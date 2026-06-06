@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
+from app.DTOs.whatsappmessagedto import SendMessageDTO
 from app.config.settings import VERIFY_TOKEN
 from app.db.session import get_db
+from app.services.WhatsappService import WhatsAppService
 from app.services.messageservice import MessageService
 from app.services.userservice import UserService
 
@@ -133,3 +135,23 @@ async def receive_message(
             "status": "error",
             "message": str(e)
         }
+
+@router.post("/send")
+def send_message(
+    request: SendMessageDTO,
+    db: Session = Depends(get_db)
+):
+    user = UserService.get_user_by_id(
+        db,
+        request.user_id
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    response = WhatsAppService.send_text_message(
+        phone_number=user.phone_number,
+        message=request.message
+    )
