@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.db.database import SessionLocal
-from app.services.AIService import AIService
+from app.services.AIServiceimpl import AIService
 from app.db.session import get_db
 router = APIRouter()
 

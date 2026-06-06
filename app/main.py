@@ -8,11 +8,15 @@ from app.models.summary import Summary
 from app.models.Ai_Draft import AIDraft
 from app.api.AIWebhook import router as airouter
 from app.api.UsersRoute import router as usersrouter
+
+from app.api.AIREPLYHOOK import router as replyrouter
 app = FastAPI()
 
 app.include_router(webhook_router)
 app.include_router(airouter)
 app.include_router(usersrouter)
+
+app.include_router(replyrouter)
 
 Base.metadata.create_all(bind=engine)
 print("Creating tables...")

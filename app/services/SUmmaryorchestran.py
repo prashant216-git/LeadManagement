@@ -1,60 +1,83 @@
+import this
+
 from sqlalchemy.orm import Session
 
 from app.services.messageservice import MessageService
 from app.services.Summaryservice import SummaryService
 from app.services.AIDraftService import AIDraftService
-from app.services.AIService import AIService
+from app.services.AIServiceimpl import AIService
 
 
-class DraftGenerationService:
+class Summaryimpl:
+
+
 
     @staticmethod
-    def get_or_create_draft_for_user(
-        db: Session,
-        user_id: int
+    def ensure_summary(
+            db,
+            user_id: int
     ):
 
-        latest_message = (
-            MessageService.get_latest_message(
-                db=db,
-                user_id=user_id
-            )
-        )
-
-        if not latest_message:
-            return None
-
-        if latest_message.sender != "user":
-            return None
-
-        existing_draft = (
-            AIDraftService.get_by_message_id(
-                db=db,
-                message_id=latest_message.id
-            )
-        )
-
-        if existing_draft:
-            return existing_draft
-
-        SummaryService.ensure_summary(
+        summary = SummaryService.get_summary(
             db=db,
             user_id=user_id
         )
 
-        draft_text = (
-            AIService.generate_reply(
+        # ----------------------------------
+        # First Summary Generation
+        # ----------------------------------
+
+        if not summary:
+
+            messages = (
+                MessageService.get_all_messages(
+                    db=db,
+                    user_id=user_id
+                )
+            )
+
+            if not messages:
+                return None
+
+            summary_text = (
+                AIService.generate_initial_summary(
+                    messages=messages
+                )
+            )
+
+            return SummaryService.create_summary(
                 db=db,
-                user_id=user_id
+                user_id=user_id,
+                summary_text=summary_text,
+                last_message_id=messages[-1].id
+            )
+
+        # ----------------------------------
+        # Existing Summary
+        # ----------------------------------
+
+        new_messages = (
+            MessageService.get_messages_after_id(
+                db=db,
+                user_id=user_id,
+                message_id=summary.last_summarized_message_id
             )
         )
 
-        draft= (
-            AIDraftService.create_draft(
-                db=db,
-                user_id=user_id,
-                message_id=latest_message.id,
-                draft_text=draft_text
+        # No need to re-summarize yet
+        if len(new_messages) < 5:
+            return summary
+
+        updated_summary = (
+            AIService.update_summary(
+                existing_summary=summary.summary,
+                messages=new_messages
             )
         )
-        return AIDraftService.to_dto(draft)
+
+        return SummaryService.update_summary(
+            db=db,
+            user_id=user_id,
+            summary_text=updated_summary,
+            last_message_id=new_messages[-1].id
+        )

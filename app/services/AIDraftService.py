@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.DTOs.AIDraftDTO import DraftDTO
 from app.models.Ai_Draft import AIDraft
 
 
@@ -135,34 +136,34 @@ class AIDraftService:
 
         return True
 
-    @staticmethod
-    def get_or_create_draft_for_message(
-        db: Session,
-        user_id: int,
-        message_id: int,
-        generator_func
-    ) -> AIDraft:
-
-        existing_draft = (
-            AIDraftService.get_by_message_id(
-                db,
-                message_id
-            )
-        )
-
-        if existing_draft:
-            return existing_draft
-
-        draft_text = generator_func()
-
-        return (
-            AIDraftService.create_draft(
-                db=db,
-                user_id=user_id,
-                message_id=message_id,
-                draft_text=draft_text
-            )
-        )
+    # @staticmethod
+    # def get_or_create_draft_for_message(
+    #     db: Session,
+    #     user_id: int,
+    #     message_id: int,
+    #     generator_func
+    # ) -> AIDraft:
+    #
+    #     existing_draft = (
+    #         AIDraftService.get_by_message_id(
+    #             db,
+    #             message_id
+    #         )
+    #     )
+    #
+    #     if existing_draft:
+    #         return existing_draft
+    #
+    #     draft_text = generator_func()
+    #
+    #     return (
+    #         AIDraftService.create_draft(
+    #             db=db,
+    #             user_id=user_id,
+    #             message_id=message_id,
+    #             draft_text=draft_text
+    #         )
+    #     )
 
     @staticmethod
     def to_dto(
