@@ -1,15 +1,16 @@
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import Text
-from sqlalchemy import ForeignKey
-from sqlalchemy import DateTime
-
-from sqlalchemy.sql import func
 
 from app.db.database import Base
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import DateTime
+from sqlalchemy.sql import func
+from sqlalchemy import ForeignKey
 
+from sqlalchemy import Text
 
 class Summary(Base):
+
     __tablename__ = "summaries"
 
     id = Column(
@@ -27,6 +28,11 @@ class Summary(Base):
 
     summary = Column(
         Text,
+        nullable=True
+    )
+
+    last_summarized_message_id = Column(
+        Integer,
         nullable=True
     )
 

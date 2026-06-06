@@ -105,3 +105,37 @@ class MessageService:
             .first()
             is not None
         )
+
+    @staticmethod
+    def get_all_messages(
+            db,
+            user_id: int
+    ):
+        return (
+            db.query(Message)
+            .filter(
+                Message.user_id == user_id
+            )
+            .order_by(
+                Message.id.asc()
+            )
+            .all()
+        )
+
+    @staticmethod
+    def get_messages_after_id(
+            db,
+            user_id: int,
+            message_id: int
+    ):
+        return (
+            db.query(Message)
+            .filter(
+                Message.user_id == user_id,
+                Message.id > message_id
+            )
+            .order_by(
+                Message.id.asc()
+            )
+            .all()
+        )
