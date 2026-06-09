@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
-
+from time import time
 from app.DTOs.whatsappmessagedto import SendMessageDTO
 from app.config.settings import VERIFY_TOKEN
 from app.db.session import get_db
+from app.services.AIDraftService import AIDraftService
 from app.services.WhatsappService import WhatsAppService
 from app.services.messageservice import MessageService
 from app.services.userservice import UserService
@@ -154,4 +155,25 @@ def send_message(
     response = WhatsAppService.send_text_message(
         phone_number=user.phone_number,
         message=request.message
+    )
+    print(response)
+    channel_message_id = (
+        response["messages"][0]["id"]
+    )
+    MessageService.save_message(
+        db=db,
+        user_id=request.user_id,
+        channel="whatsapp",
+        channel_message_id=channel_message_id,
+        sender="agent",
+        content=request.message,
+
+
+    message_timestamp = str(
+        int(time())
+    )
+    )
+    AIDraftService.mark_sent(
+        db=db,
+        draft_id=request.draft_id
     )
