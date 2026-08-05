@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 
+from app.services import Summaryservice
 from app.services.SUmmaryorchestran import Summaryimpl
 from app.services.AIDraftService import AIDraftService
 from app.services.AIServiceimpl import AIService
+
 from app.services.messageservice import MessageService
 
 
@@ -35,7 +37,8 @@ class DraftGenerationService:
         )
 
         if existing_draft:
-            return AIDraftService.to_dto(existing_draft)
+            summary=Summaryservice.SummaryService.get_summary_text(db=db,user_id=user_id)
+            return AIDraftService.to_dto(existing_draft,summary)
 
         Summaryimpl.ensure_summary(
             db=db,
@@ -58,4 +61,5 @@ class DraftGenerationService:
                 draft_text=draft_text
             )
         )
-        return AIDraftService.to_dto(draft)
+        return AIDraftService.to_dto(draft,Summaryservice.SummaryService.get_summary_text(db=db,user_id=user_id))
+        return AIDraftService.to_dto(draft,summary=Summaryservice.Summaryservice.get_summary_text(db=db,user_id=user_id))

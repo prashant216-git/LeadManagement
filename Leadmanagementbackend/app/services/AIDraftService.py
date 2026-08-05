@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.DTOs.AIDraftDTO import DraftDTO
+from app.models import Summary
 from app.models.Ai_Draft import AIDraft
 
 
@@ -167,7 +168,7 @@ class AIDraftService:
 
     @staticmethod
     def to_dto(
-            draft: AIDraft
+            draft: AIDraft,summary:str
     ) -> DraftDTO:
 
         return DraftDTO(
@@ -175,7 +176,9 @@ class AIDraftService:
             user_id=draft.user_id,
             message_id=draft.message_id,
             draft_text=draft.draft_text,
-            status=draft.status
+            status=draft.status,
+            summarytext=summary
+
         )
 
 

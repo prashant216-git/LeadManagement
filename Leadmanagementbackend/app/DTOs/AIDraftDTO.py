@@ -9,3 +9,4 @@ class DraftDTO(BaseModel):
     message_id: int
     draft_text: str
     status: str
+    summarytext: str
