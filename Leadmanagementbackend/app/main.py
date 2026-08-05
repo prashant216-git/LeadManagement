@@ -15,7 +15,7 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",  # frontend (React/Vue)
     "http://localhost:5173",
-    "https://yourdomain.com"
+    "https://veloratechnologies.in"
 ]
 
 app.add_middleware(
