@@ -152,6 +152,7 @@ def send_message(
             status_code=404,
             detail="User not found"
         )
+    print("trying to send message")
     response = WhatsAppService.send_text_message(
         phone_number=user.phone_number,
         message=request.message

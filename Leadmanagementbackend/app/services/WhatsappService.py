@@ -13,11 +13,14 @@ class WhatsAppService:
         phone_number: str,
         message: str
     ):
+        print("trying sending message to"+phone_number)
 
         url = (
-            f"https://graph.facebook.com/v23.0/"
+            f"https://graph.facebook.com/v25.0/"
             f"{os.getenv('PHONE_NUMBER_ID')}/messages"
         )
+
+
 
         headers = {
             "Authorization":
@@ -41,4 +44,9 @@ class WhatsAppService:
             json=payload
         )
 
+
+        print(response.status_code)
+        print(response.text)
+
+        response.raise_for_status()
         return response.json()
