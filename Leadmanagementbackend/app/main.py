@@ -13,9 +13,11 @@ from app.api.UsersRoute import router as usersrouter
 from app.api.AIREPLYHOOK import router as replyrouter
 app = FastAPI()
 origins = [
-    "http://localhost:3000",  # frontend (React/Vue)
-    "http://localhost:5173",
-    "https://veloratechnologies.in"
+    "http://localhost:3000",  # React
+    "http://localhost:5173",  # Vite
+    "https://veloratechnologies.in",
+    "https://api.veloratechnologies.in",
+    "https://www.veloratechnologies.in",
 ]
 
 app.add_middleware(
