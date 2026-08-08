@@ -3,7 +3,7 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 from time import time
 from app.DTOs.whatsappmessagedto import SendMessageDTO
-from app.config.settings import VERIFY_TOKEN
+from app.core.config import settings
 from app.db.session import get_db
 from app.services.AIDraftService import AIDraftService
 from app.services.WhatsappService import WhatsAppService
@@ -19,7 +19,7 @@ async def verify_webhook(
         hub_verify_token: str = None,
         hub_challenge: str = None
 ):
-    if hub_verify_token == VERIFY_TOKEN:
+    if hub_verify_token == settings.VERIFY_TOKEN:
         return PlainTextResponse(content=hub_challenge)
 
     return PlainTextResponse(
