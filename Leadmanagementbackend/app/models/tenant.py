@@ -119,3 +119,8 @@ class Tenant(BaseModel):
         "ChannelConnection",
         back_populates="tenant",
     )
+    leads = relationship(
+        "Lead",
+        back_populates="tenant",
+        cascade="all, delete-orphan",
+    )

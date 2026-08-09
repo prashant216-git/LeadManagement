@@ -4,7 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.channel_controller import router as channel_router
 from app.api.whatsappwebhook import router as webhook_router
 from app.db.database import Base, engine
-from app.models.User import User
+from app.models.Leads import Lead
 from app.models.messages import Message
 from app.models.summary import Summary
 from app.models.Ai_Draft import AIDraft

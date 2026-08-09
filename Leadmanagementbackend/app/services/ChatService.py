@@ -3,7 +3,7 @@ from sqlalchemy import func
 
 from app.DTOs.MessageDTO import MessageDTO
 from app.DTOs.UserChatDTO import UserChatDTO
-from app.models.User import User
+from app.models.Leads import Lead
 from app.models.messages import Message
 
 from app.DTOs.Chats import ChatSidebarDTO
@@ -32,18 +32,18 @@ class ChatService:
         results = (
 
             db.query(
-                User,
+                Lead,
                 Message
             )
 
             .outerjoin(
                 latest_message_subquery,
-                User.id == latest_message_subquery.c.user_id
+                Lead.id == latest_message_subquery.c.user_id
             )
 
             .outerjoin(
                 Message,
-                (Message.user_id == User.id)
+                (Message.user_id == Lead.id)
                 &
                 (
                     Message.created_at
@@ -86,8 +86,8 @@ class ChatService:
             user_id: int
     ) -> UserChatDTO:
         user = (
-            db.query(User)
-            .filter(User.id == user_id)
+            db.query(Lead)
+            .filter(Lead.id == user_id)
             .first()
         )
 

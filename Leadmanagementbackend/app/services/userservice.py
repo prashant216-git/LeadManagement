@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
-from app.models.User import User
+from app.models.Leads import Lead
 
 
 class UserService:
@@ -11,25 +11,25 @@ class UserService:
         db: Session,
         phone_number: str | None = None,
         email: str | None = None
-    ) -> User | None:
+    ) -> Lead | None:
 
         if not phone_number and not email:
             raise ValueError(
                 "phone_number or email is required"
             )
 
-        query = db.query(User)
+        query = db.query(Lead)
 
         conditions = []
 
         if phone_number:
             conditions.append(
-                User.phone_number == phone_number
+                Lead.phone_number == phone_number
             )
 
         if email:
             conditions.append(
-                User.email == email
+                Lead.email == email
             )
 
         return query.filter(
@@ -42,14 +42,14 @@ class UserService:
         phone_number: str | None = None,
         email: str | None = None,
         name: str | None = None
-    ) -> User:
+    ) -> Lead:
 
         if not phone_number and not email:
             raise ValueError(
                 "phone_number or email is required"
             )
 
-        user = User(
+        user = Lead(
             name=name,
             email=email,
             phone_number=phone_number
@@ -67,7 +67,7 @@ class UserService:
         phone_number: str | None = None,
         email: str | None = None,
         name: str | None = None
-    ) -> User:
+    ) -> Lead:
 
         user = UserService.get_user(
             db=db,
@@ -91,9 +91,9 @@ class UserService:
             user_id: int
     ):
         return (
-            db.query(User)
+            db.query(Lead)
             .filter(
-                User.id == user_id
+                Lead.id == user_id
             )
             .first()
         )
