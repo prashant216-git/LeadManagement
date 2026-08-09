@@ -165,3 +165,9 @@ class ChannelConnection(BaseModel):
         "Tenant",
         back_populates="channel_connections",
     )
+    watch = relationship(
+        "ChannelWatch",
+        back_populates="connection",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

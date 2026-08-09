@@ -28,22 +28,37 @@ class ChannelConnectionRepository:
 
         return result.scalar_one_or_none()
 
+    def get_by_oauth_state(
+            self,
+            tenant_id: int,
+            oauth_state: str,
+    ) -> ChannelConnection | None:
+        result = self.db.execute(
+            select(ChannelConnection)
+            .where(
+                ChannelConnection.tenant_id == tenant_id,
+                ChannelConnection.oauth_state == oauth_state,
+            )
+        )
+
+        return result.scalar_one_or_none()
+
     # ==========================================================
     # Get by Provider Account
     # ==========================================================
 
-    def get_by_provider_account(
+    def get_by_provider_identifier(
         self,
         channel_id: int,
-        provider_account_id: str,
+        provider_account_identifier: str,
     ) -> ChannelConnection | None:
 
         result = self.db.execute(
             select(ChannelConnection)
             .where(
                 ChannelConnection.channel_id == channel_id,
-                ChannelConnection.provider_account_id
-                == provider_account_id,
+                ChannelConnection.provider_identifier
+                == provider_account_identifier,
             )
         )
 
@@ -73,9 +88,25 @@ class ChannelConnectionRepository:
 
         return result.scalar_one_or_none()
 
-    # ==========================================================
-    # Save
-    # ==========================================================
+    def get_connected_connection(
+        self,
+        tenant_id: int,
+        channel_id: int,
+
+    ) -> ChannelConnection | None:
+
+        result = self.db.execute(
+            select(ChannelConnection)
+            .where(
+                ChannelConnection.tenant_id == tenant_id,
+                ChannelConnection.channel_id == channel_id,
+
+                ChannelConnection.connection_status
+                == ConnectionStatus.CONNECTED,
+            )
+        )
+
+        return result.scalar_one_or_none()
 
     def save(
         self,

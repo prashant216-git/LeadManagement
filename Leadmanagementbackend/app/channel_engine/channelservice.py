@@ -1,16 +1,24 @@
 import secrets
+from datetime import datetime, timezone
 
+from app.DTOs import channelreponseDTO
 from app.channel_engine.engine import ChannelEngine
 
 from app.DTOs.messages_and_attachment.send_message_request import (
     SendMessageRequest,
 )
+from app.models.ChannelWatch import ChannelWatch
 from app.channel_engine.registry import ChannelProviderRegistry
 from app.enums.channel import ConnectionStatus
-
+from app.enums.channel import CredentialType
+from app.models.channel_credential import ChannelCredential
+from app.models.channel_master import ChannelMaster
+from app.repositories.ChannelCredentialRepository import ChannelCredentialRepository
 from app.repositories.ChannelConnectionRepository import (
     ChannelConnectionRepository,
 )
+from app.models.ChannelWatch import ChannelWatch
+from app.services.CredentialEncryptionService import CredentialEncryptionService
 
 from app.repositories.ChannelMasterRepositories import (
     ChannelMasterRepository,
@@ -24,10 +32,17 @@ class ChannelService:
         channel_engine: ChannelEngine,
         connection_repository: ChannelConnectionRepository,
         channel_master_repository: ChannelMasterRepository,
+        credentials_repository : ChannelCredentialRepository,
+        credential_encryption_service :CredentialEncryptionService,
+
+
     ):
         self.channel_engine = channel_engine
         self.connection_repository = connection_repository
         self.channel_master_repository = channel_master_repository
+        self.credentials_repository = credentials_repository
+        self.credential_encryption_service = credential_encryption_service
+
 
     # ==========================================================
     # NEW CONNECTION
@@ -100,13 +115,13 @@ class ChannelService:
             ChannelConnection,
         )
         random_state = secrets.token_urlsafe(15)[:20]
-        tenant_id = tenant_id + 1001
-        state = f"{random_state}{tenant_id}"
+        tenantmasked = tenant_id + 1001
+        state = f"{random_state}{tenantmasked}"
         connection = ChannelConnection(
             tenant_id=tenant_id,
             channel_id=channel.id,
             created_by=tenant_id,
-            
+            oauth_state=state
         )
         connection = self.connection_repository.save(
             connection
@@ -127,7 +142,7 @@ class ChannelService:
             )
 
 
-            result = await provider.connect(request=None,tenant_id=tenant_id)
+            result = await provider.connect(request=None,state=state)
 
             connection.connection_url = result.authorization_url
 
@@ -142,15 +157,203 @@ class ChannelService:
             self.connection_repository.update(connection)
 
             raise
+
+    async def handle_callback(
+            self,
+            channel_code: str,
+            query_params: dict,
+            headers: dict,
+            body,
+    ):
+
         # ------------------------------------------------------
-        # 5. Start provider connection
+        # 1. Let engine resolve the provider
         # ------------------------------------------------------
 
-        return provider.connect()
+        result = await self.channel_engine.handle_callback(
+            channel_code=channel_code,
+            query_params=query_params,
+            headers=headers,
+            body=body,
+        )
 
-    # ==========================================================
-    # EXISTING CONNECTION
-    # ==========================================================
+        state=result["state"]
+
+        tenantmasked=int(state[20:])
+
+        tenantid=tenantmasked-1001
+
+
+        print(tenantid)
+
+        # ------------------------------------------------------
+        # 2. Get connection
+        # ------------------------------------------------------
+
+        connection = self.connection_repository.get_by_oauth_state(
+            oauth_state=state,tenant_id=tenantid)
+
+        if connection is None:
+            raise ValueError(
+                "No channel connection found for this OAuth state."
+            )
+
+        connection_id=connection.id
+
+
+
+        if connection is None:
+            raise ValueError(
+                "Channel connection not found."
+            )
+
+        # ------------------------------------------------------
+        # 3. Credentials returned by provider
+        # ------------------------------------------------------
+
+        credentials = result["credentials"]
+
+        if credentials is None:
+            raise ValueError(
+                "Provider did not return credentials."
+            )
+
+        # ------------------------------------------------------
+        # 4. Encrypt credentials
+        # ------------------------------------------------------
+
+        encrypted_payload = (
+            self.credential_encryption_service.encrypt(credentials)
+
+        )
+
+
+
+        # ------------------------------------------------------
+        # 5. Save credentials
+        # ------------------------------------------------------
+        credential = ChannelCredential(
+            channel_connection_id=connection.id,
+            credential_type=CredentialType.OAUTH,
+            token_type=credentials["token_type"],
+            expires_at=result["expires_at"],
+            last_refreshed_at=datetime.now(timezone.utc),
+            encrypted_payload=encrypted_payload,
+            encryption_key_version=1,
+            credential_version=1,
+            is_active=True,
+        )
+        self.credentials_repository.save(
+            credential
+        )
+
+
+
+        # ------------------------------------------------------
+        # 6. Update connection
+        # ------------------------------------------------------
+
+        connection.connection_status = result["status"]
+
+        connection.provider_account_id = (
+            result.get("provider_account_id")
+        )
+
+        connection.provider_identifier = (
+            result.get("provider_identifier")
+        )
+
+        connection.display_name = (
+            result.get("display_name")
+        )
+
+        self.connection_repository.update(
+            connection
+        )
+
+        # ------------------------------------------------------
+        # 7. Don't expose credentials to API
+        # ------------------------------------------------------
+
+        return {
+            "connection_id": connection.id,
+            "status": connection.connection_status,
+            "message": "Channel connected successfully.",
+        }
+
+    async def setup_watch(
+            self,
+            tenant_id: int,
+            channel_code:str
+
+    ):
+        sourcename = self.channel_master_repository.get_by_code(
+            channel_code=channel_code)
+
+
+        connection = (
+            self.connection_repository
+            .get_connected_connection(
+                tenant_id=tenant_id,
+                channel_id=sourcename.id,
+            )
+        )
+
+
+
+        if connection is None:
+            print(
+                "No channel connection found for this OAuth state."
+            )
+            raise ValueError(
+                "Gmail connection not found."
+            )
+
+        provider = self.channel_engine.create_provider(
+            channel_code=sourcename.code,
+            connection=connection,
+        )
+
+        print("her1")
+
+        if provider is None:
+            print(
+                "No channel provider found for this OAuth state.")
+            raise ValueError(
+                "Gmail provider not found."
+            )
+
+        print("heree")
+        credentialsmodel =self.credentials_repository.get_by_connection_id(
+            connection_id=connection.id,
+        )
+
+
+        if credentialsmodel is None:
+            print(
+                "No channel credentials found for this OAuth state.")
+            raise ValueError("no cred found")
+        credentailsencrypted=credentialsmodel.encrypted_payload
+
+
+
+        decryptedcredentials=self.credential_encryption_service.decrypt(credentailsencrypted)
+        print(decryptedcredentials)
+
+        accesstoken=decryptedcredentials["access_token"]
+
+        print(accesstoken)
+
+        return await provider.setup_watch(access_token=accesstoken)
+
+
+
+
+
+
+
+
+
 
     async def disconnect(
         self,
@@ -165,6 +368,9 @@ class ChannelService:
         )
 
         return provider.disconnect()
+
+
+
 
     # ==========================================================
     # SEND MESSAGE
@@ -185,4 +391,38 @@ class ChannelService:
 
         return provider.send_message(
             request
+        )
+
+    async def get_all_channels(self) -> list[ChannelMaster]:
+        return self.channel_master_repository.get_all()
+
+    async def handle_notification(
+            self,
+            channel_code: str,
+            payload: dict,
+    ):
+        sourcename = self.channel_master_repository.get_by_code(
+            channel_code=channel_code)
+
+
+
+
+
+        provider = self.channel_engine.create_provider(
+            channel_code=sourcename.code,
+            connection=None,
+        )
+
+        print("her1")
+
+        if provider is None:
+            print(
+                "No channel provider found for this OAuth state.")
+            raise ValueError(
+                "Gmail provider not found."
+            )
+
+
+        return await provider.handle_notification(
+            payload=payload,
         )

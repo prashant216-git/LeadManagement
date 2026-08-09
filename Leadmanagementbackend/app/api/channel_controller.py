@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, Request
+from starlette.responses import RedirectResponse
 
+from app.DTOs.channelreponseDTO import ChannelResponseDTO
 from app.DTOs.connection.connection_response import ConnectResponse
-
 from app.channel_engine.engine import ChannelEngine
 from app.channel_engine.channelservice import ChannelService
 from app.core.config import settings
@@ -18,6 +20,7 @@ from app.repositories.ChannelMasterRepositories import (
 from app.repositories.ChannelCredentialRepository import (
     ChannelCredentialRepository,
 )
+from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 
 from app.services.CredentialEncryptionService import (
     CredentialEncryptionService,
@@ -62,6 +65,8 @@ def get_channel_service(
 
     credential_service = CredentialEncryptionService()
 
+    channel_watch_repository=ChannelWatchRepository(db)
+
     # ------------------------------------------------------
     # Channel Engine
     # ------------------------------------------------------
@@ -70,6 +75,9 @@ def get_channel_service(
         connection_repository=connection_repository,
         credential_repository=credential_repository,
         credential_service=credential_service,
+        channel_watch_repository=channel_watch_repository,
+        channel_master_repository=channel_master_repository,
+
     )
 
     # ------------------------------------------------------
@@ -80,6 +88,10 @@ def get_channel_service(
         channel_engine=channel_engine,
         connection_repository=connection_repository,
         channel_master_repository=channel_master_repository,
+        credentials_repository=credential_repository,
+        credential_encryption_service=credential_service,
+
+
     )
 
 
@@ -135,3 +147,99 @@ async def connect_channel(
             status_code=500,
             detail="Unable to connect channel.",
         )
+
+@router.api_route(
+    "/{channel_code}/callback",
+    methods=["GET", "POST"],
+)
+async def channel_callback(
+    channel_code: str,
+    request: Request,
+channel_service: ChannelService = Depends(
+        get_channel_service
+    ),
+):
+    try:
+        # --------------------------------------------------
+        # Query parameters
+        # --------------------------------------------------
+
+        query_params = dict(request.query_params)
+
+        # --------------------------------------------------
+        # Headers
+        # --------------------------------------------------
+
+        headers = dict(request.headers)
+
+        # --------------------------------------------------
+        # Body
+        # --------------------------------------------------
+
+        body = None
+
+        if request.method == "POST":
+            content_type = request.headers.get(
+                "content-type",
+                "",
+            )
+
+            if "application/json" in content_type:
+                body = await request.json()
+
+            else:
+                body = await request.body()
+
+        # --------------------------------------------------
+        # Pass EVERYTHING to ChannelService
+        # --------------------------------------------------
+        rs=await channel_service.handle_callback(channel_code=channel_code, body=body,headers=headers,query_params=query_params)
+        print(rs)
+
+
+
+        return RedirectResponse(
+            url=(
+                "https://veloratechnologies.in/"
+                "channel-configuration"
+                "?channel=gmail"
+                "&status=connected"
+            )
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+@router.post(
+    "/gmail/setup-watch",
+)
+async def setup_gmail_watch(
+    request: Request,
+channel_service: ChannelService = Depends(
+        get_channel_service
+    ),
+):
+    try:
+        # Temporary tenant for testing
+        tenant_id = 1
+
+        return await channel_service.setup_watch(
+            tenant_id=tenant_id,channel_code="gmail"
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+@router.get(
+    "/",
+    response_model=list[ChannelResponseDTO]
+)
+async def get_all_channels(
+    service: ChannelService = Depends(get_channel_service),
+):
+    return await service.get_all_channels()

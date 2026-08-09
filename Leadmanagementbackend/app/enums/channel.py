@@ -44,3 +44,10 @@ class CredentialType(str, Enum):
     JWT = "JWT"
     CERTIFICATE = "CERTIFICATE"
     CUSTOM = "CUSTOM"
+
+class WatchStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    DISABLED = "DISABLED"
+    DELETED = "DELETED"
+    FAILED = "FAILED"
+    SUSPENDED = "SUSPENDED"

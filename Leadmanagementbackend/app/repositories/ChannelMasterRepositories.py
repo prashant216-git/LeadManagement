@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.enums.channel import ChannelStatus
 from app.models.channel_master import ChannelMaster
 
 
@@ -81,3 +82,11 @@ class ChannelMasterRepository:
         await self.db.refresh(channel)
 
         return channel
+
+    def get_all(self) -> list[ChannelMaster]:
+        result = self.db.execute(
+            select(ChannelMaster)
+            .order_by(ChannelMaster.id)
+        )
+
+        return result.scalars().all()

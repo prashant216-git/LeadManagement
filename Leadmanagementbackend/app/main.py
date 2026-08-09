@@ -11,6 +11,7 @@ from app.models.Ai_Draft import AIDraft
 from app.api.AIWebhook import router as airouter
 from app.api.UsersRoute import router as usersrouter
 from app.core.config import settings
+from app.api.channel_webhook_controller import router as webhook_controller
 
 
 from app.api.AIREPLYHOOK import router as replyrouter
@@ -34,7 +35,7 @@ app.add_middleware(
 app.include_router(webhook_router)
 app.include_router(airouter)
 app.include_router(usersrouter)
-
+app.include_router(webhook_controller)
 app.include_router(replyrouter)
 
 

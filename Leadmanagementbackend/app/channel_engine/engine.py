@@ -1,3 +1,4 @@
+from app.DTOs import connection
 from app.channel_engine.registry import ChannelProviderRegistry
 
 from app.repositories.ChannelConnectionRepository import (
@@ -7,6 +8,8 @@ from app.repositories.ChannelConnectionRepository import (
 from app.repositories.ChannelCredentialRepository import (
     ChannelCredentialRepository,
 )
+from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
+from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 
 from app.services.CredentialEncryptionService import (
     CredentialEncryptionService,
@@ -34,10 +37,14 @@ class ChannelEngine:
         connection_repository: ChannelConnectionRepository,
         credential_repository: ChannelCredentialRepository,
         credential_service: CredentialEncryptionService,
+        channel_watch_repository: ChannelWatchRepository,
+        channel_master_repository:ChannelMasterRepository,
     ):
         self.connection_repository = connection_repository
         self.credential_repository = credential_repository
         self.credential_service = credential_service
+        self.channel_watch_repository = channel_watch_repository
+        self.channel_master_repository = channel_master_repository
 
     # ==========================================================
     # NEW CONNECTION
@@ -66,9 +73,11 @@ class ChannelEngine:
             Google OAuth
         """
 
+
         provider_class = (
             ChannelProviderRegistry.get(channel_code)
         )
+
 
         if provider_class is None:
             raise ValueError(
@@ -78,9 +87,11 @@ class ChannelEngine:
         return provider_class(
             connection=connection,
             credentials=None,
-            encryption_service=CredentialEncryptionService,
-            credential_repository=ChannelCredentialRepository,
-            connection_repository=ChannelConnectionRepository
+            encryption_service=self.credential_service,
+            credential_repository=self.credential_repository,
+            connection_repository=self.connection_repository,
+            channel_watch_repository=self.channel_watch_repository,
+            channel_master_repository=self.channel_master_repository,
         )
 
     # ==========================================================
@@ -171,4 +182,34 @@ class ChannelEngine:
         return provider_class(
             connection=connection,
             credentials=credentials,
+        )
+
+    async def handle_callback(
+            self,
+            channel_code: str,
+            query_params: dict,
+            headers: dict,
+            body,
+    ):
+
+        provider_class = (
+            ChannelProviderRegistry.get(
+                channel_code
+            )
+        )
+        provider_class=provider_class(
+            connection=connection,
+            credentials=None,
+            encryption_service=CredentialEncryptionService,
+            credential_repository=ChannelCredentialRepository,
+            connection_repository=ChannelConnectionRepository,
+            channel_watch_repository=self.channel_watch_repository,
+            channel_master_repository=self.channel_master_repository
+
+        )
+
+        return await provider_class.handle_callback(
+            query_params=query_params,
+            headers=headers,
+            body=body,
         )
