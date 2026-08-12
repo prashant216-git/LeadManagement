@@ -21,6 +21,7 @@ from app.repositories.ChannelCredentialRepository import (
     ChannelCredentialRepository,
 )
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
+from app.repositories.LeadRepository import LeadRepository
 
 from app.services.CredentialEncryptionService import (
     CredentialEncryptionService,
@@ -67,6 +68,8 @@ def get_channel_service(
 
     channel_watch_repository=ChannelWatchRepository(db)
 
+    lead_repository = LeadRepository(db)
+
     # ------------------------------------------------------
     # Channel Engine
     # ------------------------------------------------------
@@ -77,6 +80,7 @@ def get_channel_service(
         credential_service=credential_service,
         channel_watch_repository=channel_watch_repository,
         channel_master_repository=channel_master_repository,
+        lead_repository=lead_repository
 
     )
 
@@ -236,10 +240,17 @@ channel_service: ChannelService = Depends(
             detail=str(e),
         )
 @router.get(
-    "/",
+    "/all",
     response_model=list[ChannelResponseDTO]
 )
 async def get_all_channels(
     service: ChannelService = Depends(get_channel_service),
 ):
-    return await service.get_all_channels()
+    try:
+        tenant_id=1
+        return await service.get_all_channels(tenant_id=tenant_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )

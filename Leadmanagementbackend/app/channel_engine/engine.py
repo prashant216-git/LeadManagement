@@ -10,10 +10,12 @@ from app.repositories.ChannelCredentialRepository import (
 )
 from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
+from app.repositories.LeadRepository import LeadRepository
 
 from app.services.CredentialEncryptionService import (
     CredentialEncryptionService,
 )
+from app.services.Leadmanagementservice import LeadService
 
 
 class ChannelEngine:
@@ -39,12 +41,14 @@ class ChannelEngine:
         credential_service: CredentialEncryptionService,
         channel_watch_repository: ChannelWatchRepository,
         channel_master_repository:ChannelMasterRepository,
+            lead_repository: LeadRepository,
     ):
         self.connection_repository = connection_repository
         self.credential_repository = credential_repository
         self.credential_service = credential_service
         self.channel_watch_repository = channel_watch_repository
         self.channel_master_repository = channel_master_repository
+        self.lead_repository = lead_repository
 
     # ==========================================================
     # NEW CONNECTION
@@ -92,6 +96,9 @@ class ChannelEngine:
             connection_repository=self.connection_repository,
             channel_watch_repository=self.channel_watch_repository,
             channel_master_repository=self.channel_master_repository,
+            lead_service=LeadService(channel_connection_repository=self.connection_repository,
+                                     lead_repository=self.lead_repository),
+
         )
 
     # ==========================================================
@@ -204,7 +211,8 @@ class ChannelEngine:
             credential_repository=ChannelCredentialRepository,
             connection_repository=ChannelConnectionRepository,
             channel_watch_repository=self.channel_watch_repository,
-            channel_master_repository=self.channel_master_repository
+            channel_master_repository=self.channel_master_repository,
+            lead_service=LeadService(channel_connection_repository=self.connection_repository,lead_repository=self.lead_repository),
 
         )
 

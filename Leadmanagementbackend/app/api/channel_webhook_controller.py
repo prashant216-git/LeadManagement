@@ -8,7 +8,9 @@ from app.repositories.ChannelConnectionRepository import ChannelConnectionReposi
 from app.repositories.ChannelCredentialRepository import ChannelCredentialRepository
 from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
+from app.repositories.LeadRepository import LeadRepository
 from app.services.CredentialEncryptionService import CredentialEncryptionService
+from app.services.Leadmanagementservice import LeadService
 
 router = APIRouter(
     prefix="/webhooks",
@@ -43,6 +45,9 @@ def get_channel_service(
 
     channel_watch_repository=ChannelWatchRepository(db)
 
+
+    lead_repository = LeadRepository(db)
+
     # ------------------------------------------------------
     # Channel Engine
     # ------------------------------------------------------
@@ -53,6 +58,8 @@ def get_channel_service(
         credential_service=credential_service,
         channel_watch_repository=channel_watch_repository,
         channel_master_repository=channel_master_repository,
+        lead_repository=lead_repository
+
 
     )
 

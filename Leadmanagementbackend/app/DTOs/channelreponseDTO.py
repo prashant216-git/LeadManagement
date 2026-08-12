@@ -1,16 +1,17 @@
 from pydantic import BaseModel
-from typing import Optional, Any
+
+
+class ConnectedAccountDTO(BaseModel):
+    id: int
+
+    provider_identifier: str
 
 
 class ChannelResponseDTO(BaseModel):
     id: int
     code: str
     name: str
-    description: Optional[str] = None
-    icon: Optional[str] = None
 
-    configuration_schema: Optional[dict[str, Any]] = None
+    connection_status: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    connected_accounts: list[ConnectedAccountDTO] = []

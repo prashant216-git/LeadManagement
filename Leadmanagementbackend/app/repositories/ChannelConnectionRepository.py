@@ -106,7 +106,27 @@ class ChannelConnectionRepository:
             )
         )
 
+
+
         return result.scalar_one_or_none()
+
+    def get_all_by_tenant_and_channel(
+            self,
+            tenant_id: int,
+            channel_id: int,
+    ) -> list[ChannelConnection]:
+        result =  self.db.execute(
+            select(ChannelConnection)
+            .where(
+                ChannelConnection.tenant_id == tenant_id,
+                ChannelConnection.channel_id == channel_id,
+            )
+            .order_by(
+                ChannelConnection.created_at.desc()
+            )
+        )
+
+        return result.scalars().all()
 
     def save(
         self,

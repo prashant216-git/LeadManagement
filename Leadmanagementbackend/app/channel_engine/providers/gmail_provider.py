@@ -1,9 +1,12 @@
 import json
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from secrets import token_urlsafe
 from urllib.parse import urlencode
 import base64
+
+from app.DTOs.connection.callbackerror import CallbackError, CallbackException
 from app.channel_engine.BaseChannelProvider import BaseChannelProvider
 from app.channel_engine.registry import ChannelProviderRegistry
 from app.core.config import settings
@@ -42,7 +45,8 @@ class GmailProvider(BaseChannelProvider):
         credential_repository,
         encryption_service,
         channel_watch_repository,
-        channel_master_repository
+        channel_master_repository,
+        lead_service,
     ):
         self.connection = connection
         self.credentials = credentials
@@ -53,6 +57,7 @@ class GmailProvider(BaseChannelProvider):
         self.channel_watch_repository = channel_watch_repository
         self.client = httpx.AsyncClient()
         self.channel_master_repository=channel_master_repository
+        self.lead_service = lead_service
 
     # ==========================================================
     # Connection Lifecycle
@@ -119,19 +124,22 @@ class GmailProvider(BaseChannelProvider):
         error = query_params.get("error")
 
         if error:
-            raise ValueError(
-                f"Google OAuth failed: {error}"
-            )
+            raise CallbackException( CallbackError(message=error,state=state))
+
 
         if not code:
-            raise ValueError(
-                "Google authorization code is missing."
-            )
+            CallbackException(
+                CallbackError(
+                    message="Google authorization code is missing.",
+                    state=state
+                ))
 
         if not state:
-            raise ValueError(
-                "Google OAuth state is missing."
-            )
+            raise CallbackException(
+                CallbackError(
+                    message="Google OAuth state is missing.",
+                    state=state
+                ))
 
         # ------------------------------------------------------
         # 2. Exchange code for tokens
@@ -410,44 +418,39 @@ class GmailProvider(BaseChannelProvider):
             self,
             payload: dict,
     ):
-        """
-        Handles a Gmail Pub/Sub notification.
+        # 1. Decode notification
+        decoded = base64.b64decode(
+            payload["message"]["data"]
+        ).decode("utf-8")
 
-        Gmail-specific responsibilities:
-        - Decode Pub/Sub payload
-        - Resolve Gmail notification
-        - Get/update ChannelWatch
-        - Fetch Gmail history
-        - Fetch new messages
-        - Save messages
-        - Trigger lead processing afterwards
-        """
+        notification = json.loads(decoded)
 
-        # ==================================================
-        # 1. Resolve Gmail notification
-        # ==================================================
+        email_address = notification["emailAddress"]
+        history_id = str(notification["historyId"])
 
-        decoded = base64.b64decode(payload["message"]["data"]).decode("utf-8")
-        notifications = json.loads(decoded)
+        # 2. Resolve connection
+        channel = await (
+            self.channel_master_repository
+            .get_by_code("gmail")
+        )
 
-
-
-        email_address = notifications["emailAddress"]
-        history_id = str(notifications["historyId"])
-
-        channels=self.channel_master_repository.get_by_code(channel_code="gmail")
-
-        connection = self.connection_repository.get_by_provider_identifier(provider_account_identifier=email_address,channel_id=channels.id)
-
-        # ==================================================
-        # 2. Resolve / update watch
-        # ==================================================
-
-        watch = (
-            self.channel_watch_repository
-            .get_by_connection_id(
-                connection.id
+        connection = await (
+            self.connection_repository
+            .get_by_provider_identifier(
+                provider_account_identifier=email_address,
+                channel_id=channel.id,
             )
+        )
+
+        if connection is None:
+            raise ValueError(
+                "Gmail connection not found."
+            )
+
+        # 3. Get watch
+        watch = await (
+            self.channel_watch_repository
+            .get_by_connection_id(connection.id)
         )
 
         if watch is None:
@@ -455,78 +458,149 @@ class GmailProvider(BaseChannelProvider):
                 "Gmail watch not found."
             )
 
-        previous_history_id = (
+        # 4. Get new messages
+        messages = await self._get_new_messages(
             watch.provider_cursor
         )
 
-        print("GMAIL NOTIFICATION:", notifications)
-        print("CONNECTION ID:", connection.id)
-        print("HISTORY ID:", history_id)
+        # 5. Create/update leads
+        for message in messages:
 
-        # ==================================================
-        # 3. Get Gmail history
-        # ==================================================
+            sender = self._extract_sender(
+                message
+            )
 
-        # history = await self._get_history(
-        #     start_history_id=previous_history_id,
-        # )
+            if sender is None:
+                continue
 
-        # ==================================================
-        # 4. Process new messages
-        # ==================================================
+            await self.lead_service.create_or_update(
+                identifier=sender["email"],
+                lead_details={
+                    "name": sender["name"],
+                    "email": sender["email"],
+                },
+            )
 
-        # messages = []
-        #
-        # for history_record in history:
-        #
-        #     history_messages = (
-        #         history_record.get(
-        #             "messagesAdded",
-        #             []
-        #         )
-        #     )
-
-            # for item in history_messages:
-            #     message = await self._get_message(
-            #         item["message"]["id"]
-            #     )
-            #
-            #     messages.append(message)
-
-        # ==================================================
-        # 5. Update watch cursor
-        # ==================================================
-
+        # 6. Update watch
         watch.provider_cursor = history_id
         watch.last_event_at = datetime.now(
             timezone.utc
         )
 
-        self.channel_watch_repository.save(
+        await self.channel_watch_repository.save(
             watch
         )
-
-        # ==================================================
-        # 6. Save messages
-        # ==================================================
-
-        # for message in messages:
-        #     await self._save_message(
-        #         message
-        #     )
-        #
-        # # ==================================================
-        # # 7. Lead processing
-        # # ==================================================
-        #
-        # for message in messages:
-        #     await self._process_lead(
-        #         message
-        #     )
 
         return {
             "status": "processed",
             "email_address": email_address,
             "history_id": history_id,
-
         }
+
+    async def _get_new_messages(
+            self,
+            history_id: str,
+    ):
+        response = await self.client.get(
+            "https://gmail.googleapis.com/gmail/v1/users/me/history",
+            headers={
+                "Authorization": (
+                    f"Bearer "
+                    f"{self.credentials['access_token']}"
+                )
+            },
+            params={
+                "startHistoryId": history_id,
+                "historyTypes": "messageAdded",
+            },
+        )
+
+        response.raise_for_status()
+
+        history = response.json()
+
+        messages = []
+
+        for record in history.get("history", []):
+
+            for item in record.get(
+                    "messagesAdded",
+                    []
+            ):
+                message_id = item["message"]["id"]
+
+                message = await self._get_message(
+                    message_id
+                )
+
+                messages.append(message)
+
+        return messages
+
+    async def _get_message(
+            self,
+            message_id: str,
+    ):
+        response = await self.client.get(
+            f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message_id}",
+            headers={
+                "Authorization": (
+                    f"Bearer "
+                    f"{self.credentials['access_token']}"
+                )
+            },
+            params={
+                "format": "metadata",
+                "metadataHeaders": [
+                    "From",
+                    "To",
+                    "Subject",
+                ],
+            },
+        )
+
+        response.raise_for_status()
+
+        return response.json()
+
+    def _extract_sender(
+            self,
+            message: dict,
+    ):
+        headers = (
+            message
+            .get("payload", {})
+            .get("headers", [])
+        )
+
+        for header in headers:
+
+            if header["name"].lower() != "from":
+                continue
+
+            sender = header["value"]
+
+            match = re.match(
+                r"^(.*?)\s*<(.+?)>$",
+                sender,
+            )
+
+            if match:
+                return {
+                    "name": (
+                        match.group(1)
+                        .strip()
+                        .strip('"')
+                    ),
+                    "email": (
+                        match.group(2)
+                        .strip()
+                    ),
+                }
+
+            return {
+                "name": None,
+                "email": sender.strip(),
+            }
+
+        return None

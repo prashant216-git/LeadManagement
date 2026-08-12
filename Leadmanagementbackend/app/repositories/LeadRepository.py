@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.Lead import Lead
+from app.models.Leads import Lead
 
 
 class LeadRepository:

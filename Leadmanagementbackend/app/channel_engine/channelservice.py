@@ -2,11 +2,16 @@ import secrets
 from datetime import datetime, timezone
 
 from app.DTOs import channelreponseDTO
+from app.DTOs.connection.callbackerror import CallbackException
+from app.DTOs.connection.connection_response import ConnectResponse
 from app.channel_engine.engine import ChannelEngine
 
 from app.DTOs.messages_and_attachment.send_message_request import (
     SendMessageRequest,
 )
+
+from app.DTOs.channelreponseDTO import ConnectedAccountDTO
+from app.models import tenant
 from app.models.ChannelWatch import ChannelWatch
 from app.channel_engine.registry import ChannelProviderRegistry
 from app.enums.channel import ConnectionStatus
@@ -23,6 +28,8 @@ from app.services.CredentialEncryptionService import CredentialEncryptionService
 from app.repositories.ChannelMasterRepositories import (
     ChannelMasterRepository,
 )
+
+from app.DTOs.channelreponseDTO import ChannelResponseDTO
 
 
 class ChannelService:
@@ -102,10 +109,18 @@ class ChannelService:
             )
         )
 
-        if existing_connection is not None:
-            raise ValueError(
-                "A connection is already being established."
-            )
+        if (
+                existing_connection is not None
+                and existing_connection.connection_status
+                == ConnectionStatus.CONNECTING):
+            return ConnectResponse(
+                success=True,
+                authorization_url=existing_connection.connection_url,
+                message="Redirect user to Google.")
+
+
+
+
 
         # ------------------------------------------------------
         # 3. Create pending connection
@@ -165,17 +180,50 @@ class ChannelService:
             headers: dict,
             body,
     ):
+        state = None
 
         # ------------------------------------------------------
         # 1. Let engine resolve the provider
         # ------------------------------------------------------
 
-        result = await self.channel_engine.handle_callback(
-            channel_code=channel_code,
-            query_params=query_params,
-            headers=headers,
-            body=body,
-        )
+
+        try:
+            result = await self.channel_engine.handle_callback(
+                channel_code=channel_code,
+                query_params=query_params,
+                headers=headers,
+                body=body,
+            )
+        except CallbackException as e:
+            state=e.error.state
+            tenantmasked = int(state[20:])
+
+            tenantid = tenantmasked - 1001
+
+            connection = self.connection_repository.get_by_oauth_state(
+                oauth_state=state, tenant_id=tenantid)
+            if connection is not None:
+                connection.connection_status = (
+                    ConnectionStatus.FAILED
+                )
+
+                await self.connection_repository.save(
+                    connection
+                )
+
+            raise HTTPException(
+                status_code=400,
+                detail=str(e),
+            )
+
+
+
+
+
+
+
+
+
 
         state=result["state"]
 
@@ -393,8 +441,68 @@ class ChannelService:
             request
         )
 
-    async def get_all_channels(self) -> list[ChannelMaster]:
-        return self.channel_master_repository.get_all()
+    async def get_all_channels(
+            self,
+            tenant_id: int,
+    ) -> list[ChannelResponseDTO]:
+
+
+
+        channels =  (
+            self.channel_master_repository
+            .get_all()
+        )
+
+        result = []
+
+
+        for channel in channels:
+
+            connections =  (
+                self.connection_repository
+                .get_all_by_tenant_and_channel(
+                    tenant_id=tenant_id,
+                    channel_id=channel.id,
+                )
+            )
+
+            connected_accounts = []
+
+            for connection in connections:
+
+                if (
+                        connection.connection_status
+                        == ConnectionStatus.CONNECTED
+                ):
+                    connected_accounts.append(
+                        ConnectedAccountDTO(
+                            id=connection.id,
+
+                            provider_identifier=(
+                                connection.provider_identifier
+                            ),
+                        )
+                    )
+
+            if connected_accounts:
+                connection_status = "connected"
+            else:
+                connection_status = "pending"
+
+            result.append(
+                ChannelResponseDTO(
+                    id=channel.id,
+                    code=channel.code,
+                    name=channel.name,
+                    connection_status=connection_status,
+                    connected_accounts=connected_accounts,
+                )
+            )
+
+        return result
+
+
+
 
     async def handle_notification(
             self,
@@ -421,6 +529,8 @@ class ChannelService:
             raise ValueError(
                 "Gmail provider not found."
             )
+
+
 
 
         return await provider.handle_notification(
