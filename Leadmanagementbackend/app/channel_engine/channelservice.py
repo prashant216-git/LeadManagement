@@ -415,7 +415,7 @@ class ChannelService:
             connection_id
         )
 
-        return provider.disconnect()
+        return provider
 
 
 
@@ -521,7 +521,7 @@ class ChannelService:
             connection=None,
         )
 
-        print("her1")
+
 
         if provider is None:
             print(

@@ -429,23 +429,7 @@ class GmailProvider(BaseChannelProvider):
         history_id = str(notification["historyId"])
 
         # 2. Resolve connection
-        channel = await (
-            self.channel_master_repository
-            .get_by_code("gmail")
-        )
 
-        connection = await (
-            self.connection_repository
-            .get_by_provider_identifier(
-                provider_account_identifier=email_address,
-                channel_id=channel.id,
-            )
-        )
-
-        if connection is None:
-            raise ValueError(
-                "Gmail connection not found."
-            )
 
         # 3. Get watch
         watch = await (

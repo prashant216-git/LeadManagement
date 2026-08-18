@@ -1,3 +1,4 @@
+from app.enums.channel import ConnectionStatus
 from app.models import Lead
 
 
@@ -14,10 +15,60 @@ class LeadService:
         )
 
     async def create_or_update_lead(
-        self,
-        identifier: str,
-        lead_details: dict,
+            self,
+            identifier: str,
+            name: str | None = None,
+            email: str | None = None,
+            phone_number: str | None = None,
+
     ):
+
+        connection = await (
+            self.channel_connection_repository
+            .get_by_provider_identifier_and_status(
+                provider_account_identifier=identifier,
+                connection_status=ConnectionStatus.CONNECTED,
+            )
+        )
+
+        if connection is None:
+            raise ValueError(
+                "No connected channel found for identifier."
+            )
+
+        lead = await (
+            self.lead_repository
+            .get_by_identifier(
+                channel_connection_id=connection.id,
+                identifier=identifier,
+            )
+        )
+
+        if lead is not None:
+
+            if name:
+                lead.name = name
+
+            if email:
+                lead.email = email
+
+            if phone_number:
+                lead.phone_number = phone_number
+
+            await self.lead_repository.update(lead)
+
+        lead = Lead(
+            tenant_id=connection.tenant_id,
+            channel_connection_id=connection.id,
+            name=name,
+            email=email,
+            phone_number=phone_number,
+        )
+
+        return await self.lead_repository.save(
+            lead
+        )
+
         """
         Create or update a lead using an external
         channel identifier.

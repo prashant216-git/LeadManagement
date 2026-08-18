@@ -6,7 +6,7 @@ from sqlalchemy import (
     ForeignKey,
 )
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.database import Base
 
@@ -23,6 +23,8 @@ class Lead(Base):
         primary_key=True,
         index=True,
     )
+
+
 
     # ======================================================
     # Tenant
@@ -64,6 +66,14 @@ class Lead(Base):
     summary = Column(
         String,
         nullable=True,
+    )
+
+    channel_connection_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "channel_connections.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
     )
 
     # ======================================================

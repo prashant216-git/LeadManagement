@@ -60,12 +60,18 @@ class LeadRepository:
     # SAVE
     # ======================================================
 
-    async def save(
+    def save(
         self,
         lead: Lead,
     ):
         self.db.add(lead)
 
-        await self.db.flush()
+        self.db.flush()
 
         return lead
+
+    def update(
+            self,
+            lead: Lead,
+    ):
+        self.db.flush()
