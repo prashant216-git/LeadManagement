@@ -47,6 +47,9 @@ class GmailProvider(BaseChannelProvider):
         channel_watch_repository,
         channel_master_repository,
         lead_service,
+
+        channel_resolver
+
     ):
         self.connection = connection
         self.credentials = credentials
@@ -58,6 +61,8 @@ class GmailProvider(BaseChannelProvider):
         self.client = httpx.AsyncClient()
         self.channel_master_repository=channel_master_repository
         self.lead_service = lead_service
+
+        self.channel_resolver=channel_resolver
 
     # ==========================================================
     # Connection Lifecycle
@@ -428,23 +433,30 @@ class GmailProvider(BaseChannelProvider):
         email_address = notification["emailAddress"]
         history_id = str(notification["historyId"])
 
+        channelcodeid= self.channel_resolver.resolve_channel_id(channel_code="gmail")
+
+        print(channelcodeid)
+
         # 2. Resolve connection
 
+        print(email_address)
 
-        # 3. Get watch
-        watch = await (
-            self.channel_watch_repository
-            .get_by_connection_id(connection.id)
-        )
+        connectionid =  self.channel_resolver.resolve_connection_id(channel_id=channelcodeid,identifier=email_address)
+        print(connectionid)
+        watch =  self.channel_resolver.resolve_watch(connection_id=connectionid)
 
-        if watch is None:
-            raise ValueError(
-                "Gmail watch not found."
-            )
+        print(watch)
+
+        accesstoken =  self.channel_resolver.resolve_access_token(connection_id=connectionid)
+
+        print(accesstoken)
+
+
 
         # 4. Get new messages
         messages = await self._get_new_messages(
-            watch.provider_cursor
+            watch.provider_cursor,
+            accesstoken
         )
 
         # 5. Create/update leads
@@ -484,13 +496,14 @@ class GmailProvider(BaseChannelProvider):
     async def _get_new_messages(
             self,
             history_id: str,
+            access_token: str,
     ):
         response = await self.client.get(
             "https://gmail.googleapis.com/gmail/v1/users/me/history",
             headers={
                 "Authorization": (
                     f"Bearer "
-                    f"{self.credentials['access_token']}"
+                    f"{access_token}"
                 )
             },
             params={
@@ -524,13 +537,14 @@ class GmailProvider(BaseChannelProvider):
     async def _get_message(
             self,
             message_id: str,
+            access_token: str,
     ):
         response = await self.client.get(
             f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message_id}",
             headers={
                 "Authorization": (
                     f"Bearer "
-                    f"{self.credentials['access_token']}"
+                    f"{access_token}"
                 )
             },
             params={

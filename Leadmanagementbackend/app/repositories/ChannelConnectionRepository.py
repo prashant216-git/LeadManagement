@@ -58,7 +58,7 @@ class ChannelConnectionRepository:
             .where(
                 ChannelConnection.channel_id == channel_id,
                 ChannelConnection.provider_identifier
-                == provider_account_identifier,
+                == provider_account_identifier,ChannelConnection.connection_status== ConnectionStatus.CONNECTED,
             )
         )
 

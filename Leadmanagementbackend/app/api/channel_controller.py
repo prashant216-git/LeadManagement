@@ -5,6 +5,7 @@ from starlette.responses import RedirectResponse
 
 from app.DTOs.channelreponseDTO import ChannelResponseDTO
 from app.DTOs.connection.connection_response import ConnectResponse
+from app.channel_engine.channelresolver import ChannelResolver
 from app.channel_engine.engine import ChannelEngine
 from app.channel_engine.channelservice import ChannelService
 from app.core.config import settings
@@ -70,6 +71,12 @@ def get_channel_service(
 
     lead_repository = LeadRepository(db)
 
+    channel_resolver = ChannelResolver(connection_repository=connection_repository,
+                                       credential_repository=credential_repository,
+                                       channel_watch_repository=channel_watch_repository,
+                                       channel_master_repository=channel_master_repository,
+                                       credential_encryption_service=credential_service, )
+
     # ------------------------------------------------------
     # Channel Engine
     # ------------------------------------------------------
@@ -80,7 +87,9 @@ def get_channel_service(
         credential_service=credential_service,
         channel_watch_repository=channel_watch_repository,
         channel_master_repository=channel_master_repository,
-        lead_repository=lead_repository
+        lead_repository=lead_repository,
+        channel_resolver=channel_resolver
+
 
     )
 
@@ -94,6 +103,7 @@ def get_channel_service(
         channel_master_repository=channel_master_repository,
         credentials_repository=credential_repository,
         credential_encryption_service=credential_service,
+        channel_watch_repository=channel_watch_repository
 
 
     )

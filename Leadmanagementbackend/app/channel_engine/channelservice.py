@@ -22,7 +22,7 @@ from app.repositories.ChannelCredentialRepository import ChannelCredentialReposi
 from app.repositories.ChannelConnectionRepository import (
     ChannelConnectionRepository,
 )
-from app.models.ChannelWatch import ChannelWatch
+from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 from app.services.CredentialEncryptionService import CredentialEncryptionService
 
 from app.repositories.ChannelMasterRepositories import (
@@ -41,6 +41,7 @@ class ChannelService:
         channel_master_repository: ChannelMasterRepository,
         credentials_repository : ChannelCredentialRepository,
         credential_encryption_service :CredentialEncryptionService,
+        channel_watch_repository : ChannelWatchRepository,
 
 
     ):
@@ -49,6 +50,7 @@ class ChannelService:
         self.channel_master_repository = channel_master_repository
         self.credentials_repository = credentials_repository
         self.credential_encryption_service = credential_encryption_service
+        self.channel_watch_repository = channel_watch_repository
 
 
     # ==========================================================
@@ -536,3 +538,74 @@ class ChannelService:
         return await provider.handle_notification(
             payload=payload,
         )
+
+    async def resolve_connection_id(
+            self,
+            identifier: str,
+            channel_id: int,
+    ) -> int:
+
+        connection = (
+            self.connection_repository
+            .get_by_provider_identifier(
+                provider_account_identifier=identifier,
+                channel_id=channel_id,
+            )
+        )
+
+        if connection is None:
+            raise ValueError(
+                "Connected channel not found."
+            )
+
+        if (
+                connection.connection_status
+                != ConnectionStatus.CONNECTED
+        ):
+            raise ValueError(
+                "Channel connection is not connected."
+            )
+
+        return connection.id
+
+    async def resolve_watch(
+            self,
+            connection_id: int,
+    ):
+
+        watch = await (
+            self.channel_watch_repository
+            .get_by_connection_id(
+                connection_id
+            )
+        )
+
+        if watch is None:
+            raise ValueError(
+                "Channel watch not found."
+            )
+
+        return watch
+
+    async def resolve_access_token(
+            self,
+            connection_id: int,
+    ) -> str:
+
+        credential = (
+            self.credentials_repository
+            .get_by_connection_id(
+                connection_id
+            )
+        )
+
+        if credential is None:
+            raise ValueError(
+                "Channel credentials not found."
+            )
+
+
+
+        return (self.credential_encryption_service.decrypt(
+            credential.encrypted_payload
+        ))["access_token"]
