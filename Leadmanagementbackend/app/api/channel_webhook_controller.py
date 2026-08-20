@@ -82,7 +82,8 @@ def get_channel_service(
         channel_master_repository=channel_master_repository,
         credentials_repository=credential_repository,
         credential_encryption_service=credential_service,
-        channel_watch_repository=channel_watch_repository
+        channel_watch_repository=channel_watch_repository,
+        channel_resolver=channel_resolver,
 
 
 

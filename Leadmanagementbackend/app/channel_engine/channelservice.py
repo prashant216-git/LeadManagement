@@ -9,7 +9,7 @@ from app.channel_engine.engine import ChannelEngine
 from app.DTOs.messages_and_attachment.send_message_request import (
     SendMessageRequest,
 )
-
+from app.channel_engine.channelresolver import ChannelResolver
 from app.DTOs.channelreponseDTO import ConnectedAccountDTO
 from app.models import tenant
 from app.models.ChannelWatch import ChannelWatch
@@ -42,6 +42,7 @@ class ChannelService:
         credentials_repository : ChannelCredentialRepository,
         credential_encryption_service :CredentialEncryptionService,
         channel_watch_repository : ChannelWatchRepository,
+        channel_resolver : ChannelResolver,
 
 
     ):
@@ -51,6 +52,7 @@ class ChannelService:
         self.credentials_repository = credentials_repository
         self.credential_encryption_service = credential_encryption_service
         self.channel_watch_repository = channel_watch_repository
+        self.channel_resolver = channel_resolver
 
 
     # ==========================================================
@@ -333,6 +335,7 @@ class ChannelService:
 
     async def setup_watch(
             self,
+            identifier:str,
             tenant_id: int,
             channel_code:str
 
@@ -342,12 +345,9 @@ class ChannelService:
 
 
         connection = (
-            self.connection_repository
-            .get_connected_connection(
-                tenant_id=tenant_id,
-                channel_id=sourcename.id,
-            )
+            self.connection_repository.get_by_provider_identifier(provider_account_identifier=identifier,channel_id=sourcename.id)
         )
+
 
 
 
@@ -374,27 +374,10 @@ class ChannelService:
             )
 
         print("heree")
-        credentialsmodel =self.credentials_repository.get_by_connection_id(
-            connection_id=connection.id,
-        )
-
-
-        if credentialsmodel is None:
-            print(
-                "No channel credentials found for this OAuth state.")
-            raise ValueError("no cred found")
-        credentailsencrypted=credentialsmodel.encrypted_payload
 
 
 
-        decryptedcredentials=self.credential_encryption_service.decrypt(credentailsencrypted)
-        print(decryptedcredentials)
-
-        accesstoken=decryptedcredentials["access_token"]
-
-        print(accesstoken)
-
-        return await provider.setup_watch(access_token=accesstoken)
+        return await provider.setup_watch(identifier=identifier,channel_id=sourcename.id)
 
 
 

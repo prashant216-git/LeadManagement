@@ -1,4 +1,8 @@
+import httpx
+
+from app.core.config import settings
 from app.enums.channel import ConnectionStatus
+from datetime import datetime, timezone, timedelta
 
 
 class ChannelResolver:
@@ -18,6 +22,7 @@ class ChannelResolver:
         self.credential_encryption_service = (
             credential_encryption_service
         )
+        self.client = httpx.AsyncClient()
 
     def resolve_connection_id(
         self,
@@ -60,10 +65,12 @@ class ChannelResolver:
 
         return watch
 
-    def resolve_access_token(
+    async def resolve_access_token(
         self,
         connection_id: int,
     ) -> str:
+
+        print("resolving token")
 
         credential =  (
             self.credential_repository
@@ -72,17 +79,36 @@ class ChannelResolver:
             )
         )
 
-        if credential is None:
-            raise ValueError(
-                "Channel credentials not found."
-            )
-
         credentials = (
             self.credential_encryption_service
             .decrypt(
                 credential.encrypted_payload
             )
         )
+
+        if credential is None:
+            raise ValueError(
+                "Channel credentials not found."
+            )
+        expires_at = credential.expires_at
+
+        if expires_at is not None:
+
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(
+                    tzinfo=timezone.utc
+                )
+
+        refresh_token=credentials["refresh_token"]
+
+        print(refresh_token)
+
+        if expires_at<datetime.now(timezone.utc):
+            print("returning new access token")
+            return await self.refresh_access_token(
+                connection_id=connection_id,refresh_token=refresh_token )
+
+
 
         access_token = credentials["access_token"]
 
@@ -111,3 +137,105 @@ class ChannelResolver:
             )
 
         return channel.id
+
+    async def save_refreshed_credentials(
+            self,
+            connection_id: int,
+            access_token: str,
+            expires_in: str | None = None,
+    ):
+        credential = (
+            self.credential_repository
+            .get_by_connection_id(
+                connection_id
+            )
+        )
+
+        print("saving started")
+
+        if credential is None:
+            raise ValueError(
+                "Channel credentials not found."
+            )
+
+        credentials = (
+            self.credential_encryption_service
+            .decrypt(
+                credential.encrypted_payload
+            )
+        )
+
+        credentials["access_token"] = access_token
+
+        credentials["expires_at"] = expires_in
+
+
+
+        credential.encrypted_payload = (
+            self.credential_encryption_service.encrypt(
+                credentials
+            )
+        )
+
+        credential.updated_at = datetime.now(
+            timezone.utc
+        )
+
+        self.credential_repository.update(
+            credential
+        )
+
+    async def refresh_access_token(
+            self,
+            connection_id: int,
+            refresh_token: str,
+    ) -> str:
+
+        # Get refresh token
+        print("rferehsing")
+
+
+        # Ask Google for a new access token
+        response = await self.client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "refresh_token": refresh_token,
+                "grant_type": "refresh_token",
+            },
+        )
+
+        print("refereshed")
+
+        response.raise_for_status()
+
+        token_data = response.json()
+
+        new_access_token = token_data.get(
+            "access_token"
+        )
+
+        if not new_access_token:
+            raise ValueError(
+                "Google did not return a new access token."
+            )
+
+        expires_at = None
+
+        # Save new credentials
+        await self.save_refreshed_credentials(
+            connection_id=connection_id,
+            access_token=new_access_token,
+            expires_in=(
+                    datetime.now(timezone.utc)
+                    + timedelta(seconds=token_data.get("expires_in"))
+            ).isoformat()
+        )
+        print("returning new access token")
+
+        print(new_access_token)
+
+
+        # Return token for immediate use
+        return new_access_token

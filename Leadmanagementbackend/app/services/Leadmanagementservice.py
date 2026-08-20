@@ -16,6 +16,7 @@ class LeadService:
 
     async def create_or_update_lead(
             self,
+            channel_id: int,
             identifier: str,
             name: str | None = None,
             email: str | None = None,
@@ -23,11 +24,12 @@ class LeadService:
 
     ):
 
-        connection = await (
+        connection = (
             self.channel_connection_repository
-            .get_by_provider_identifier_and_status(
+            .get_by_provider_identifier(
                 provider_account_identifier=identifier,
-                connection_status=ConnectionStatus.CONNECTED,
+                channel_id=channel_id,
+
             )
         )
 
@@ -36,10 +38,10 @@ class LeadService:
                 "No connected channel found for identifier."
             )
 
-        lead = await (
+        lead = (
             self.lead_repository
             .get_by_identifier(
-                channel_connection_id=connection.id,
+                tenant_id=1,
                 identifier=identifier,
             )
         )
@@ -65,7 +67,7 @@ class LeadService:
             phone_number=phone_number,
         )
 
-        return await self.lead_repository.save(
+        return self.lead_repository.save(
             lead
         )
 

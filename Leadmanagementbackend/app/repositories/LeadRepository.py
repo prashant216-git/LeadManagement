@@ -16,7 +16,7 @@ class LeadRepository:
     # FIND LEAD
     # ======================================================
 
-    async def get_by_identifier(
+    def get_by_identifier(
         self,
         tenant_id: int,
         identifier: str,
@@ -28,7 +28,7 @@ class LeadRepository:
         is matched against email or phone number.
         """
 
-        result = await self.db.execute(
+        result = self.db.execute(
             select(Lead).where(
                 Lead.tenant_id == tenant_id,
                 (
@@ -44,11 +44,11 @@ class LeadRepository:
     # GET BY ID
     # ======================================================
 
-    async def get_by_id(
+    def get_by_id(
         self,
         lead_id: int,
     ):
-        result = await self.db.execute(
+        result = self.db.execute(
             select(Lead).where(
                 Lead.id == lead_id
             )

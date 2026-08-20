@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Request
 from starlette.responses import RedirectResponse
@@ -103,7 +103,8 @@ def get_channel_service(
         channel_master_repository=channel_master_repository,
         credentials_repository=credential_repository,
         credential_encryption_service=credential_service,
-        channel_watch_repository=channel_watch_repository
+        channel_watch_repository=channel_watch_repository,
+        channel_resolver=channel_resolver,
 
 
     )
@@ -232,6 +233,7 @@ channel_service: ChannelService = Depends(
 )
 async def setup_gmail_watch(
     request: Request,
+identifier: str = Body(..., embed=True),
 channel_service: ChannelService = Depends(
         get_channel_service
     ),
@@ -240,7 +242,7 @@ channel_service: ChannelService = Depends(
         # Temporary tenant for testing
         tenant_id = 1
 
-        return await channel_service.setup_watch(
+        return await channel_service.setup_watch(identifier=identifier,
             tenant_id=tenant_id,channel_code="gmail"
         )
 

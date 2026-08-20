@@ -2,6 +2,7 @@ import json
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
+from os import access
 from secrets import token_urlsafe
 from urllib.parse import urlencode
 import base64
@@ -31,6 +32,7 @@ from app.enums.channel import ConnectionStatus, WatchStatus
 
 import httpx
 
+from app.models import channel_connection
 from app.models.ChannelWatch import ChannelWatch
 
 
@@ -357,7 +359,11 @@ class GmailProvider(BaseChannelProvider):
     ) -> NormalizedMessage:
         raise NotImplementedError()
 
-    async def setup_watch(self,access_token:str):
+    async def setup_watch(self,identifier:str,channel_id:int):
+
+        connectionid=self.channel_resolver.resolve_connection_id(identifier=identifier,channel_id=channel_id)
+
+        access_token=await self.channel_resolver.resolve_access_token(connection_id=connectionid)
 
         response = await self.client.post(
             "https://gmail.googleapis.com/gmail/v1/users/me/watch",
@@ -441,19 +447,21 @@ class GmailProvider(BaseChannelProvider):
 
         print(email_address)
 
-        connectionid =  self.channel_resolver.resolve_connection_id(channel_id=channelcodeid,identifier=email_address)
+        connectionid =   self.channel_resolver.resolve_connection_id(channel_id=channelcodeid,identifier=email_address)
         print(connectionid)
-        watch =  self.channel_resolver.resolve_watch(connection_id=connectionid)
+        watch =   self.channel_resolver.resolve_watch(connection_id=connectionid)
 
         print(watch)
 
-        accesstoken =  self.channel_resolver.resolve_access_token(connection_id=connectionid)
+        accesstoken = await self.channel_resolver.resolve_access_token(connection_id=connectionid)
 
         print(accesstoken)
 
 
 
         # 4. Get new messages
+
+        print("getting new messages")
         messages = await self._get_new_messages(
             watch.provider_cursor,
             accesstoken
@@ -469,12 +477,11 @@ class GmailProvider(BaseChannelProvider):
             if sender is None:
                 continue
 
-            await self.lead_service.create_or_update(
-                identifier=sender["email"],
-                lead_details={
-                    "name": sender["name"],
-                    "email": sender["email"],
-                },
+            await self.lead_service.create_or_update_lead(
+                channel_id=channelcodeid,
+                identifier=email_address,
+                email=sender["email"],
+                name=sender["name"]
             )
 
         # 6. Update watch
@@ -483,7 +490,7 @@ class GmailProvider(BaseChannelProvider):
             timezone.utc
         )
 
-        await self.channel_watch_repository.save(
+        self.channel_watch_repository.save(
             watch
         )
 
@@ -498,6 +505,7 @@ class GmailProvider(BaseChannelProvider):
             history_id: str,
             access_token: str,
     ):
+        print(access_token)
         response = await self.client.get(
             "https://gmail.googleapis.com/gmail/v1/users/me/history",
             headers={
@@ -511,6 +519,8 @@ class GmailProvider(BaseChannelProvider):
                 "historyTypes": "messageAdded",
             },
         )
+        print("newmessage extraction done")
+        print("getnewmessage",response)
 
         response.raise_for_status()
 
@@ -527,7 +537,8 @@ class GmailProvider(BaseChannelProvider):
                 message_id = item["message"]["id"]
 
                 message = await self._get_message(
-                    message_id
+                    message_id=message_id,
+                    access_token=access_token,
                 )
 
                 messages.append(message)
@@ -539,6 +550,8 @@ class GmailProvider(BaseChannelProvider):
             message_id: str,
             access_token: str,
     ):
+
+        print("getting single messages")
         response = await self.client.get(
             f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message_id}",
             headers={
@@ -556,6 +569,8 @@ class GmailProvider(BaseChannelProvider):
                 ],
             },
         )
+
+        print("get_)message",response)
 
         response.raise_for_status()
 

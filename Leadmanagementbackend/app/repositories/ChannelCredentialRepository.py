@@ -34,3 +34,15 @@ class ChannelCredentialRepository:
         self.db.refresh(credential)
 
         return credential
+
+    def update(
+            self,
+            credential,
+    ):
+        self.db.add(credential)
+
+        self.db.commit()
+
+        self.db.refresh(credential)
+
+        return credential
