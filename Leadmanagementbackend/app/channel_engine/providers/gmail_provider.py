@@ -335,7 +335,23 @@ class GmailProvider(BaseChannelProvider):
                 "Gmail access token not found."
             )
 
+
+
         refresh_token= await self.channel_resolver.resolve_access_token(connection_id)
+
+        response2 = await self.client.post(
+            "https://oauth2.googleapis.com/revoke",
+            data={
+                "token": refresh_token,
+            },
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
+
+        watch =self.channel_resolver.resolve_watch(connection_id)
+        if watch is None:
+            raise ValueError("revoke done but watch not found")
 
         response = await self.client.post(
             "https://gmail.googleapis.com/gmail/v1/users/me/stop",
