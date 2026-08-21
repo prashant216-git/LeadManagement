@@ -59,9 +59,7 @@ class ChannelResolver:
         )
 
         if watch is None:
-            raise ValueError(
-                "Channel watch not found."
-            )
+            return None
 
         return watch
 
@@ -94,6 +92,7 @@ class ChannelResolver:
 
         if expires_at is not None:
 
+
             if expires_at.tzinfo is None:
                 expires_at = expires_at.replace(
                     tzinfo=timezone.utc
@@ -102,11 +101,17 @@ class ChannelResolver:
         refresh_token=credentials["refresh_token"]
 
         print(refresh_token)
+        print("expires at",expires_at)
+        print(datetime.now(timezone.utc) + timedelta(seconds=60))
 
-        if expires_at<datetime.now(timezone.utc):
-            print("returning new access token")
+        print(expires_at <= datetime.now(timezone.utc) + timedelta(seconds=60))
+
+
+        if expires_at <= datetime.now(timezone.utc) + timedelta(seconds=60):
             return await self.refresh_access_token(
-                connection_id=connection_id,refresh_token=refresh_token )
+                connection_id=connection_id,
+                refresh_token=refresh_token,
+            )
 
 
 
@@ -142,8 +147,10 @@ class ChannelResolver:
             self,
             connection_id: int,
             access_token: str,
-            expires_in: str | None = None,
+            expires_in: datetime | None = None,
     ):
+        if expires_in is not None and expires_in.tzinfo is not None:
+            expires_at = expires_in.astimezone(timezone.utc).replace(tzinfo=None)
         credential = (
             self.credential_repository
             .get_by_connection_id(
@@ -242,7 +249,7 @@ class ChannelResolver:
 
 
 
-    async def resolve_referesh_token(
+    async def resolve_refresh_token(
         self,
         connection_id: int,
     ) -> str:
