@@ -239,3 +239,38 @@ class ChannelResolver:
 
         # Return token for immediate use
         return new_access_token
+
+
+
+    async def resolve_referesh_token(
+        self,
+        connection_id: int,
+    ) -> str:
+
+        print("resolving token")
+
+        credential =  (
+            self.credential_repository
+            .get_by_connection_id(
+                connection_id
+            )
+        )
+
+        credentials = (
+            self.credential_encryption_service
+            .decrypt(
+                credential.encrypted_payload
+            )
+        )
+
+        if credential is None:
+            raise ValueError(
+                "Channel credentials not found."
+            )
+
+
+        refresh_token=credentials["refresh_token"]
+
+
+
+        return refresh_token

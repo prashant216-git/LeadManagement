@@ -5,7 +5,12 @@ from app.DTOs import channelreponseDTO
 from app.DTOs.connection.callbackerror import CallbackException
 from app.DTOs.connection.connection_response import ConnectResponse
 from app.channel_engine.engine import ChannelEngine
+from datetime import datetime, timezone
 
+from app.enums.channel import (
+    ConnectionStatus,
+    WatchStatus,
+)
 from app.DTOs.messages_and_attachment.send_message_request import (
     SendMessageRequest,
 )
@@ -381,26 +386,112 @@ class ChannelService:
 
 
 
-
-
-
-
-
-
-
     async def disconnect(
-        self,
-        connection_id: int,
+            self,
+            connection_id: int,
     ):
-        """
-        Disconnect an existing channel connection.
-        """
 
-        provider = self.channel_engine.get_provider(
-            connection_id
+        # ==================================================
+        # 1. Resolve connection
+        # ==================================================
+
+        connection = (
+            self.connection_repository
+            .get_by_id(
+                connection_id
+            )
         )
 
-        return provider
+
+        print(connection.id)
+
+        if connection is None:
+            raise ValueError(
+                "Channel connection not found."
+            )
+
+        # ==================================================
+        # 2. Already disconnected
+        # ==================================================
+
+        if (
+                connection.connection_status
+                == ConnectionStatus.DISCONNECTED
+        ):
+            return {
+                "status": "already_disconnected",
+                "connection_id": connection.id,
+            }
+
+        # ==================================================
+        # 3. Resolve provider
+        # ==================================================
+
+        channel=self.channel_master_repository.get_by_id(connection.channel_id)
+        if channel is None:
+            raise ValueError("No channel found ")
+
+
+
+        provider = self.channel_engine.create_provider(
+            channel_code=channel.code,
+            connection=connection,
+        )
+
+        print("yeaah")
+
+        # ==================================================
+        # 4. Disconnect provider
+        # ==================================================
+
+        await provider.disconnect(connection_id=connection_id)
+
+        # ==================================================
+        # 5. Update connection
+        # ==================================================
+
+        connection.connection_status = (
+            ConnectionStatus.DISCONNECTED
+        )
+
+        connection.disconnected_at = datetime.now(
+            timezone.utc
+        )
+
+        self.connection_repository.save(
+            connection
+        )
+
+        # ==================================================
+        # 6. Resolve watch
+        # ==================================================
+
+        watch = (
+            self.channel_watch_repository
+            .get_by_connection_id(
+                connection_id
+            )
+        )
+
+        # ==================================================
+        # 7. Disable watch
+        # ==================================================
+
+        if watch is not None:
+            watch.status = (
+                WatchStatus.INACTIVE
+            )
+
+            watch.is_active = False
+
+            self.channel_watch_repository.save(
+                watch
+            )
+
+        return {
+            "status": "disconnected",
+            "connection_id": connection.id,
+        }
 
 
 

@@ -22,7 +22,8 @@ class ChannelConnectionRepository:
         result = self.db.execute(
             select(ChannelConnection)
             .where(
-                ChannelConnection.id == connection_id
+                ChannelConnection.id == connection_id,
+
             )
         )
 

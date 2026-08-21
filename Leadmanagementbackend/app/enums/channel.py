@@ -51,3 +51,4 @@ class WatchStatus(str, Enum):
     DELETED = "DELETED"
     FAILED = "FAILED"
     SUSPENDED = "SUSPENDED"
+    INACTIVE = "INACTIVE"

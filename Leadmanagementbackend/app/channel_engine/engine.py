@@ -136,7 +136,7 @@ class ChannelEngine:
         # 1. Load connection
         # ------------------------------------------------------
 
-        connection = await (
+        connection = (
             self.connection_repository.get_by_id(
                 connection_id
             )
@@ -151,7 +151,7 @@ class ChannelEngine:
         # 2. Load credentials
         # ------------------------------------------------------
 
-        credential = await (
+        credential = (
             self.credential_repository
             .get_by_connection_id(
                 connection.id

@@ -266,3 +266,38 @@ async def get_all_channels(
             status_code=400,
             detail=str(e),
         )
+
+
+@router.post(
+    "/{connection_id}/disconnect",
+)
+async def disconnect_channel(
+    connection_id: int,
+    channel_service: ChannelService = Depends(
+        get_channel_service
+    ),
+):
+
+    try:
+
+        return await channel_service.disconnect(
+            connection_id=connection_id,
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+    except Exception as e:
+
+        print(
+            f"Channel disconnect failed: {e}"
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to disconnect channel.",
+        )

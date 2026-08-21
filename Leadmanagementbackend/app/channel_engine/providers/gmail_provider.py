@@ -317,8 +317,52 @@ class GmailProvider(BaseChannelProvider):
 
         return response.json()
 
-    async def disconnect(self):
-        raise NotImplementedError()
+    async def disconnect(
+            self,
+            connection_id:int
+    ):
+        """
+        Disconnect Gmail provider.
+
+        Stops the active Gmail watch.
+        """
+
+        access_token = await self.channel_resolver.resolve_access_token(connection_id)
+
+
+        if not access_token:
+            raise ValueError(
+                "Gmail access token not found."
+            )
+
+        refresh_token=self.channel_resolver.resolve_access_token(connection_id)
+
+        response = await self.client.post(
+            "https://gmail.googleapis.com/gmail/v1/users/me/stop",
+            headers={
+                "Authorization": (
+                    f"Bearer {access_token}"
+                ),
+            },
+        )
+        response.raise_for_status()
+
+        response2 = await self.client.post(
+    "https://oauth2.googleapis.com/revoke",
+    data={
+        "token": refresh_token,
+    },
+    headers={
+        "Content-Type": "application/x-www-form-urlencoded",
+    },
+)
+        response2.raise_for_status()
+
+
+
+        return {
+            "status": "provider_disconnected",
+        }
 
     async def refresh_credentials(self):
         raise NotImplementedError()
@@ -449,6 +493,12 @@ class GmailProvider(BaseChannelProvider):
 
         connectionid =   self.channel_resolver.resolve_connection_id(channel_id=channelcodeid,identifier=email_address)
         print(connectionid)
+
+        if connectionid is None:
+            return {
+                "status": "ignored",
+                "reason": "channel_disconnected Or Not Found",
+            }
         watch =   self.channel_resolver.resolve_watch(connection_id=connectionid)
 
         print(watch)
