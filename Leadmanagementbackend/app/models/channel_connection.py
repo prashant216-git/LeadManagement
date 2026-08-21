@@ -5,8 +5,9 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     String,
-    UniqueConstraint,
+    text,
 )
+
 from app.models.tenant import Tenant
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -37,11 +38,15 @@ class ChannelConnection(BaseModel):
     __tablename__ = "channel_connections"
 
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_active_channel_connection",
             "tenant_id",
             "channel_id",
             "provider_account_id",
-            name="uq_channel_connection",
+            unique=True,
+            postgresql_where=text(
+                "connection_status = 'CONNECTED'"
+            ),
         ),
 
         Index(
@@ -70,7 +75,6 @@ class ChannelConnection(BaseModel):
     )
 
     created_by: Mapped[int] = mapped_column(
-
         nullable=False,
     )
 
@@ -135,10 +139,12 @@ class ChannelConnection(BaseModel):
     last_health_check_at: Mapped[datetime | None] = mapped_column(
         nullable=True,
     )
+
     connection_url: Mapped[str | None] = mapped_column(
         String(2000),
         nullable=True,
     )
+
     oauth_state: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
@@ -161,10 +167,12 @@ class ChannelConnection(BaseModel):
         uselist=False,
         cascade="all, delete-orphan",
     )
+
     tenant: Mapped["Tenant"] = relationship(
         "Tenant",
         back_populates="channel_connections",
     )
+
     watch = relationship(
         "ChannelWatch",
         back_populates="connection",

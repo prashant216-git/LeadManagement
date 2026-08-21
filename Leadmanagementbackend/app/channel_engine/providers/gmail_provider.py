@@ -335,7 +335,7 @@ class GmailProvider(BaseChannelProvider):
                 "Gmail access token not found."
             )
 
-        refresh_token=self.channel_resolver.resolve_access_token(connection_id)
+        refresh_token= await self.channel_resolver.resolve_access_token(connection_id)
 
         response = await self.client.post(
             "https://gmail.googleapis.com/gmail/v1/users/me/stop",

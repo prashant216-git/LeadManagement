@@ -1,6 +1,9 @@
 import secrets
 from datetime import datetime, timezone
 
+from fastapi import HTTPException
+
+
 from app.DTOs import channelreponseDTO
 from app.DTOs.connection.callbackerror import CallbackException
 from app.DTOs.connection.connection_response import ConnectResponse
@@ -542,6 +545,11 @@ class ChannelService:
                 )
             )
 
+            if connections is None:
+                raise ValueError(
+                    "No channel found for this .")
+
+
             connected_accounts = []
 
             for connection in connections:
@@ -550,6 +558,14 @@ class ChannelService:
                         connection.connection_status
                         == ConnectionStatus.CONNECTED
                 ):
+                    watch = self.channel_watch_repository.get_by_connection_id(connection_id=connection.id)
+
+                    if watch is None:
+                        messagesubscription=False
+                    else:
+                        messagesubscription=watch.is_active
+
+
                     connected_accounts.append(
                         ConnectedAccountDTO(
                             id=connection.id,
@@ -557,6 +573,8 @@ class ChannelService:
                             provider_identifier=(
                                 connection.provider_identifier
                             ),
+                            messagesubscription=messagesubscription
+
                         )
                     )
 

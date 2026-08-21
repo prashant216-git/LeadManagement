@@ -5,6 +5,7 @@ class ConnectedAccountDTO(BaseModel):
     id: int
 
     provider_identifier: str
+    messagesubscription:bool
 
 
 class ChannelResponseDTO(BaseModel):

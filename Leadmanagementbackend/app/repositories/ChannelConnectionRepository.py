@@ -121,6 +121,7 @@ class ChannelConnectionRepository:
             .where(
                 ChannelConnection.tenant_id == tenant_id,
                 ChannelConnection.channel_id == channel_id,
+                ChannelConnection.connection_status== ConnectionStatus.CONNECTED,
             )
             .order_by(
                 ChannelConnection.created_at.desc()
