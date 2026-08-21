@@ -41,6 +41,7 @@ class LeadService:
         lead = (
             self.lead_repository
             .get_by_identifier(
+                channel_connection_id=connection.id,
                 tenant_id=1,
                 identifier=identifier,
             )
@@ -58,6 +59,7 @@ class LeadService:
                 lead.phone_number = phone_number
 
             await self.lead_repository.update(lead)
+            return lead
 
         lead = Lead(
             tenant_id=connection.tenant_id,

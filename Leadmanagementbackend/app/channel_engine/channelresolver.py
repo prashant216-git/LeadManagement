@@ -147,10 +147,9 @@ class ChannelResolver:
             self,
             connection_id: int,
             access_token: str,
-            expires_in: datetime | None = None,
+            expires_in: int | None = None,
     ):
-        if expires_in is not None and expires_in.tzinfo is not None:
-            expires_at = expires_in.astimezone(timezone.utc).replace(tzinfo=None)
+
         credential = (
             self.credential_repository
             .get_by_connection_id(
@@ -165,6 +164,8 @@ class ChannelResolver:
                 "Channel credentials not found."
             )
 
+        print("CREDENTIALS BEFORE ENCRYPT:", credential.encrypted_payload)
+
         credentials = (
             self.credential_encryption_service
             .decrypt(
@@ -174,7 +175,13 @@ class ChannelResolver:
 
         credentials["access_token"] = access_token
 
-        credentials["expires_at"] = expires_in
+        if expires_in:
+            expires_at = (
+                    datetime.now(timezone.utc)
+                    + timedelta(seconds=expires_in)
+            ).isoformat()
+
+        credential.expires_at = expires_at
 
 
 
@@ -183,6 +190,7 @@ class ChannelResolver:
                 credentials
             )
         )
+
 
         credential.updated_at = datetime.now(
             timezone.utc
@@ -198,9 +206,7 @@ class ChannelResolver:
             refresh_token: str,
     ) -> str:
 
-        # Get refresh token
-        print("rferehsing")
-
+        print("refreshing")
 
         # Ask Google for a new access token
         response = await self.client.post(
@@ -213,36 +219,34 @@ class ChannelResolver:
             },
         )
 
-        print("refereshed")
-
         response.raise_for_status()
 
         token_data = response.json()
 
-        new_access_token = token_data.get(
-            "access_token"
-        )
+        new_access_token = token_data.get("access_token")
 
         if not new_access_token:
             raise ValueError(
                 "Google did not return a new access token."
             )
 
-        expires_at = None
+        expires_in = token_data.get("expires_in")
+
+        if expires_in is None:
+            raise ValueError(
+                "Google did not return token expiry information."
+            )
+
+
 
         # Save new credentials
         await self.save_refreshed_credentials(
             connection_id=connection_id,
             access_token=new_access_token,
-            expires_in=(
-                    datetime.now(timezone.utc)
-                    + timedelta(seconds=token_data.get("expires_in"))
-            ).isoformat()
+            expires_in=expires_in,
         )
-        print("returning new access token")
 
-        print(new_access_token)
-
+        print("access token refreshed")
 
         # Return token for immediate use
         return new_access_token

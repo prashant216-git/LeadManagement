@@ -22,6 +22,7 @@ origins = [
     "https://veloratechnologies.in",
     "https://api.veloratechnologies.in",
     "https://www.veloratechnologies.in",
+    "https://crm.veloratechnologies.in"
 ]
 
 app.add_middleware(

@@ -18,6 +18,7 @@ class LeadRepository:
 
     def get_by_identifier(
         self,
+            channel_connection_id:int,
         tenant_id: int,
         identifier: str,
     ):
@@ -30,7 +31,7 @@ class LeadRepository:
 
         result = self.db.execute(
             select(Lead).where(
-                Lead.tenant_id == tenant_id,
+                Lead.tenant_id == tenant_id,Lead.channel_connection_id == channel_connection_id,
                 (
                     (Lead.email == identifier)
                     | (Lead.phone_number == identifier)

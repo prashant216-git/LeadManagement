@@ -76,13 +76,7 @@ class Lead(Base):
         nullable=False,
     )
 
-    channel_id: Mapped[int] = mapped_column(
-        ForeignKey(
-            "channel_master.id",
-            ondelete="CASCADE",
-        ),
-        nullable=False,
-    )
+
 
     # ======================================================
     # Timestamps
