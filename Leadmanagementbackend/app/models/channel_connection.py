@@ -179,3 +179,7 @@ class ChannelConnection(BaseModel):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    messages = relationship(
+        "Message",
+        back_populates="channel_connection",
+    )

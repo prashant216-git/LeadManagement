@@ -1,40 +1,65 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.models.messages import Message
+from app.repositories.MessageRepository import MessageRepository
+
+from app.enums.message import MessageDirection
+from app.enums.message import MessageType
 
 
 class MessageService:
 
-    @staticmethod
-    def save_message(
-        db: Session,
-        user_id: int,
-        channel: str,
-        sender: str,
-        content: str,
-        channel_message_id: str | None = None,
-        message_type: str = "text",
-    message_timestamp: int | None = None
-
-    ) -> Message:
-
-        message = Message(
-            user_id=user_id,
-            channel=channel,
-            channel_message_id=channel_message_id,
-            sender=sender,
-            message_type=message_type,
-            content=content,
-            message_timestamp=message_timestamp
+    def __init__(
+            self,
+            message_repository: MessageRepository,
+    ):
+        self.message_repository = (
+            message_repository
         )
 
-        db.add(message)
-        db.commit()
-        db.refresh(message)
+    async def create_message(
+            self,
+            lead_id: int | None,
+            channel_connection_id: int | None,
+            provider_message_id: str | None = None,
+            direction: MessageDirection | None = None,
+            sender_identifier: str | None = None,
+            recipient_identifier: str | None = None,
+            content: str | None = None,
+            message_type: MessageType | None = None,
+            provider_created_at: datetime | None = None,
+            provider_metadata: dict | None = None,
+    ) -> Message:
 
-        return message
+        existmessage=self.message_repository.get_by_provider_message_id_and_lead_id(provider_message_id=provider_message_id, lead_id=lead_id)
+        if existmessage:
+            return existmessage
 
-    @staticmethod
+
+        message = Message(
+            lead_id=lead_id,
+            channel_connection_id=channel_connection_id,
+            provider_message_id=provider_message_id,
+            direction=direction,
+            sender_identifier=sender_identifier,
+            recipient_identifier=recipient_identifier,
+            content=content,
+            message_type=message_type,
+            provider_created_at=provider_created_at,
+            provider_metadata=provider_metadata,
+        )
+
+        return self.message_repository.create(
+            message
+        )
+
+
+
+    
+
+
     def get_latest_message(
         db: Session,
         user_id: int
@@ -47,7 +72,7 @@ class MessageService:
             .first()
         )
 
-    @staticmethod
+
     def get_recent_messages(
         db: Session,
         user_id: int,
@@ -64,7 +89,7 @@ class MessageService:
 
         return list(reversed(messages))
 
-    @staticmethod
+
     def get_all_messages(
         db: Session,
         user_id: int

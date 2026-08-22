@@ -3,6 +3,9 @@ from math import ceil
 from app.DTOs.Leadlist import LeadlistDTO, Leadetails
 from app.enums.channel import ConnectionStatus
 from app.models import Lead
+from app.core.lead_lock import (
+    lead_lock_manager,
+)
 
 
 class LeadService:

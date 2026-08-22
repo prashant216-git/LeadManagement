@@ -101,3 +101,7 @@ class Lead(Base):
         "Tenant",
         back_populates="leads",
     )
+    messages = relationship(
+        "Message",
+        back_populates="lead",
+    )

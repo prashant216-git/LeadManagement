@@ -32,6 +32,7 @@ from app.enums.channel import ConnectionStatus, WatchStatus
 
 import httpx
 
+from app.enums.message import MessageDirection, MessageType
 from app.models import channel_connection
 from app.models.ChannelWatch import ChannelWatch
 
@@ -50,7 +51,8 @@ class GmailProvider(BaseChannelProvider):
         channel_master_repository,
         lead_service,
 
-        channel_resolver
+        channel_resolver,
+        message_service
 
     ):
         self.connection = connection
@@ -63,6 +65,7 @@ class GmailProvider(BaseChannelProvider):
         self.client = httpx.AsyncClient()
         self.channel_master_repository=channel_master_repository
         self.lead_service = lead_service
+        self.message_service = message_service
 
         self.channel_resolver=channel_resolver
 
@@ -545,12 +548,32 @@ class GmailProvider(BaseChannelProvider):
             if sender is None:
                 continue
 
-            await self.lead_service.create_or_update_lead(
+            createdlead=await self.lead_service.create_or_update_lead(
                 channel_id=channelcodeid,
                 identifier=email_address,
                 email=sender["email"],
                 name=sender["name"]
             )
+            await self.message_service.create_message(
+                lead_id=createdlead.id,
+                channel_connection_id=connectionid,
+                provider_message_id=message["id"],
+                direction=MessageDirection.INBOUND,
+                sender_identifier=sender["email"],
+                recipient_identifier=email_address,
+                content=self._extract_body(message),
+                message_type=MessageType.TEXT,
+                provider_created_at=datetime.fromtimestamp(
+                    int(message["internalDate"]) / 1000,
+                    tz=timezone.utc,
+                ),
+                provider_metadata={
+                    "thread_id": message.get("threadId"),
+                },
+            )
+
+
+
 
         # 6. Update watch
         watch.provider_cursor = history_id
@@ -629,12 +652,8 @@ class GmailProvider(BaseChannelProvider):
                 )
             },
             params={
-                "format": "metadata",
-                "metadataHeaders": [
-                    "From",
-                    "To",
-                    "Subject",
-                ],
+                 "format": "full",
+
             },
         )
 
@@ -685,3 +704,48 @@ class GmailProvider(BaseChannelProvider):
             }
 
         return None
+
+    def _extract_body(
+            self,
+            message: dict,
+    ):
+        def decode_body(data: str | None):
+            if not data:
+                return None
+
+            decoded = base64.urlsafe_b64decode(
+                data + "=" * (-len(data) % 4)
+            )
+
+            return decoded.decode(
+                "utf-8",
+                errors="replace",
+            )
+
+        def find_body(part: dict):
+            mime_type = part.get("mimeType")
+            body_data = (
+                part.get("body", {})
+                .get("data")
+            )
+
+            # Prefer plain text
+            if mime_type == "text/plain" and body_data:
+                return decode_body(body_data)
+
+            # Search nested MIME parts
+            for child in part.get("parts", []):
+                result = find_body(child)
+
+                if result:
+                    return result
+
+            # Fallback to HTML
+            if mime_type == "text/html" and body_data:
+                return decode_body(body_data)
+
+            return None
+
+        payload = message.get("payload", {})
+
+        return find_body(payload)

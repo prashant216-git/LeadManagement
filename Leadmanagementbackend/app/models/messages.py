@@ -1,62 +1,154 @@
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
-from sqlalchemy import ForeignKey
-from sqlalchemy import DateTime
-from sqlalchemy.sql import func
+from datetime import datetime
 
-from app.db.database import Base
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    JSON,
+    String,
+    Text,
+)
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
+
+from app.models.base_model import BaseModel
+from app.enums.message import (
+    MessageDirection,
+    MessageType,
+)
 
 
-class Message(Base):
+class Message(BaseModel):
+    """
+    Represents a communication message associated with a lead.
+
+    A message may come from any supported channel such as
+    Gmail, WhatsApp, Telegram, or future providers.
+    """
+
     __tablename__ = "messages"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True
+    __table_args__ = (
+        Index(
+            "idx_message_lead",
+            "lead_id",
+        ),
+        Index(
+            "idx_message_connection",
+            "channel_connection_id",
+        ),
+        Index(
+            "idx_message_provider_id",
+            "provider_message_id",
+        ),
+        Index(
+            "idx_message_provider_created_at",
+            "provider_created_at",
+        ),
     )
 
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id"),
-        nullable=False
+    # ======================================================
+    # LEAD MAPPING
+    # ======================================================
+
+    lead_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "leads.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
     )
 
-    channel = Column(
-        String(50),
-        nullable=False
+    # ======================================================
+    # CHANNEL CONNECTION
+    # ======================================================
+
+    channel_connection_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "channel_connections.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
     )
 
-    channel_message_id = Column(
+    # ======================================================
+    # PROVIDER IDENTITY
+    # ======================================================
+
+    provider_message_id: Mapped[str | None] = mapped_column(
         String(255),
-        unique=True,
-        nullable=False
+        nullable=True,
     )
 
-    sender = Column(
-        String(50),
-        nullable=False
+    # ======================================================
+    # MESSAGE DIRECTION
+    # ======================================================
+
+    direction: Mapped[MessageDirection | None] = mapped_column(
+        Enum(MessageDirection),
+        nullable=True,
     )
 
-    message_type = Column(
-        String(50),
-        nullable=False,
-        default="text"
+    # ======================================================
+    # SENDER / RECIPIENT
+    # ======================================================
+
+    sender_identifier: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
     )
 
-    content = Column(
+    recipient_identifier: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    # ======================================================
+    # CONTENT
+    # ======================================================
+
+    content: Mapped[str | None] = mapped_column(
         Text,
-        nullable=False
+        nullable=True,
     )
 
-    message_timestamp = Column(
-        String(50),
-        nullable=True
+    message_type: Mapped[MessageType | None] = mapped_column(
+        Enum(MessageType),
+        nullable=True,
     )
 
-    created_at = Column(
+    # ======================================================
+    # PROVIDER TIMESTAMP
+    # ======================================================
+
+    provider_created_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now()
+        nullable=True,
+    )
+
+    # ======================================================
+    # PROVIDER METADATA
+    # ======================================================
+
+    provider_metadata: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
+    # ======================================================
+    # RELATIONSHIPS
+    # ======================================================
+
+    lead = relationship(
+        "Lead",
+        back_populates="messages",
+    )
+
+    channel_connection = relationship(
+        "ChannelConnection",
+        back_populates="messages",
     )

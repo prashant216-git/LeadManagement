@@ -23,13 +23,14 @@ from app.repositories.ChannelCredentialRepository import (
 )
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 from app.repositories.LeadRepository import LeadRepository
+from app.repositories.MessageRepository import MessageRepository
 
 from app.services.CredentialEncryptionService import (
     CredentialEncryptionService,
 )
 
 from app.db.session import get_db
-
+from app.services.messageservice import MessageService
 
 router = APIRouter(
     prefix="/channels",
@@ -60,16 +61,21 @@ def get_channel_service(
     credential_repository = ChannelCredentialRepository(
         db
     )
+    lead_repository = LeadRepository(db)
+    credential_service = CredentialEncryptionService()
+
 
     # ------------------------------------------------------
     # Credential service
     # ------------------------------------------------------
 
-    credential_service = CredentialEncryptionService()
+
 
     channel_watch_repository=ChannelWatchRepository(db)
+    message_repository = MessageRepository(db)
+    message_service = MessageService(message_repository=message_repository)
 
-    lead_repository = LeadRepository(db)
+
 
     channel_resolver = ChannelResolver(connection_repository=connection_repository,
                                        credential_repository=credential_repository,
@@ -88,7 +94,8 @@ def get_channel_service(
         channel_watch_repository=channel_watch_repository,
         channel_master_repository=channel_master_repository,
         lead_repository=lead_repository,
-        channel_resolver=channel_resolver
+        channel_resolver=channel_resolver,
+        message_service=message_service
 
 
     )
