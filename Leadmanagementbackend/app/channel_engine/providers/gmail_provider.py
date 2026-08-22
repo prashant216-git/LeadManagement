@@ -522,7 +522,7 @@ class GmailProvider(BaseChannelProvider):
             }
         watch =   self.channel_resolver.resolve_watch(connection_id=connectionid)
 
-        print(watch)
+        print(watch.provider_cursor)
 
         accesstoken = await self.channel_resolver.resolve_access_token(connection_id=connectionid)
 
@@ -554,6 +554,8 @@ class GmailProvider(BaseChannelProvider):
                 email=sender["email"],
                 name=sender["name"]
             )
+
+            print(createdlead.id)
             await self.message_service.create_message(
                 lead_id=createdlead.id,
                 channel_connection_id=connectionid,
@@ -576,10 +578,13 @@ class GmailProvider(BaseChannelProvider):
 
 
         # 6. Update watch
-        watch.provider_cursor = history_id
-        watch.last_event_at = datetime.now(
-            timezone.utc
-        )
+
+        if int(history_id) > int(watch.provider_cursor):
+            watch.provider_cursor = history_id
+
+            watch.last_event_at = datetime.now(
+                timezone.utc
+            )
 
         self.channel_watch_repository.save(
             watch

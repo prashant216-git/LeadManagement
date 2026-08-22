@@ -3,7 +3,7 @@ from math import ceil
 from app.DTOs.Leadlist import LeadlistDTO, Leadetails
 from app.enums.channel import ConnectionStatus
 from app.models import Lead
-from app.core.lead_lock import (
+from app.core.lock import (
     lead_lock_manager,
 )
 
@@ -30,6 +30,8 @@ class LeadService:
 
     ):
 
+        print("entered leadservice")
+
         connection = (
             self.channel_connection_repository
             .get_by_provider_identifier(
@@ -44,40 +46,56 @@ class LeadService:
                 "No connected channel found for identifier."
             )
 
-        lead = (
-            self.lead_repository
-            .get_by_identifier(
-                channel_connection_id=connection.id,
-                tenant_id=1,
-                identifier=identifier,
+
+
+        lock_key = (
+            f"lead:{connection.id}:"
+            f"{identifier.lower()}"
+        )
+
+        lock = lead_lock_manager.get_lock(
+            lock_key
+        )
+
+        with lock:
+            lead = (
+                self.lead_repository
+                .get_by_identifier(
+
+                    tenant_id=1,
+                    email=email,
+                    phone_number=phone_number,
+                )
             )
-        )
 
-        if lead is not None:
+            if lead is not None:
+                print("got old")
 
-            if name:
-                lead.name = name
+                if name:
+                    lead.name = name
 
-            if email:
-                lead.email = email
+                if email:
+                    lead.email = email
 
-            if phone_number:
-                lead.phone_number = phone_number
+                if phone_number:
+                    lead.phone_number = phone_number
 
-            self.lead_repository.update(lead)
-            return lead
+                self.lead_repository.update(lead)
+                return lead
 
-        lead = Lead(
-            tenant_id=connection.tenant_id,
-            channel_connection_id=connection.id,
-            name=name,
-            email=email,
-            phone_number=phone_number,
-        )
+            print("creating new")
 
-        return self.lead_repository.save(
-            lead
-        )
+            lead = Lead(
+                tenant_id=connection.tenant_id,
+                channel_connection_id=connection.id,
+                name=name,
+                email=email,
+                phone_number=phone_number,
+            )
+
+            return self.lead_repository.save(
+                lead
+            )
 
 
 
@@ -98,6 +116,7 @@ class LeadService:
             all_leads, total = (
                 self.lead_repository
                 .get_leads_by_channel_id(
+                    tenant_id=1,
                     channel_id=channel_id,
                     limit=page_size,
                     offset=offset,

@@ -221,6 +221,7 @@ class ChannelEngine:
             channel_watch_repository=self.channel_watch_repository,
             channel_master_repository=self.channel_master_repository,
             channel_resolver=self.channel_resolver,
+            message_service=self.message_service,
             lead_service=LeadService(channel_connection_repository=self.connection_repository,lead_repository=self.lead_repository),
 
         )

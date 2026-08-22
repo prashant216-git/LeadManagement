@@ -5,9 +5,9 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
-    JSON,
     String,
     Text,
+    JSON,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -64,6 +64,15 @@ class Message(BaseModel):
     )
 
     # ======================================================
+    # CONVERSATION
+    # ======================================================
+
+    conversation_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    # ======================================================
     # CHANNEL CONNECTION
     # ======================================================
 
@@ -81,6 +90,18 @@ class Message(BaseModel):
 
     provider_message_id: Mapped[str | None] = mapped_column(
         String(255),
+        nullable=True,
+    )
+
+    # ======================================================
+    # REPLY TO MESSAGE
+    # ======================================================
+
+    reply_to_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "messages.id",
+            ondelete="SET NULL",
+        ),
         nullable=True,
     )
 
@@ -127,15 +148,6 @@ class Message(BaseModel):
 
     provider_created_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
-        nullable=True,
-    )
-
-    # ======================================================
-    # PROVIDER METADATA
-    # ======================================================
-
-    provider_metadata: Mapped[dict | None] = mapped_column(
-        JSON,
         nullable=True,
     )
 

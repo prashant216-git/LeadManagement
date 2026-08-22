@@ -1,7 +1,7 @@
 import threading
 
 
-class LeadLockManager:
+class LockManager:
 
     def __init__(self):
         self._locks = {}
@@ -16,4 +16,4 @@ class LeadLockManager:
             return self._locks[key]
 
 
-lead_lock_manager = LeadLockManager()
+lead_lock_manager = LockManager()

@@ -4,6 +4,8 @@ from app.core.config import settings
 from app.enums.channel import ConnectionStatus
 from datetime import datetime, timezone, timedelta
 
+from app.core.lock import lead_lock_manager
+
 
 class ChannelResolver:
 
@@ -23,6 +25,7 @@ class ChannelResolver:
             credential_encryption_service
         )
         self.client = httpx.AsyncClient()
+
 
     def resolve_connection_id(
         self,
@@ -70,59 +73,64 @@ class ChannelResolver:
 
         print("resolving token")
 
-        credential =  (
-            self.credential_repository
-            .get_by_connection_id(
-                connection_id
-            )
+        lock_key = f"token:{connection_id}"
+        lock = lead_lock_manager.get_lock(
+            lock_key
         )
 
-        credentials = (
-            self.credential_encryption_service
-            .decrypt(
-                credential.encrypted_payload
+        if lock:
+            credential = (
+                self.credential_repository
+                .get_by_connection_id(
+                    connection_id
+                )
             )
-        )
 
-        if credential is None:
-            raise ValueError(
-                "Channel credentials not found."
+            credentials = (
+                self.credential_encryption_service
+                .decrypt(
+                    credential.encrypted_payload
+                )
             )
-        expires_at = credential.expires_at
 
-        if expires_at is not None:
+            if credential is None:
+                raise ValueError(
+                    "Channel credentials not found."
+                )
+            expires_at = credential.expires_at
 
+            if expires_at is not None:
 
-            if expires_at.tzinfo is None:
-                expires_at = expires_at.replace(
-                    tzinfo=timezone.utc
+                if expires_at.tzinfo is None:
+                    expires_at = expires_at.replace(
+                        tzinfo=timezone.utc
+                    )
+
+            refresh_token = credentials["refresh_token"]
+
+            print(refresh_token)
+            print("expires at", expires_at)
+            print(datetime.now(timezone.utc) + timedelta(seconds=60))
+
+            print(expires_at <= datetime.now(timezone.utc) + timedelta(seconds=60))
+
+            if expires_at <= datetime.now(timezone.utc) + timedelta(seconds=60):
+                return await self.refresh_access_token(
+                    connection_id=connection_id,
+                    refresh_token=refresh_token,
+                )
+            access_token = credentials["access_token"]
+
+            if not access_token:
+                raise ValueError(
+                    "Access token not found."
                 )
 
-        refresh_token=credentials["refresh_token"]
-
-        print(refresh_token)
-        print("expires at",expires_at)
-        print(datetime.now(timezone.utc) + timedelta(seconds=60))
-
-        print(expires_at <= datetime.now(timezone.utc) + timedelta(seconds=60))
-
-
-        if expires_at <= datetime.now(timezone.utc) + timedelta(seconds=60):
-            return await self.refresh_access_token(
-                connection_id=connection_id,
-                refresh_token=refresh_token,
-            )
+            return access_token
 
 
 
-        access_token = credentials["access_token"]
 
-        if not access_token:
-            raise ValueError(
-                "Access token not found."
-            )
-
-        return access_token
 
     def resolve_channel_id(
             self,

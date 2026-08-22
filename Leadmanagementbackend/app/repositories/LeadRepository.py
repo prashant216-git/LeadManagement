@@ -19,9 +19,10 @@ class LeadRepository:
 
     def get_by_identifier(
         self,
-            channel_connection_id:int,
+
         tenant_id: int,
-        identifier: str,
+        email :str | None = None,
+        phone_number: str | None = None,
     ):
         """
         Find a lead belonging to a tenant.
@@ -32,10 +33,10 @@ class LeadRepository:
 
         result = self.db.execute(
             select(Lead).where(
-                Lead.tenant_id == tenant_id,Lead.channel_connection_id == channel_connection_id,
+                Lead.tenant_id == tenant_id,
                 (
-                    (Lead.email == identifier)
-                    | (Lead.phone_number == identifier)
+                    (Lead.email == email)
+                    | (Lead.phone_number == phone_number)
                 ),
             )
         )
@@ -60,6 +61,7 @@ class LeadRepository:
 
     def get_leads_by_channel_id(
             self,
+            tenant_id:int,
             channel_id: int,
             limit: int,
             offset: int,
@@ -90,7 +92,8 @@ class LeadRepository:
                 Lead.channel_connection_id == ChannelConnection.id,
             )
             .where(
-                ChannelConnection.channel_id == channel_id
+                ChannelConnection.channel_id == channel_id,
+                Lead.tenant_id==tenant_id
             )
         )
 

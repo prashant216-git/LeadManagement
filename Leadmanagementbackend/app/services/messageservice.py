@@ -2,6 +2,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.DTOs.MessageDTO import LeadMessagesResponseDTO, MessageDetailsDTO
+from app.core.lock import lead_lock_manager
 from app.models.messages import Message
 from app.repositories.MessageRepository import MessageRepository
 
@@ -32,135 +34,81 @@ class MessageService:
             provider_created_at: datetime | None = None,
             provider_metadata: dict | None = None,
     ) -> Message:
+        lock_key = (
 
-        existmessage=self.message_repository.get_by_provider_message_id_and_lead_id(provider_message_id=provider_message_id, lead_id=lead_id)
-        if existmessage:
-            return existmessage
-
-
-        message = Message(
-            lead_id=lead_id,
-            channel_connection_id=channel_connection_id,
-            provider_message_id=provider_message_id,
-            direction=direction,
-            sender_identifier=sender_identifier,
-            recipient_identifier=recipient_identifier,
-            content=content,
-            message_type=message_type,
-            provider_created_at=provider_created_at,
-            provider_metadata=provider_metadata,
+            f"{lead_id}:"
+            f"{provider_message_id}"
         )
 
-        return self.message_repository.create(
-            message
+        lock = lead_lock_manager.get_lock(
+            lock_key
         )
 
 
+        with lock:
+            existmessage = self.message_repository.get_by_provider_message_id_and_lead_id(
+                provider_message_id=provider_message_id, lead_id=lead_id,channel_connection_id=channel_connection_id)
+            if existmessage:
+                return existmessage
 
-    
-
-
-    def get_latest_message(
-        db: Session,
-        user_id: int
-    ) -> Message | None:
-
-        return (
-            db.query(Message)
-            .filter(Message.user_id == user_id)
-            .order_by(Message.created_at.desc())
-            .first()
-        )
-
-
-    def get_recent_messages(
-        db: Session,
-        user_id: int,
-        limit: int = 5
-    ) -> list[Message]:
-
-        messages = (
-            db.query(Message)
-            .filter(Message.user_id == user_id)
-            .order_by(Message.created_at.desc())
-            .limit(limit)
-            .all()
-        )
-
-        return list(reversed(messages))
-
-
-    def get_all_messages(
-        db: Session,
-        user_id: int
-    ) -> list[Message]:
-
-        return (
-            db.query(Message)
-            .filter(Message.user_id == user_id)
-            .order_by(Message.created_at.asc())
-            .all()
-        )
-
-    @staticmethod
-    def get_message_by_channel_message_id(
-        db: Session,
-        channel_message_id: str
-    ) -> Message | None:
-
-        return (
-            db.query(Message)
-            .filter(
-                Message.channel_message_id == channel_message_id
+            message = Message(
+                lead_id=lead_id,
+                channel_connection_id=channel_connection_id,
+                provider_message_id=provider_message_id,
+                direction=direction,
+                sender_identifier=sender_identifier,
+                recipient_identifier=recipient_identifier,
+                content=content,
+                message_type=message_type,
+                provider_created_at=provider_created_at,
+                provider_metadata=provider_metadata,
             )
-            .first()
-        )
 
-    @staticmethod
-    def message_exists(
-        db: Session,
-        channel_message_id: str
-    ) -> bool:
+            return self.message_repository.create(
+                message
+            )
 
-        return (
-            db.query(Message)
-            .filter(
-                Message.channel_message_id == channel_message_id
-            )
-            .first()
-            is not None
-        )
+    async def get_messages_by_lead_id(
+                self,
+                lead_id: int,
+        ) -> LeadMessagesResponseDTO:
 
-    @staticmethod
-    def get_all_messages(
-            db,
-            user_id: int
-    ):
-        return (
-            db.query(Message)
-            .filter(
-                Message.user_id == user_id
+            messages = (
+                self.message_repository
+                .get_messages_by_lead_id(
+                    lead_id=lead_id
+                )
             )
-            .order_by(
-                Message.id.asc()
-            )
-            .all()
-        )
 
-    @staticmethod
-    def get_messages_after_id(
-            db,
-            user_id: int,
-            message_id: int
-    ):
-        return (
-            db.query(Message)
-            .filter(
-                Message.user_id == user_id,
-                Message.id > message_id
+            message_details = []
+
+            for message in messages:
+                message_details.append(
+                    MessageDetailsDTO(
+                        id=message.id,
+                        direction=message.direction,
+                        sender_identifier=message.sender_identifier,
+                        recipient_identifier=message.recipient_identifier,
+                        content=message.content,
+                        message_type=message.message_type,
+                        provider_created_at=message.provider_created_at,
+                    )
+                )
+
+            return LeadMessagesResponseDTO(
+                lead_id=lead_id,
+                messages=message_details,
             )
-            .order_by(
-                Message.id.asc()
-            )
-            .all()
-        )
+
+
+
+
+
+
+
+
+
+
+
+
+
