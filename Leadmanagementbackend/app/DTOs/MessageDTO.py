@@ -22,11 +22,19 @@ class MessageDetailsDTO(BaseModel):
 
     message_type: MessageType | None = None
 
+    repliedmessageid: int | None = None
+
     provider_created_at: datetime | None = None
 
 
 class LeadMessagesResponseDTO(BaseModel):
 
     lead_id: int
+
+    lead_name: str
+
+    lead_email: str | None = None
+
+    lead_phone: str | None = None
 
     messages: list[MessageDetailsDTO]

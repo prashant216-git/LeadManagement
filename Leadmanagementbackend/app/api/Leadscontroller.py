@@ -25,7 +25,7 @@ def get_message_service(
     )
 
     return MessageService(
-        message_repository=message_repository
+        message_repository=message_repository,lead_repository=LeadRepository(db)
     )
 def get_lead_service(
     db: AsyncSession = Depends(get_db),

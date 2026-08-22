@@ -54,3 +54,18 @@ class MessageRepository:
         )
 
         return result.scalars().all()
+
+    from sqlalchemy import select
+
+    def get_by_provider_message_id(
+            self,
+            provider_message_id: str,
+    ):
+        result = self.db.execute(
+            select(Message).where(
+                Message.provider_message_id
+                == provider_message_id
+            )
+        )
+
+        return result.scalar_one_or_none()

@@ -538,12 +538,23 @@ class GmailProvider(BaseChannelProvider):
             accesstoken
         )
 
+
+
+
+
         # 5. Create/update leads
         for message in messages:
 
             sender = self._extract_sender(
                 message
             )
+            if message is None:
+                print(
+                    "Skipping unavailable Gmail message:",
+                    message_id,
+                )
+
+                continue
 
             if sender is None:
                 continue
@@ -556,22 +567,51 @@ class GmailProvider(BaseChannelProvider):
             )
 
             print(createdlead.id)
+
+            message_details = self._extract_message_data(message)
+
+            reply_to_message_id = None
+            direction = MessageDirection.INBOUND
+
+            if message_details["reply_to_message_id"]:
+                reply_to_message_id = (
+                    await self.channel_resolver.resolve_reply_to_message_id(
+                        await self._resolve_rfc_message_id(message_details["reply_to_message_id"],access_token=accesstoken)
+                    )
+                )
+
+            if sender["email"]==email_address:
+                direction = MessageDirection.OUTBOUND
+
+
+
             await self.message_service.create_message(
                 lead_id=createdlead.id,
                 channel_connection_id=connectionid,
-                provider_message_id=message["id"],
-                direction=MessageDirection.INBOUND,
-                sender_identifier=sender["email"],
-                recipient_identifier=email_address,
-                content=self._extract_body(message),
-                message_type=MessageType.TEXT,
-                provider_created_at=datetime.fromtimestamp(
-                    int(message["internalDate"]) / 1000,
-                    tz=timezone.utc,
+
+                conversation_id=message_details["conversation_id"],
+
+                provider_message_id=(
+                    message_details["provider_message_id"]
                 ),
-                provider_metadata={
-                    "thread_id": message.get("threadId"),
-                },
+
+                reply_to_message_id=reply_to_message_id,
+
+                direction=direction,
+
+                sender_identifier=sender["email"],
+
+                recipient_identifier=(
+                    email_address
+                ),
+
+                content=message_details["content"],
+
+                message_type=message_details["message_type"],
+
+                provider_created_at=(
+                    message_details["provider_created_at"]
+                ),
             )
 
 
@@ -664,6 +704,15 @@ class GmailProvider(BaseChannelProvider):
 
         print("get_message",response)
 
+        if response.status_code == 404:
+            print(
+                "Message not found in Gmail. "
+                "Skipping message:",
+                message_id,
+            )
+
+            return None
+
         response.raise_for_status()
 
         return response.json()
@@ -727,8 +776,33 @@ class GmailProvider(BaseChannelProvider):
                 errors="replace",
             )
 
+        def clean_quoted_text(body: str):
+            lines = body.splitlines()
+            current_lines = []
+
+            for line in lines:
+                stripped = line.strip().lower()
+
+                # Gmail reply separator
+                if (
+                        stripped.startswith("on ")
+                        and stripped.endswith("wrote:")
+                ):
+                    break
+
+                # Quoted message without separator
+                if line.lstrip().startswith(">"):
+                    break
+
+                current_lines.append(line)
+
+            return "\n".join(
+                current_lines
+            ).strip()
+
         def find_body(part: dict):
             mime_type = part.get("mimeType")
+
             body_data = (
                 part.get("body", {})
                 .get("data")
@@ -751,9 +825,17 @@ class GmailProvider(BaseChannelProvider):
 
             return None
 
-        payload = message.get("payload", {})
+        payload = message.get(
+            "payload",
+            {},
+        )
 
-        return find_body(payload)
+        body = find_body(payload)
+
+        if not body:
+            return None
+
+        return clean_quoted_text(body)
 
     def _extract_message_data(
             self,
@@ -771,12 +853,16 @@ class GmailProvider(BaseChannelProvider):
             header.get("name", "").lower(): header.get("value")
             for header in headers
         }
+
         provider_created_at = None
 
         if message.get("internalDate"):
             provider_created_at = datetime.fromtimestamp(
                 int(message["internalDate"]) / 1000
             )
+
+            print(header_map.get(
+                "in-reply-to"))
 
         return {
             # Gmail conversation/thread
@@ -791,14 +877,7 @@ class GmailProvider(BaseChannelProvider):
             ),
 
             # Sender
-            "sender_identifier": self._extract_email(
-                header_map.get("from")
-            ),
 
-            # Recipient
-            "recipient_identifier": self._extract_email(
-                header_map.get("to")
-            ),
 
             # Message content
             "content": self._extract_body(
@@ -809,6 +888,71 @@ class GmailProvider(BaseChannelProvider):
             "message_type": MessageType.TEXT,
 
             # Gmail internal timestamp
-            "provider_created_at": provider_created_at
-            ),
+            "provider_created_at": provider_created_at,
         }
+
+    async def _resolve_rfc_message_id(
+            self,
+            rfc_message_id: str,
+            access_token: str,
+    ) -> str | None:
+
+        if not rfc_message_id:
+            return None
+
+        print(
+            "resolving RFC Message-ID:",
+            rfc_message_id,
+        )
+
+        # Remove < > if Gmail header contains them
+        rfc_message_id = rfc_message_id.strip()
+
+        if (
+                rfc_message_id.startswith("<")
+                and rfc_message_id.endswith(">")
+        ):
+            rfc_message_id = rfc_message_id[1:-1]
+
+        response = await self.client.get(
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+            headers={
+                "Authorization": (
+                    f"Bearer "
+                    f"{access_token}"
+                )
+            },
+            params={
+                "q": f"rfc822msgid:{rfc_message_id}",
+                "maxResults": 1,
+            },
+        )
+
+        print(
+            "resolve_rfc_message_id response:",
+            response,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        messages = data.get("messages", [])
+
+        if not messages:
+            print(
+                "No Gmail message found for RFC Message-ID:",
+                rfc_message_id,
+            )
+            return None
+
+        gmail_message_id = messages[0].get("id")
+
+        print(
+            "Resolved RFC Message-ID:",
+            rfc_message_id,
+            "-> Gmail message.id:",
+            gmail_message_id,
+        )
+
+        return gmail_message_id

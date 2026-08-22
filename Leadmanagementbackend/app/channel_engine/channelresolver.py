@@ -16,6 +16,7 @@ class ChannelResolver:
         channel_watch_repository,
         channel_master_repository,
         credential_encryption_service,
+        message_repository
     ):
         self.connection_repository = connection_repository
         self.credential_repository = credential_repository
@@ -25,6 +26,7 @@ class ChannelResolver:
             credential_encryption_service
         )
         self.client = httpx.AsyncClient()
+        self.message_repository=message_repository
 
 
     def resolve_connection_id(
@@ -293,3 +295,22 @@ class ChannelResolver:
 
 
         return refresh_token
+
+    async def resolve_reply_to_message_id(
+            self,
+            provider_message_id: str | None,
+    ) -> int | None:
+        if not provider_message_id:
+            return None
+
+        message = (
+            self.message_repository
+            .get_by_provider_message_id(
+                provider_message_id
+            )
+        )
+
+        if not message:
+            return None
+
+        return message.id

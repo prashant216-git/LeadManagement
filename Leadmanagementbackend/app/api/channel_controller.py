@@ -73,7 +73,9 @@ def get_channel_service(
 
     channel_watch_repository=ChannelWatchRepository(db)
     message_repository = MessageRepository(db)
-    message_service = MessageService(message_repository=message_repository)
+
+    message_repository=message_repository, lead_repository=LeadRepository(db)
+
 
 
 
@@ -81,7 +83,7 @@ def get_channel_service(
                                        credential_repository=credential_repository,
                                        channel_watch_repository=channel_watch_repository,
                                        channel_master_repository=channel_master_repository,
-                                       credential_encryption_service=credential_service, )
+                                       credential_encryption_service=credential_service,message_repository=message_repository )
 
     # ------------------------------------------------------
     # Channel Engine
