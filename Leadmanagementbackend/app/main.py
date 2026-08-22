@@ -13,7 +13,7 @@ from app.api.UsersRoute import router as usersrouter
 from app.core.config import settings
 from app.api.channel_webhook_controller import router as webhook_controller
 
-
+from app.api.Leadscontroller import router as lead_controller
 from app.api.AIREPLYHOOK import router as replyrouter
 app = FastAPI()
 origins = [
@@ -39,7 +39,7 @@ app.include_router(usersrouter)
 app.include_router(webhook_controller)
 app.include_router(replyrouter)
 
-
+app.include_router(lead_controller)
 app.include_router(channel_router)
 
 Base.metadata.create_all(bind=engine)

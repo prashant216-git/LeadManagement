@@ -1,3 +1,6 @@
+from math import ceil
+
+from app.DTOs.Leadlist import LeadlistDTO, Leadetails
 from app.enums.channel import ConnectionStatus
 from app.models import Lead
 
@@ -58,7 +61,7 @@ class LeadService:
             if phone_number:
                 lead.phone_number = phone_number
 
-            await self.lead_repository.update(lead)
+            self.lead_repository.update(lead)
             return lead
 
         lead = Lead(
@@ -73,86 +76,65 @@ class LeadService:
             lead
         )
 
-        """
-        Create or update a lead using an external
-        channel identifier.
 
-        The tenant is resolved internally from the
-        identifier.
-        """
 
-        # ---------------------------------------------
-        # 1. Resolve tenant + connection
-        # ---------------------------------------------
 
-        connection = await (
-            self.channel_connection_repository
-            .get_by_provider_identifier(
-                identifier=identifier
-            )
-        )
 
-        if connection is None:
-            raise ValueError(
-                "No channel connection found "
-                "for this identifier."
-            )
+    async def get_lead_by_channel_id(
+                self,
+                channel_id: int,
+                page: int = 1,
+                page_size: int = 20,
+                sort_by: str = "created_at",
+                sort_order: str = "desc",
+        ) -> LeadlistDTO:
+            offset = (
+                             page - 1
+                     ) * page_size
 
-        tenant_id = connection.tenant_id
-
-        # ---------------------------------------------
-        # 2. Find existing lead
-        # ---------------------------------------------
-
-        lead = await (
-            self.lead_repository
-            .get_by_identifier(
-                tenant_id=tenant_id,
-                identifier=identifier,
-            )
-        )
-
-        # ---------------------------------------------
-        # 3. Create
-        # ---------------------------------------------
-
-        if lead is None:
-
-            lead = Lead(
-                tenant_id=tenant_id,
-                name=lead_details.get("name"),
-                email=lead_details.get("email"),
-                phone_number=lead_details.get(
-                    "phone_number"
-                ),
-                summary=lead_details.get(
-                    "summary"
-                ),
+            all_leads, total = (
+                self.lead_repository
+                .get_leads_by_channel_id(
+                    channel_id=channel_id,
+                    limit=page_size,
+                    offset=offset,
+                    sort_by=sort_by,
+                    sort_order=sort_order,
+                )
             )
 
-            return await self.lead_repository.save(
-                lead
-            )
+            valid_leads = []
 
-        # ---------------------------------------------
-        # 4. Update
-        # ---------------------------------------------
-
-        for field in (
-            "name",
-            "email",
-            "phone_number",
-            "summary",
-        ):
-            value = lead_details.get(field)
-
-            if value is not None:
-                setattr(
-                    lead,
-                    field,
-                    value,
+            for lead_details in all_leads:
+                valid_leads.append(
+                    Leadetails(
+                        id=lead_details.id,
+                        name=lead_details.name,
+                        email=lead_details.email,
+                        phone_number=lead_details.phone_number,
+                        created_at=lead_details.created_at,
+                    )
                 )
 
-        return await self.lead_repository.save(
-            lead
-        )
+            return LeadlistDTO(
+                channel_id=channel_id,
+                Leaddetails=valid_leads,
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=ceil(
+                    total / page_size
+                ) if total > 0 else 0,
+            )
+
+
+
+
+
+
+
+
+
+
+
+
