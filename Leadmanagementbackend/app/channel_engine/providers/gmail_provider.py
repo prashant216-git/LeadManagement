@@ -662,7 +662,7 @@ class GmailProvider(BaseChannelProvider):
             },
         )
 
-        print("get_)message",response)
+        print("get_message",response)
 
         response.raise_for_status()
 
@@ -754,3 +754,61 @@ class GmailProvider(BaseChannelProvider):
         payload = message.get("payload", {})
 
         return find_body(payload)
+
+    def _extract_message_data(
+            self,
+            message: dict,
+    ) -> dict:
+        headers = message.get(
+            "payload",
+            {},
+        ).get(
+            "headers",
+            [],
+        )
+
+        header_map = {
+            header.get("name", "").lower(): header.get("value")
+            for header in headers
+        }
+        provider_created_at = None
+
+        if message.get("internalDate"):
+            provider_created_at = datetime.fromtimestamp(
+                int(message["internalDate"]) / 1000
+            )
+
+        return {
+            # Gmail conversation/thread
+            "conversation_id": message.get("threadId"),
+
+            # Gmail message ID
+            "provider_message_id": message.get("id"),
+
+            # Gmail Message-ID of the message being replied to
+            "reply_to_message_id": header_map.get(
+                "in-reply-to"
+            ),
+
+            # Sender
+            "sender_identifier": self._extract_email(
+                header_map.get("from")
+            ),
+
+            # Recipient
+            "recipient_identifier": self._extract_email(
+                header_map.get("to")
+            ),
+
+            # Message content
+            "content": self._extract_body(
+                message
+            ),
+
+            # Current implementation is text
+            "message_type": MessageType.TEXT,
+
+            # Gmail internal timestamp
+            "provider_created_at": provider_created_at
+            ),
+        }

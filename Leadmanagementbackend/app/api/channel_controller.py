@@ -222,7 +222,7 @@ channel_service: ChannelService = Depends(
 
         return RedirectResponse(
             url=(
-                "https://veloratechnologies.in/"
+                "https://crm.veloratechnologies.in/"
                 "channel-configuration"
                 "?channel=gmail"
                 "&status=connected"
