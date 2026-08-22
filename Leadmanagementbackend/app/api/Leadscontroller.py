@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
 
+from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.MessageDTO import LeadMessagesResponseDTO
 from app.db.session import get_db
 from app.repositories.ChannelConnectionRepository import (
@@ -105,11 +107,13 @@ async def get_leads_by_channel(
         )
 
 @router.get(
-    "/{lead_id}/messages",
+    "/{lead_id}/messages/{channel_id}",
     response_model=LeadMessagesResponseDTO,
 )
 async def get_lead_messages(
     lead_id: int,
+    channel_id:int,
+
     message_service: MessageService = Depends(
         get_message_service
     ),
@@ -118,7 +122,7 @@ async def get_lead_messages(
     try:
 
         return await message_service.get_messages_by_lead_id(
-            lead_id=lead_id,
+            lead_id=lead_id,channel_id=channel_id
         )
 
     except ValueError as e:
@@ -138,3 +142,37 @@ async def get_lead_messages(
             status_code=500,
             detail="Unable to retrieve lead messages.",
         )
+@router.post(
+    "/create_manual_lead",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_lead_manual(
+    lead_details: CreateManualLeadDTO = Body(
+        ...,
+
+    ),
+    lead_service=Depends(
+        get_lead_service,
+    ),
+):
+
+    try:
+
+        tenant_id = 1
+
+        created_lead = (
+            await lead_service.create_manual_lead(
+                tenant_id=tenant_id,
+                lead_data=lead_details,
+            )
+        )
+
+        return created_lead
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+

@@ -551,7 +551,7 @@ class GmailProvider(BaseChannelProvider):
             if message is None:
                 print(
                     "Skipping unavailable Gmail message:",
-                    message_id,
+                    message,
                 )
 
                 continue
@@ -560,7 +560,7 @@ class GmailProvider(BaseChannelProvider):
                 continue
 
             createdlead=await self.lead_service.create_or_update_lead(
-                channel_id=channelcodeid,
+                source_channel_id=channelcodeid,
                 identifier=email_address,
                 email=sender["email"],
                 name=sender["name"]
@@ -763,7 +763,10 @@ class GmailProvider(BaseChannelProvider):
             self,
             message: dict,
     ):
-        def decode_body(data: str | None):
+        def decode_body(
+                data: str | None,
+        ) -> str | None:
+
             if not data:
                 return None
 
@@ -776,21 +779,45 @@ class GmailProvider(BaseChannelProvider):
                 errors="replace",
             )
 
-        def clean_quoted_text(body: str):
+        def clean_quoted_text(
+                body: str,
+        ) -> str:
+
             lines = body.splitlines()
             current_lines = []
 
-            for line in lines:
+            for index, line in enumerate(lines):
+
                 stripped = line.strip().lower()
 
-                # Gmail reply separator
+                # Gmail single-line reply separator
+                #
+                # On Sun, 23 Aug 2026 at 00:57,
+                # Prashant <email@example.com> wrote:
+                #
                 if (
                         stripped.startswith("on ")
                         and stripped.endswith("wrote:")
                 ):
                     break
 
-                # Quoted message without separator
+                # Gmail multi-line reply separator
+                #
+                # On Sun, 23 Aug 2026 at 00:57,
+                # Prashant <email@example.com>
+                # wrote:
+                #
+                if (
+                        stripped.startswith("on ")
+                        and index + 1 < len(lines)
+                        and lines[index + 1]
+                        .strip()
+                        .lower()
+                        == "wrote:"
+                ):
+                    break
+
+                # Standard quoted email line
                 if line.lstrip().startswith(">"):
                     break
 
@@ -800,28 +827,48 @@ class GmailProvider(BaseChannelProvider):
                 current_lines
             ).strip()
 
-        def find_body(part: dict):
-            mime_type = part.get("mimeType")
+        def find_body(
+                part: dict,
+        ) -> str | None:
+
+            mime_type = part.get(
+                "mimeType",
+            )
 
             body_data = (
                 part.get("body", {})
                 .get("data")
             )
 
-            # Prefer plain text
-            if mime_type == "text/plain" and body_data:
-                return decode_body(body_data)
+            # Prefer plain text body
+            if (
+                    mime_type == "text/plain"
+                    and body_data
+            ):
+                return decode_body(
+                    body_data,
+                )
 
             # Search nested MIME parts
-            for child in part.get("parts", []):
-                result = find_body(child)
+            for child in part.get(
+                    "parts",
+                    [],
+            ):
+                result = find_body(
+                    child,
+                )
 
                 if result:
                     return result
 
-            # Fallback to HTML
-            if mime_type == "text/html" and body_data:
-                return decode_body(body_data)
+            # Fallback to HTML body
+            if (
+                    mime_type == "text/html"
+                    and body_data
+            ):
+                return decode_body(
+                    body_data,
+                )
 
             return None
 
@@ -830,12 +877,16 @@ class GmailProvider(BaseChannelProvider):
             {},
         )
 
-        body = find_body(payload)
+        body = find_body(
+            payload,
+        )
 
         if not body:
             return None
 
-        return clean_quoted_text(body)
+        return clean_quoted_text(
+            body,
+        )
 
     def _extract_message_data(
             self,

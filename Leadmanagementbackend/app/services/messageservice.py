@@ -85,14 +85,8 @@ class MessageService:
     async def get_messages_by_lead_id(
             self,
             lead_id: int,
+            channel_id:int
     ) -> LeadMessagesResponseDTO:
-
-        messages = (
-            self.message_repository
-            .get_messages_by_lead_id(
-                lead_id=lead_id
-            )
-        )
 
         lead = (
             self.lead_repository
@@ -100,6 +94,18 @@ class MessageService:
                 lead_id=lead_id
             )
         )
+
+        messages = (
+            self.message_repository
+            .get_messages_by_lead_id_and_channel_id(
+                lead_id=lead_id,
+                channel_id=channel_id
+            )
+        )
+        if lead is None:
+            raise ValueError("No lead found")
+
+
 
         message_details = []
 

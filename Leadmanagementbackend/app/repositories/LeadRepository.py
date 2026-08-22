@@ -126,12 +126,18 @@ class LeadRepository:
     # ======================================================
 
     def save(
-        self,
-        lead: Lead,
-    ):
-        self.db.add(lead)
+            self,
+            lead: Lead,
+    ) -> Lead:
+        self.db.add(
+            lead
+        )
 
-        self.db.flush()
+        self.db.commit()
+
+        self.db.refresh(
+            lead
+        )
 
         return lead
 

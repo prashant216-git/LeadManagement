@@ -68,12 +68,14 @@ class Lead(Base):
         nullable=True,
     )
 
-    channel_connection_id: Mapped[int] = mapped_column(
+    source_channel_id = Column(
+        Integer,
         ForeignKey(
-            "channel_connections.id",
-            ondelete="CASCADE",
+            "channel_master.id",
+            ondelete="SET NULL",
         ),
-        nullable=False,
+        nullable=True,
+        index=True,
     )
 
 

@@ -1,5 +1,6 @@
 from math import ceil
 
+from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.Leadlist import LeadlistDTO, Leadetails
 from app.enums.channel import ConnectionStatus
 from app.models import Lead
@@ -22,7 +23,7 @@ class LeadService:
 
     async def create_or_update_lead(
             self,
-            channel_id: int,
+            source_channel_id: int,
             identifier: str,
             name: str | None = None,
             email: str | None = None,
@@ -36,7 +37,7 @@ class LeadService:
             self.channel_connection_repository
             .get_by_provider_identifier(
                 provider_account_identifier=identifier,
-                channel_id=channel_id,
+                channel_id=source_channel_id,
 
             )
         )
@@ -49,7 +50,7 @@ class LeadService:
 
 
         lock_key = (
-            f"lead:{connection.id}:"
+            f"lead:{source_channel_id}:"
             f"{identifier.lower()}"
         )
 
@@ -87,7 +88,7 @@ class LeadService:
 
             lead = Lead(
                 tenant_id=connection.tenant_id,
-                channel_connection_id=connection.id,
+                source_channel_id=source_channel_id,
                 name=name,
                 email=email,
                 phone_number=phone_number,
@@ -148,6 +149,25 @@ class LeadService:
                     total / page_size
                 ) if total > 0 else 0,
             )
+
+    async def create_manual_lead(
+            self,
+            tenant_id: int,
+            lead_data: CreateManualLeadDTO,
+    ) -> Lead:
+
+
+        lead = Lead(
+            tenant_id=tenant_id,
+            source_channel_id=None,
+            name=lead_data.name,
+            email=lead_data.email,
+            phone_number=lead_data.phone_number,
+        )
+
+        return self.lead_repository.save(
+            lead
+        )
 
 
 

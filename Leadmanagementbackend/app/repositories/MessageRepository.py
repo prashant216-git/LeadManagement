@@ -1,3 +1,5 @@
+from app.models import Lead
+from app.models.channel_connection import ChannelConnection
 from app.models.messages import Message
 
 from sqlalchemy import select
@@ -35,14 +37,20 @@ class MessageRepository:
 
         return result.scalar_one_or_none()
 
-    def get_messages_by_lead_id(
+    def get_messages_by_lead_id_and_channel_id(
             self,
             lead_id: int,
+            channel_id: int,
     ) -> list[Message]:
         statement = (
             select(Message)
+            .join(
+                Lead,
+                Message.lead_id == Lead.id,
+            )
             .where(
-                Message.lead_id == lead_id
+                Lead.id == lead_id,
+                Lead.source_channel_id == channel_id,
             )
             .order_by(
                 Message.provider_created_at.asc()
