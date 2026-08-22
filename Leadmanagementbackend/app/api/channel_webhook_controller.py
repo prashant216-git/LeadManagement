@@ -46,7 +46,8 @@ def get_channel_service(
     lead_repository = LeadRepository(db)
     credential_service = CredentialEncryptionService()
     message_repository = MessageRepository(db)
-    message_repository=message_repository, lead_repository=LeadRepository(db)
+    message_service=MessageService(message_repository=message_repository,
+        lead_repository=lead_repository )
 
 
     channel_watch_repository=ChannelWatchRepository(db)
