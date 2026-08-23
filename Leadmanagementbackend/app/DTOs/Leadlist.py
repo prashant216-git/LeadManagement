@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 
 
 class Leadetails(BaseModel):
+    connection_id:int | None=None
+    source_identifier:str | None=None
     id: int
     name: str | None = None
     email: str | None = None
@@ -12,7 +14,7 @@ class Leadetails(BaseModel):
 
 
 class LeadlistDTO(BaseModel):
-    channel_id: int
+    channel_id: int | None=None
     Leaddetails: list[Leadetails] = Field(
         default_factory=list
     )

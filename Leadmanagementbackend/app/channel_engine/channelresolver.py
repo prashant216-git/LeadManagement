@@ -3,7 +3,7 @@ import httpx
 from app.core.config import settings
 from app.enums.channel import ConnectionStatus
 from datetime import datetime, timezone, timedelta
-
+from app.models.messages import Message
 from app.core.lock import lead_lock_manager
 
 
@@ -314,3 +314,13 @@ class ChannelResolver:
             return None
 
         return message.id
+
+    def resolve_message_id(
+            self,
+            message_id: int,
+    ) -> Message | None:
+        result =self.message_repository.get_by_id(message_id)
+
+
+
+        return result

@@ -77,3 +77,20 @@ class MessageRepository:
         )
 
         return result.scalar_one_or_none()
+
+    def get_by_id(
+            self,
+            message_id: int,
+    ) -> Message | None:
+        statement = (
+            select(Message)
+            .where(
+                Message.id == message_id
+            )
+        )
+
+        result = self.db.execute(
+            statement
+        )
+
+        return result.scalar_one_or_none()

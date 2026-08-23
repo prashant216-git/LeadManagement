@@ -1,12 +1,15 @@
 import json
 import re
 import secrets
+from email.mime.text import MIMEText
+from email.utils import make_msgid
+import base64
 from datetime import datetime, timedelta, timezone
 from os import access
 from secrets import token_urlsafe
 from urllib.parse import urlencode
 import base64
-
+from email.utils import make_msgid
 from app.DTOs.connection.callbackerror import CallbackError, CallbackException
 from app.channel_engine.BaseChannelProvider import BaseChannelProvider
 from app.channel_engine.registry import ChannelProviderRegistry
@@ -590,6 +593,7 @@ class GmailProvider(BaseChannelProvider):
                 channel_connection_id=connectionid,
 
                 conversation_id=message_details["conversation_id"],
+                rfc_message_id=message_details["reply_to_message_id"],
 
                 provider_message_id=(
                     message_details["provider_message_id"]
@@ -635,6 +639,147 @@ class GmailProvider(BaseChannelProvider):
             "email_address": email_address,
             "history_id": history_id,
         }
+
+    async def send_message(
+            self,
+            connection,
+            lead,
+            content: str,
+            reply_to_message_id: int | None = None,
+    ):
+        if not lead.email:
+            raise ValueError(
+                "Lead email is required."
+            )
+
+        access_token = (
+            await self.channel_resolver
+            .resolve_access_token(
+                connection_id=connection.id
+            )
+        )
+
+        # ==========================================
+        # Generate RFC Message-ID
+        # ==========================================
+
+        rfc_message_id = make_msgid()
+
+        email_message = MIMEText(
+            content,
+            "plain",
+            "utf-8",
+        )
+
+        email_message["To"] = lead.email
+
+        email_message["Message-ID"] = (
+            rfc_message_id
+        )
+
+        thread_id = None
+
+        # ==========================================
+        # Reply
+        # ==========================================
+
+        if reply_to_message_id:
+
+            parent_message = (
+                self.channel_resolver
+                .resolve_message_id(
+                    message_id=reply_to_message_id
+                )
+            )
+
+            if not parent_message:
+                raise ValueError(
+                    "Reply-to message not found."
+                )
+
+            if not parent_message.rfc_message_id:
+                raise ValueError(
+                    "Parent message does not have "
+                    "an RFC Message-ID."
+                )
+
+            email_message["In-Reply-To"] = (
+                parent_message.rfc_message_id
+            )
+
+            email_message["References"] = (
+                parent_message.rfc_message_id
+            )
+
+            thread_id = (
+                parent_message.conversation_id
+            )
+
+        # ==========================================
+        # Encode MIME
+        # ==========================================
+
+        raw_message = (
+            base64.urlsafe_b64encode(
+                email_message.as_bytes()
+            )
+            .decode("utf-8")
+        )
+
+        # ==========================================
+        # Send through Gmail
+        # ==========================================
+
+        sent_response = await self._send_message(
+            raw_message=raw_message,
+            access_token=access_token,
+            thread_id=thread_id,
+        )
+
+        # ==========================================
+        # Save outbound message
+        # ==========================================
+
+        await self.message_service.create_message(
+            lead_id=lead.id,
+
+            channel_connection_id=connection.id,
+
+            conversation_id=(
+                sent_response.get("threadId")
+            ),
+
+            provider_message_id=(
+                sent_response.get("id")
+            ),
+
+            rfc_message_id=(
+                rfc_message_id
+            ),
+
+            reply_to_message_id=(
+                reply_to_message_id
+            ),
+
+            direction=MessageDirection.OUTBOUND,
+
+            sender_identifier=(
+                connection.provider_identifier
+            ),
+
+            recipient_identifier=(
+                lead.email
+            ),
+
+            content=content,
+
+            message_type=MessageType.TEXT,
+
+            provider_created_at=None,
+        )
+
+        return sent_response
+
 
     async def _get_new_messages(
             self,
@@ -1007,3 +1152,33 @@ class GmailProvider(BaseChannelProvider):
         )
 
         return gmail_message_id
+
+    async def _send_message(
+            self,
+            raw_message: str,
+            access_token: str,
+            thread_id: str | None = None,
+    ):
+        payload = {
+            "raw": raw_message,
+        }
+
+        if thread_id:
+            payload["threadId"] = thread_id
+
+        response = await self.client.post(
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+            headers={
+                "Authorization": (
+                    f"Bearer {access_token}"
+                ),
+                "Content-Type": (
+                    "application/json"
+                ),
+            },
+            json=payload,
+        )
+
+        response.raise_for_status()
+
+        return response.json()

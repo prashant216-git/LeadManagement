@@ -5,6 +5,7 @@ from starlette.responses import RedirectResponse
 
 from app.DTOs.channelreponseDTO import ChannelResponseDTO
 from app.DTOs.connection.connection_response import ConnectResponse
+from app.DTOs.send_message import SendMessageDTO
 from app.channel_engine.channelresolver import ChannelResolver
 from app.channel_engine.engine import ChannelEngine
 from app.channel_engine.channelservice import ChannelService
@@ -115,6 +116,7 @@ def get_channel_service(
         credential_encryption_service=credential_service,
         channel_watch_repository=channel_watch_repository,
         channel_resolver=channel_resolver,
+        lead_repository=lead_repository
 
 
     )
@@ -310,4 +312,52 @@ async def disconnect_channel(
         raise HTTPException(
             status_code=500,
             detail="Unable to disconnect channel.",
+        )
+
+
+@router.post(
+    "/send-message",
+)
+async def send_message(
+    body: SendMessageDTO = Body(...),
+
+    channel_service: ChannelService = Depends(
+        get_channel_service
+    ),
+):
+    try:
+
+        return await (
+            channel_service
+            .send_message(
+                lead_id=body.lead_id,
+
+                channel_id=body.channel_id,
+
+                identifier=body.identifier,
+
+                content=body.content,
+
+                reply_to_message_id=(
+                    body.reply_to_message_id
+                ),
+            )
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+    except Exception as e:
+
+        print(
+            f"Failed to send message: {e}"
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to send message.",
         )

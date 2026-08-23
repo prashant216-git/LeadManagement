@@ -74,7 +74,8 @@ def get_channel_service(
         channel_master_repository=channel_master_repository,
         lead_repository=lead_repository,
         channel_resolver=channel_resolver,
-        message_service=message_service
+        message_service=message_service,
+
 
 
 
@@ -93,6 +94,7 @@ def get_channel_service(
         credential_encryption_service=credential_service,
         channel_watch_repository=channel_watch_repository,
         channel_resolver=channel_resolver,
+        lead_repository=lead_repository
 
 
 

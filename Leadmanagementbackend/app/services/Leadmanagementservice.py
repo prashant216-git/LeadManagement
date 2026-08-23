@@ -89,6 +89,7 @@ class LeadService:
             lead = Lead(
                 tenant_id=connection.tenant_id,
                 source_channel_id=source_channel_id,
+                channel_connection_id=connection.id,
                 name=name,
                 email=email,
                 phone_number=phone_number,
@@ -98,57 +99,78 @@ class LeadService:
                 lead
             )
 
-
-
-
-
     async def get_lead_by_channel_id(
-                self,
-                channel_id: int,
-                page: int = 1,
-                page_size: int = 20,
-                sort_by: str = "created_at",
-                sort_order: str = "desc",
-        ) -> LeadlistDTO:
-            offset = (
-                             page - 1
-                     ) * page_size
+            self,
+            channel_id: int,
+            page: int = 1,
+            page_size: int = 20,
+            sort_by: str = "created_at",
+            sort_order: str = "desc",
+    ) -> LeadlistDTO:
 
-            all_leads, total = (
-                self.lead_repository
-                .get_leads_by_channel_id(
-                    tenant_id=1,
-                    channel_id=channel_id,
-                    limit=page_size,
-                    offset=offset,
-                    sort_by=sort_by,
-                    sort_order=sort_order,
-                )
-            )
+        offset = (
+                         page - 1
+                 ) * page_size
 
-            valid_leads = []
-
-            for lead_details in all_leads:
-                valid_leads.append(
-                    Leadetails(
-                        id=lead_details.id,
-                        name=lead_details.name,
-                        email=lead_details.email,
-                        phone_number=lead_details.phone_number,
-                        created_at=lead_details.created_at,
-                    )
-                )
-
-            return LeadlistDTO(
+        all_leads, total = (
+            self.lead_repository
+            .get_leads_by_channel_id(
+                tenant_id=1,
                 channel_id=channel_id,
-                Leaddetails=valid_leads,
-                page=page,
-                page_size=page_size,
-                total=total,
-                total_pages=ceil(
-                    total / page_size
-                ) if total > 0 else 0,
+                limit=page_size,
+                offset=offset,
+                sort_by=sort_by,
+                sort_order=sort_order,
             )
+        )
+
+        valid_leads = []
+
+        for (
+                lead_details,
+                source_identifier,
+        ) in all_leads:
+            valid_leads.append(
+                Leadetails(
+                    connection_id=(
+                        lead_details.channel_connection_id
+                    ),
+
+                    source_identifier=(
+                        source_identifier
+                    ),
+
+                    id=lead_details.id,
+
+                    name=lead_details.name,
+
+                    email=lead_details.email,
+
+                    phone_number=lead_details.phone_number,
+
+                    created_at=(
+                        lead_details.created_at
+                    ),
+                )
+            )
+
+        return LeadlistDTO(
+            channel_id=channel_id,
+
+            Leaddetails=valid_leads,
+
+            page=page,
+
+            page_size=page_size,
+
+            total=total,
+
+            total_pages=(
+                ceil(total / page_size)
+                if total > 0
+                else 0
+            ),
+        )
 
     async def create_manual_lead(
             self,
@@ -167,6 +189,70 @@ class LeadService:
 
         return self.lead_repository.save(
             lead
+        )
+
+    async def get_manual_leads(
+            self,
+            page: int = 1,
+            page_size: int = 20,
+            sort_by: str = "created_at",
+            sort_order: str = "desc",
+    ) -> LeadlistDTO:
+
+        offset = (
+                         page - 1
+                 ) * page_size
+
+        all_leads, total = (
+            self.lead_repository
+            .get_manual_leads(
+                tenant_id=1,
+                limit=page_size,
+                offset=offset,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+        )
+
+        valid_leads = []
+
+        for lead_details in all_leads:
+            valid_leads.append(
+                Leadetails(
+                    connection_id=(
+                        lead_details.channel_connection_id
+                    ),
+
+                    source_identifier=None,
+
+                    id=lead_details.id,
+
+                    name=lead_details.name,
+
+                    email=lead_details.email,
+
+                    phone_number=lead_details.phone_number,
+
+                    created_at=lead_details.created_at,
+                )
+            )
+
+        return LeadlistDTO(
+            channel_id=None,
+
+            Leaddetails=valid_leads,
+
+            page=page,
+
+            page_size=page_size,
+
+            total=total,
+
+            total_pages=(
+                ceil(total / page_size)
+                if total > 0
+                else 0
+            ),
         )
 
 

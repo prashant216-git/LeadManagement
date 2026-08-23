@@ -64,8 +64,70 @@ class LeadRepository:
 
     def get_leads_by_channel_id(
             self,
-            tenant_id:int,
+            tenant_id: int,
             channel_id: int,
+            limit: int,
+            offset: int,
+            sort_by: str,
+            sort_order: str,
+    ):
+        allowed_sort_fields = {
+            "created_at": Lead.created_at,
+            "name": Lead.name,
+            "email": Lead.email,
+        }
+
+        sort_column = allowed_sort_fields.get(
+            sort_by,
+            Lead.created_at,
+        )
+
+        order_by = (
+            sort_column.asc()
+            if sort_order.lower() == "asc"
+            else sort_column.desc()
+        )
+
+        query = (
+            select(
+                Lead,
+                ChannelConnection.provider_identifier,
+            )
+            .outerjoin(
+                ChannelConnection,
+                Lead.channel_connection_id
+                == ChannelConnection.id,
+            )
+            .where(
+                Lead.source_channel_id == channel_id,
+                Lead.tenant_id == tenant_id,
+            )
+        )
+
+        total = (
+            self.db.execute(
+                select(
+                    func.count(Lead.id)
+                )
+                .where(
+                    Lead.source_channel_id == channel_id,
+                    Lead.tenant_id == tenant_id,
+                )
+            )
+        ).scalar_one()
+
+        result = self.db.execute(
+            query
+            .order_by(order_by)
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return result.all(), total
+
+    def get_manual_leads(
+            self,
+            tenant_id: int,
             limit: int,
             offset: int,
             sort_by: str,
@@ -91,18 +153,19 @@ class LeadRepository:
         query = (
             select(Lead)
             .where(
-                Lead.source_channel_id == channel_id,
-                Lead.tenant_id==tenant_id
+                Lead.tenant_id == tenant_id,
+                Lead.source_channel_id.is_(None),
             )
         )
 
         total = (
             self.db.execute(
-                select(func.count(Lead.id))
-
+                select(
+                    func.count(Lead.id)
+                )
                 .where(
-                    Lead.source_channel_id == channel_id,
-                    Lead.tenant_id == tenant_id
+                    Lead.tenant_id == tenant_id,
+                    Lead.source_channel_id.is_(None),
                 )
             )
         ).scalar_one()
@@ -114,7 +177,10 @@ class LeadRepository:
             .limit(limit)
         )
 
-        return result.scalars().all(), total
+        return (
+            result.scalars().all(),
+            total,
+        )
 
     # ======================================================
     # SAVE

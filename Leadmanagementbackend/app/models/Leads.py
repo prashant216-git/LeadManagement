@@ -75,6 +75,17 @@ class Lead(Base):
             ondelete="SET NULL",
         ),
         nullable=True,
+        default=None,
+        index=True,
+    )
+
+    channel_connection_id = Column(
+        Integer,
+        ForeignKey(
+            "channel_connections.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
         index=True,
     )
 

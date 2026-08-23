@@ -48,10 +48,12 @@ def get_lead_service(
 
 
 @router.get(
-    "/{channel_id}",
+    "/all",
 )
-async def get_leads_by_channel(
-    channel_id: int,
+async def get_leads(
+    channel_id: int | None = Query(
+        default=None,
+    ),
 
     page: int = Query(
         default=1,
@@ -74,18 +76,33 @@ async def get_leads_by_channel(
     ),
 
     lead_service: LeadService = Depends(
-        get_lead_service
+        get_lead_service,
     ),
 ):
 
     try:
 
-        return await lead_service.get_lead_by_channel_id(
-            channel_id=channel_id,
-            page=page,
-            page_size=page_size,
-            sort_by=sort_by,
-            sort_order=sort_order,
+        if channel_id is None:
+
+            return await (
+                lead_service
+                .get_manual_leads(
+                    page=page,
+                    page_size=page_size,
+                    sort_by=sort_by,
+                    sort_order=sort_order,
+                )
+            )
+
+        return await (
+            lead_service
+            .get_lead_by_channel_id(
+                channel_id=channel_id,
+                page=page,
+                page_size=page_size,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
         )
 
     except ValueError as e:

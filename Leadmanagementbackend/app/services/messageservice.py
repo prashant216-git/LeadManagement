@@ -31,6 +31,7 @@ class MessageService:
             conversation_id:str | None,
             channel_connection_id: int | None,
             provider_message_id: str | None = None,
+            rfc_message_id: str | None = None,
             reply_to_message_id: int | None = None,  # Internal Message.id
             direction: MessageDirection | None = None,
             sender_identifier: str | None = None,
@@ -66,6 +67,7 @@ class MessageService:
                 channel_connection_id=channel_connection_id,
                 provider_message_id=provider_message_id,
                 conversation_id=conversation_id,
+                rfc_message_id=rfc_message_id,
 
                 # Important:
                 # This is YOUR DB Message.id, not Gmail's ID

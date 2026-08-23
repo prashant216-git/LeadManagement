@@ -31,6 +31,7 @@ from app.repositories.ChannelConnectionRepository import (
     ChannelConnectionRepository,
 )
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
+from app.repositories.LeadRepository import LeadRepository
 from app.services.CredentialEncryptionService import CredentialEncryptionService
 
 from app.repositories.ChannelMasterRepositories import (
@@ -51,6 +52,7 @@ class ChannelService:
         credential_encryption_service :CredentialEncryptionService,
         channel_watch_repository : ChannelWatchRepository,
         channel_resolver : ChannelResolver,
+        lead_repository : LeadRepository,
 
 
     ):
@@ -61,6 +63,7 @@ class ChannelService:
         self.credential_encryption_service = credential_encryption_service
         self.channel_watch_repository = channel_watch_repository
         self.channel_resolver = channel_resolver
+        self.lead_repository = lead_repository
 
 
     # ==========================================================
@@ -504,20 +507,62 @@ class ChannelService:
     # ==========================================================
 
     async def send_message(
-        self,
-        connection_id: int,
-        request: SendMessageRequest,
+            self,
+            lead_id: int,
+            channel_id: int,
+            identifier: str,
+            content: str,
+            reply_to_message_id:int
     ):
-        """
-        Send a message using an existing connection.
-        """
 
-        provider = self.channel_engine.get_provider(
-            connection_id
+        lead = (
+            self.lead_repository
+            .get_by_id(lead_id)
         )
 
-        return provider.send_message(
-            request
+        if not lead:
+            raise ValueError(
+                "Lead not found."
+            )
+
+        channel = (
+            self.channel_master_repository
+            .get_by_id(channel_id)
+        )
+
+        if not channel:
+            raise ValueError(
+                "Channel not found."
+            )
+
+        connection = (
+            self.connection_repository
+            .get_by_provider_identifier(
+                channel_id=channel_id,
+                provider_account_identifier=identifier,
+            )
+        )
+
+        if not connection:
+            raise ValueError(
+                "No active connection found."
+            )
+
+        provider = self.channel_engine.create_provider(
+            channel_code=channel.code,
+            connection=connection,
+        )
+
+        if not provider:
+            raise ValueError(
+                f"Provider not found for {channel.code}"
+            )
+
+        return await provider.send_message(
+            reply_to_message_id=reply_to_message_id,
+            connection=connection,
+            lead=lead,
+            content=content,
         )
 
     async def get_all_channels(

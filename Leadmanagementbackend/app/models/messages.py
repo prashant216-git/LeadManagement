@@ -105,6 +105,7 @@ class Message(BaseModel):
         nullable=True,
     )
 
+
     # ======================================================
     # MESSAGE DIRECTION
     # ======================================================
@@ -113,6 +114,11 @@ class Message(BaseModel):
         Enum(MessageDirection),
         nullable=True,
     )
+    rfc_message_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
 
     # ======================================================
     # SENDER / RECIPIENT
