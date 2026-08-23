@@ -109,7 +109,7 @@ class ChannelConnectionRepository:
 
 
 
-        return result.scalar_one_or_none()
+        return result.scalars().all()
 
     def get_all_by_tenant_and_channel(
             self,

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
+from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.MessageDTO import LeadMessagesResponseDTO
 from app.db.session import get_db
@@ -191,5 +192,42 @@ async def create_lead_manual(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
+        )
+
+@router.get(
+    "/{lead_id}/channels/{channel_id}/identifiers",
+    response_model=LeadChannelIdentifiersDTO,
+)
+async def get_lead_channel_identifiers(
+    lead_id: int,
+    channel_id: int,
+    lead_service: LeadService = Depends(
+        get_lead_service
+    ),
+):
+
+    try:
+
+        return await lead_service.get_lead_channel_identifiers(
+            lead_id=lead_id,
+            channel_id=channel_id,
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        )
+
+    except Exception as e:
+
+        print(
+            f"Failed to retrieve channel identifiers: {e}"
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to retrieve channel identifiers.",
         )
 

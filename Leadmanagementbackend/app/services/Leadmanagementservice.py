@@ -1,5 +1,6 @@
 from math import ceil
 
+from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO, ChannelIdentifierDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.Leadlist import LeadlistDTO, Leadetails
 from app.enums.channel import ConnectionStatus
@@ -254,6 +255,69 @@ class LeadService:
                 if total > 0
                 else 0
             ),
+        )
+
+    async def get_lead_channel_identifiers(
+            self,
+            lead_id: int,
+            channel_id: int,
+    ) -> LeadChannelIdentifiersDTO:
+
+        # ==================================================
+        # Get Lead
+        # ==================================================
+
+        lead = self.lead_repository.get_by_id(
+            lead_id
+        )
+
+        if lead is None:
+            raise ValueError(
+                "Lead not found."
+            )
+
+        # ==================================================
+        # Get connected identifiers for lead's channel
+        # ==================================================
+
+        connections = (
+            self.channel_connection_repository
+            .get_connected_connection(
+                tenant_id=lead.tenant_id,
+                channel_id=channel_id,
+            )
+        )
+
+        # ==================================================
+        # Lead's related identifier first
+        # ==================================================
+
+        identifiers = sorted(
+            connections,
+            key=lambda connection: (
+                    connection.id != lead.channel_connection_id
+            ),
+        )
+
+        # ==================================================
+        # Return
+        # ==================================================
+
+        return LeadChannelIdentifiersDTO(
+            lead_id=lead.id,
+            channel_id=channel_id,
+            identifiers=[
+                ChannelIdentifierDTO(
+                    connection_id=connection.id,
+                    identifier=connection.provider_identifier,
+                    display_name=connection.display_name,
+                    is_lead_connection=(
+                            connection.id
+                            == lead.channel_connection_id
+                    ),
+                )
+                for connection in identifiers
+            ],
         )
 
 
