@@ -970,9 +970,24 @@ class GmailProvider(BaseChannelProvider):
 
             return None
 
+
+
         response.raise_for_status()
 
-        return response.json()
+        result = response.json()
+        label_ids = result.get(
+            "labelIds",
+            [],
+        )
+
+        if "CATEGORY_PROMOTIONS" in label_ids:
+            print(
+                "Promotional message. Skipping:",
+                message_id,
+            )
+            return None
+
+        return result
 
     def _extract_sender(
             self,
