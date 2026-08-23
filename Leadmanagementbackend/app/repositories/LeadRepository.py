@@ -5,6 +5,9 @@ from app.models.Leads import Lead
 from app.models.channel_connection import ChannelConnection
 from sqlalchemy import select, func
 
+from app.models.channel_master import ChannelMaster
+
+
 class LeadRepository:
 
     def __init__(
@@ -87,12 +90,8 @@ class LeadRepository:
 
         query = (
             select(Lead)
-            .join(
-                ChannelConnection,
-                Lead.channel_connection_id == ChannelConnection.id,
-            )
             .where(
-                ChannelConnection.channel_id == channel_id,
+                Lead.source_channel_id == channel_id,
                 Lead.tenant_id==tenant_id
             )
         )
@@ -100,14 +99,10 @@ class LeadRepository:
         total = (
             self.db.execute(
                 select(func.count(Lead.id))
-                .join(
-                    ChannelConnection,
-                    Lead.channel_connection_id
-                    == ChannelConnection.id,
-                )
+
                 .where(
-                    ChannelConnection.channel_id
-                    == channel_id
+                    Lead.source_channel_id == channel_id,
+                    Lead.tenant_id == tenant_id
                 )
             )
         ).scalar_one()
