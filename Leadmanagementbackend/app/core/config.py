@@ -32,12 +32,20 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: Optional[str] = None
     DATABASE_URL: Optional[str] = None
 
+    # JWT_SECRET_KEY: str
+    # JWT_ALGORITHM: str = "HS256"
+    #
+    # JWT_ISSUER: str | None = None
+    # JWT_AUDIENCE: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",
     )
+
+
 
 
 settings = Settings()

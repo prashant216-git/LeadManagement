@@ -1,4 +1,5 @@
 from math import ceil
+from uuid import UUID
 
 from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO, ChannelIdentifierDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
@@ -24,7 +25,7 @@ class LeadService:
 
     async def create_or_update_lead(
             self,
-            source_channel_id: int,
+            source_channel_id: UUID,
             identifier: str,
             name: str | None = None,
             email: str | None = None,
@@ -63,7 +64,7 @@ class LeadService:
             lead = (
                 self.lead_repository
                 .get_by_identifier(
-                    tenant_id=connection.tenant_id,
+                    user_id=connection.user_id,
                     source_channel_id=source_channel_id,
                     channel_connection_id=connection.id,
                     email=email,
@@ -89,7 +90,7 @@ class LeadService:
             print("creating new")
 
             lead = Lead(
-                tenant_id=connection.tenant_id,
+                user_id=connection.user_id,
                 source_channel_id=source_channel_id,
                 channel_connection_id=connection.id,
                 name=name,
@@ -103,7 +104,7 @@ class LeadService:
 
     async def get_lead_by_channel_id(
             self,
-            channel_id: int,
+            channel_id: UUID,
             page: int = 1,
             page_size: int = 20,
             sort_by: str = "created_at",
@@ -117,7 +118,7 @@ class LeadService:
         all_leads, total = (
             self.lead_repository
             .get_leads_by_channel_id(
-                tenant_id=1,
+                user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f"),
                 channel_id=channel_id,
                 limit=page_size,
                 offset=offset,
@@ -176,13 +177,13 @@ class LeadService:
 
     async def create_manual_lead(
             self,
-            tenant_id: int,
+            user_id: UUID,
             lead_data: CreateManualLeadDTO,
     ) -> Lead:
 
 
         lead = Lead(
-            tenant_id=tenant_id,
+            user_id=user_id,
             source_channel_id=None,
             name=lead_data.name,
             email=lead_data.email,
@@ -208,7 +209,7 @@ class LeadService:
         all_leads, total = (
             self.lead_repository
             .get_manual_leads(
-                tenant_id=1,
+                user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f"),
                 limit=page_size,
                 offset=offset,
                 sort_by=sort_by,
@@ -259,8 +260,8 @@ class LeadService:
 
     async def get_lead_channel_identifiers(
             self,
-            lead_id: int,
-            channel_id: int,
+            lead_id: UUID,
+            channel_id: UUID,
     ) -> LeadChannelIdentifiersDTO:
 
         # ==================================================
@@ -283,7 +284,7 @@ class LeadService:
         connections = (
             self.channel_connection_repository
             .get_connected_connection(
-                tenant_id=lead.tenant_id,
+                user_id=lead.user_id,
                 channel_id=channel_id,
             )
         )

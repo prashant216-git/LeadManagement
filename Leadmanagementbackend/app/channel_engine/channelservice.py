@@ -1,5 +1,7 @@
+import ast
 import secrets
 from datetime import datetime, timezone
+from uuid import UUID
 
 from fastapi import HTTPException
 
@@ -19,7 +21,7 @@ from app.DTOs.messages_and_attachment.send_message_request import (
 )
 from app.channel_engine.channelresolver import ChannelResolver
 from app.DTOs.channelreponseDTO import ConnectedAccountDTO
-from app.models import tenant
+from app.models import Users
 from app.models.ChannelWatch import ChannelWatch
 from app.channel_engine.registry import ChannelProviderRegistry
 from app.enums.channel import ConnectionStatus
@@ -72,7 +74,7 @@ class ChannelService:
 
     async def connect(
         self,
-        tenant_id: int,
+        user_id: UUID,
         channel_code: str,
     ):
         """
@@ -118,9 +120,9 @@ class ChannelService:
         existing_connection = (
             self.connection_repository
             .get_pending_connection(
-                tenant_id=tenant_id,
+                user_id=user_id,
                 channel_id=channel.id,
-                created_by=tenant_id,
+                created_by=user_id,
             )
         )
 
@@ -144,13 +146,13 @@ class ChannelService:
         from app.models.channel_connection import (
             ChannelConnection,
         )
-        random_state = secrets.token_urlsafe(15)[:20]
-        tenantmasked = tenant_id + 1001
-        state = f"{random_state}{tenantmasked}"
+        random_state = secrets.token_urlsafe(32)
+
+        state = f"{random_state}"
         connection = ChannelConnection(
-            tenant_id=tenant_id,
+            user_id=user_id,
             channel_id=channel.id,
-            created_by=tenant_id,
+            created_by=user_id,
             oauth_state=state
         )
         connection = self.connection_repository.save(
@@ -211,12 +213,15 @@ class ChannelService:
             )
         except CallbackException as e:
             state=e.error.state
-            tenantmasked = int(state[20:])
 
-            tenantid = tenantmasked - 1001
+
+
+
+            # If data is returned as bytes or JSON string instead of dict:
+
 
             connection = self.connection_repository.get_by_oauth_state(
-                oauth_state=state, tenant_id=tenantid)
+                oauth_state=state, )
             if connection is not None:
                 connection.connection_status = (
                     ConnectionStatus.FAILED
@@ -242,19 +247,17 @@ class ChannelService:
 
         state=result["state"]
 
-        tenantmasked=int(state[20:])
-
-        tenantid=tenantmasked-1001
 
 
-        print(tenantid)
+
+
 
         # ------------------------------------------------------
         # 2. Get connection
         # ------------------------------------------------------
 
         connection = self.connection_repository.get_by_oauth_state(
-            oauth_state=state,tenant_id=tenantid)
+            oauth_state=state,)
 
         if connection is None:
             raise ValueError(
@@ -329,6 +332,7 @@ class ChannelService:
         connection.display_name = (
             result.get("display_name")
         )
+        connection.connected_at=datetime.now(timezone.utc)
 
         self.connection_repository.update(
             connection
@@ -347,7 +351,7 @@ class ChannelService:
     async def setup_watch(
             self,
             identifier:str,
-            tenant_id: int,
+            user_id: UUID,
             channel_code:str
 
     ):
@@ -394,7 +398,7 @@ class ChannelService:
 
     async def disconnect(
             self,
-            connection_id: int,
+            connection_id: UUID,
     ):
 
         # ==================================================
@@ -508,11 +512,11 @@ class ChannelService:
 
     async def send_message(
             self,
-            lead_id: int,
-            channel_id: int,
+            lead_id: UUID,
+            channel_id: UUID,
             identifier: str,
             content: str,
-            reply_to_message_id:int
+            reply_to_message_id:UUID
     ):
 
         lead = (
@@ -567,7 +571,7 @@ class ChannelService:
 
     async def get_all_channels(
             self,
-            tenant_id: int,
+            user_id: UUID,
     ) -> list[ChannelResponseDTO]:
 
 
@@ -585,7 +589,7 @@ class ChannelService:
             connections =  (
                 self.connection_repository
                 .get_all_by_tenant_and_channel(
-                    tenant_id=tenant_id,
+                    user_id=user_id,
                     channel_id=channel.id,
                 )
             )
@@ -679,8 +683,8 @@ class ChannelService:
     async def resolve_connection_id(
             self,
             identifier: str,
-            channel_id: int,
-    ) -> int:
+            channel_id: UUID,
+    ) -> UUID:
 
         connection = (
             self.connection_repository
@@ -707,7 +711,7 @@ class ChannelService:
 
     async def resolve_watch(
             self,
-            connection_id: int,
+            connection_id: UUID,
     ):
 
         watch = await (
@@ -726,7 +730,7 @@ class ChannelService:
 
     async def resolve_access_token(
             self,
-            connection_id: int,
+            connection_id: UUID,
     ) -> str:
 
         credential = (

@@ -1,80 +1,74 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
     String,
+    Uuid,
     text,
 )
-
-from app.models.tenant import Tenant
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.enums.channel import (
     AdminStatus,
     ConnectionStatus,
 )
-
 from app.models.base_model import BaseModel
+
+if TYPE_CHECKING:
+    from app.models.channel_credential import ChannelCredential
+    from app.models.channel_master import ChannelMaster
+    from app.models.ChannelWatch import ChannelWatch
+    from app.models.messages import Message
+    from app.models.Users import User
 
 
 class ChannelConnection(BaseModel):
-    """
-    Represents a connected communication account.
-
-    The record is created when a user starts connecting
-    a channel and may initially exist in CONNECTING state.
-
-    Example lifecycle:
-
-        CONNECTING
-            ↓
-        CONNECTED
-            ↓
-        DISCONNECTED
-    """
-
     __tablename__ = "channel_connections"
 
     __table_args__ = (
         Index(
             "uq_active_channel_connection",
-            "tenant_id",
+            "user_id",
             "channel_id",
             "provider_account_id",
             unique=True,
-            postgresql_where=text(
-                "connection_status = 'CONNECTED'"
-            ),
+            postgresql_where=text("connection_status = 'CONNECTED'"),
         ),
-
-        Index(
-            "idx_channel_tenant",
-            "tenant_id",
-        ),
-
-        Index(
-            "idx_channel_provider",
-            "provider_account_id",
-        ),
+        Index("idx_channel_user", "user_id"),
+        Index("idx_channel_provider", "provider_account_id"),
     )
 
     # ==========================================================
     # Ownership
     # ==========================================================
 
-    tenant_id: Mapped[int] = mapped_column(
-        ForeignKey("tenants.id"),
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
 
-    channel_id: Mapped[int] = mapped_column(
-        ForeignKey("channel_master.id"),
+    channel_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("channel_master.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
 
-    created_by: Mapped[int] = mapped_column(
+    created_by: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id"),
         nullable=False,
     )
 
@@ -82,23 +76,16 @@ class ChannelConnection(BaseModel):
     # Provider Identity
     # ==========================================================
 
-    # Unknown until OAuth/provider authorization completes.
     provider_account_id: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
     )
 
-    # Provider-specific identifier.
-    # Example:
-    # Gmail -> email address
-    # WhatsApp -> phone number/account identifier
     provider_identifier: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
     )
 
-    # Friendly name shown in the CRM.
-    # Unknown during initial connection.
     display_name: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
@@ -156,30 +143,37 @@ class ChannelConnection(BaseModel):
     # Relationships
     # ==========================================================
 
-    channel = relationship(
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="channel_connections",
+        foreign_keys=[user_id],
+    )
+
+    creator: Mapped["User"] = relationship(
+        "User",
+        foreign_keys=[created_by],
+    )
+
+    channel: Mapped["ChannelMaster"] = relationship(
         "ChannelMaster",
         back_populates="connections",
     )
 
-    credentials = relationship(
+    credentials: Mapped["ChannelCredential | None"] = relationship(
         "ChannelCredential",
         back_populates="connection",
         uselist=False,
         cascade="all, delete-orphan",
     )
 
-    tenant: Mapped["Tenant"] = relationship(
-        "Tenant",
-        back_populates="channel_connections",
-    )
-
-    watch = relationship(
+    watch: Mapped["ChannelWatch | None"] = relationship(
         "ChannelWatch",
         back_populates="connection",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    messages = relationship(
+
+    messages: Mapped[list["Message"]] = relationship(
         "Message",
         back_populates="channel_connection",
     )

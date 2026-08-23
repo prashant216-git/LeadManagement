@@ -1,39 +1,25 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DateTime,
-    ForeignKey,
-)
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from __future__ import annotations
 
-from app.db.database import Base
+from uuid import UUID
+
+from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.models.Users import User
+from app.models.messages import Message
+
+from app.models.base_model import BaseModel
 
 
-class Lead(Base):
+class Lead(BaseModel):
     __tablename__ = "leads"
 
     # ======================================================
-    # Primary Key
+    # User
     # ======================================================
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True,
-    )
-
-
-
-    # ======================================================
-    # Tenant
-    # ======================================================
-
-    tenant_id = Column(
-        Integer,
+    user_id: Mapped[UUID] = mapped_column(
         ForeignKey(
-            "tenants.id",
+            "users.id",
             ondelete="CASCADE",
         ),
         nullable=False,
@@ -44,17 +30,17 @@ class Lead(Base):
     # Lead Information
     # ======================================================
 
-    name = Column(
+    name: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
     )
 
-    email = Column(
+    email: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
     )
 
-    phone_number = Column(
+    phone_number: Mapped[str | None] = mapped_column(
         String(20),
         nullable=True,
     )
@@ -63,24 +49,21 @@ class Lead(Base):
     # AI / CRM
     # ======================================================
 
-    summary = Column(
-        String,
+    summary: Mapped[str | None] = mapped_column(
+        Text,
         nullable=True,
     )
 
-    source_channel_id = Column(
-        Integer,
+    source_channel_id: Mapped[UUID | None] = mapped_column(
         ForeignKey(
             "channel_master.id",
             ondelete="SET NULL",
         ),
         nullable=True,
-        default=None,
         index=True,
     )
 
-    channel_connection_id = Column(
-        Integer,
+    channel_connection_id: Mapped[UUID | None] = mapped_column(
         ForeignKey(
             "channel_connections.id",
             ondelete="SET NULL",
@@ -89,32 +72,13 @@ class Lead(Base):
         index=True,
     )
 
-
-
-    # ======================================================
-    # Timestamps
-    # ======================================================
-
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-    )
-
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
     # ======================================================
     # Relationships
     # ======================================================
 
-    tenant = relationship(
-        "Tenant",
-        back_populates="leads",
-    )
-    messages = relationship(
+    user: Mapped["User"] = relationship("User", back_populates="leads")
+
+    messages: Mapped[list["Message"]] = relationship(
         "Message",
         back_populates="lead",
     )

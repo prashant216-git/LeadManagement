@@ -1,6 +1,6 @@
 
 from app.db.database import Base
-from sqlalchemy import Column
+from sqlalchemy import Column, UUID
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import DateTime
@@ -20,7 +20,7 @@ class Summary(Base):
     )
 
     user_id = Column(
-        Integer,
+        UUID,
         ForeignKey("users.id"),
         unique=True,
         nullable=False

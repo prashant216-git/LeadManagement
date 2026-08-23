@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Request
@@ -140,20 +142,14 @@ async def connect_channel(
     # ======================================================
     # TEMPORARY TEST TENANT
     # ======================================================
-    #
-    # Later:
-    #
-    # tenant_id = current_user.tenant_id
-    #
-    # For now we always use tenant 1.
-    #
 
-    tenant_id = 1
+
+    user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
     print(settings.GOOGLE_CLIENT_ID)
     try:
 
         return await channel_service.connect(
-            tenant_id=tenant_id,
+            user_id=user_id,
             channel_code=channel_code,
         )
 
@@ -252,10 +248,10 @@ channel_service: ChannelService = Depends(
 ):
     try:
         # Temporary tenant for testing
-        tenant_id = 1
+        user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
 
         return await channel_service.setup_watch(identifier=identifier,
-            tenant_id=tenant_id,channel_code="gmail"
+            user_id=user_id,channel_code="gmail"
         )
 
     except Exception as e:
@@ -271,8 +267,8 @@ async def get_all_channels(
     service: ChannelService = Depends(get_channel_service),
 ):
     try:
-        tenant_id=1
-        return await service.get_all_channels(tenant_id=tenant_id)
+        user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
+        return await service.get_all_channels(user_id=user_id)
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -284,7 +280,7 @@ async def get_all_channels(
     "/{connection_id}/disconnect",
 )
 async def disconnect_channel(
-    connection_id: int,
+    connection_id: UUID,
     channel_service: ChannelService = Depends(
         get_channel_service
     ),

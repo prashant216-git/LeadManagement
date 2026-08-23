@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 
 from app.models.ChannelWatch import ChannelWatch
@@ -14,7 +16,7 @@ class ChannelWatchRepository:
 
     def get_by_connection_id(
         self,
-        connection_id: int,
+        connection_id: UUID,
     ) -> ChannelWatch | None:
 
         result = self.db.execute(
@@ -27,7 +29,7 @@ class ChannelWatchRepository:
 
     def get_by_connection_id_for_update(
             self,
-            connection_id: int,
+            connection_id: UUID,
     ) -> ChannelWatch | None:
         result = self.db.execute(
             select(ChannelWatch)

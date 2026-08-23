@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +18,7 @@ class ChannelMasterRepository:
 
     def get_by_id(
         self,
-        channel_id: int,
+        channel_id: UUID,
     ) -> ChannelMaster | None:
 
         result =  self.db.execute(

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import UUID
 
 from sqlalchemy import func, select
 
@@ -12,7 +13,7 @@ class DashboardRepository:
 
     def get_lead_counts(
         self,
-        tenant_id: int,
+        user_id: UUID,
     ):
 
         now = datetime.now(timezone.utc)
@@ -49,7 +50,7 @@ class DashboardRepository:
                 "monthly_leads"
             ),
         ).where(
-            Lead.tenant_id == tenant_id
+            Lead.user_id == user_id
         )
 
         result = self.db.execute(

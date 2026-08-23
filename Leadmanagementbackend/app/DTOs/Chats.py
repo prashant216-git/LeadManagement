@@ -1,10 +1,11 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class ChatSidebarItemDTO(BaseModel):
-    lead_id: int
+    lead_id: UUID
     name: str | None = None
     email: str | None = None
     phone_number: str | None = None
@@ -14,5 +15,5 @@ class ChatSidebarItemDTO(BaseModel):
 
 
 class ChatSidebarDTO(BaseModel):
-    channel_id: int
+    channel_id: UUID
     chats: list[ChatSidebarItemDTO]

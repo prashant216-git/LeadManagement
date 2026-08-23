@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ from app.enums.message import (
 
 class MessageDetailsDTO(BaseModel):
 
-    id: int
+    id: UUID
 
     direction: MessageDirection | None = None
 
@@ -22,14 +23,14 @@ class MessageDetailsDTO(BaseModel):
 
     message_type: MessageType | None = None
 
-    repliedmessageid: int | None = None
+    repliedmessageid: UUID | None = None
 
     provider_created_at: datetime | None = None
 
 
 class LeadMessagesResponseDTO(BaseModel):
 
-    lead_id: int
+    lead_id: UUID
 
     lead_name: str
 

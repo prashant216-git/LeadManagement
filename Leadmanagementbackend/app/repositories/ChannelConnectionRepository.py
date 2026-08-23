@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +18,7 @@ class ChannelConnectionRepository:
 
     def get_by_id(
         self,
-        connection_id: int,
+        connection_id: UUID,
     ) -> ChannelConnection | None:
 
         result = self.db.execute(
@@ -31,13 +33,13 @@ class ChannelConnectionRepository:
 
     def get_by_oauth_state(
             self,
-            tenant_id: int,
+
             oauth_state: str,
     ) -> ChannelConnection | None:
         result = self.db.execute(
             select(ChannelConnection)
             .where(
-                ChannelConnection.tenant_id == tenant_id,
+
                 ChannelConnection.oauth_state == oauth_state,
             )
         )
@@ -50,7 +52,7 @@ class ChannelConnectionRepository:
 
     def get_by_provider_identifier(
         self,
-        channel_id: int,
+        channel_id: UUID,
         provider_account_identifier: str,
     ) -> ChannelConnection | None:
 
@@ -71,15 +73,15 @@ class ChannelConnectionRepository:
 
     def get_pending_connection(
         self,
-        tenant_id: int,
-        channel_id: int,
-        created_by: int,
+        user_id: UUID,
+        channel_id: UUID,
+        created_by: UUID,
     ) -> ChannelConnection | None:
 
         result = self.db.execute(
             select(ChannelConnection)
             .where(
-                ChannelConnection.tenant_id == tenant_id,
+                ChannelConnection.user_id == user_id,
                 ChannelConnection.channel_id == channel_id,
                 ChannelConnection.created_by == created_by,
                 ChannelConnection.connection_status
@@ -91,15 +93,15 @@ class ChannelConnectionRepository:
 
     def get_connected_connection(
         self,
-        tenant_id: int,
-        channel_id: int,
+        user_id: UUID,
+        channel_id: UUID,
 
     ) -> ChannelConnection | None:
 
         result = self.db.execute(
             select(ChannelConnection)
             .where(
-                ChannelConnection.tenant_id == tenant_id,
+                ChannelConnection.user_id == user_id,
                 ChannelConnection.channel_id == channel_id,
 
                 ChannelConnection.connection_status
@@ -113,13 +115,13 @@ class ChannelConnectionRepository:
 
     def get_all_by_tenant_and_channel(
             self,
-            tenant_id: int,
-            channel_id: int,
+            user_id: UUID,
+            channel_id: UUID,
     ) -> list[ChannelConnection]:
         result =  self.db.execute(
             select(ChannelConnection)
             .where(
-                ChannelConnection.tenant_id == tenant_id,
+                ChannelConnection.user_id == user_id,
                 ChannelConnection.channel_id == channel_id,
                 ChannelConnection.connection_status== ConnectionStatus.CONNECTED,
             )

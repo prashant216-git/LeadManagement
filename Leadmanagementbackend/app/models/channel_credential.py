@@ -1,12 +1,13 @@
 from datetime import datetime
 
+
 from sqlalchemy import (
     Boolean,
     DateTime,
     Enum,
     ForeignKey,
     Index,
-    LargeBinary,
+    LargeBinary, UUID,
 )
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -38,7 +39,7 @@ class ChannelCredential(BaseModel):
     # Relationship
     # --------------------------------------------------------
 
-    channel_connection_id: Mapped[int] = mapped_column(
+    channel_connection_id: Mapped[UUID] = mapped_column(
         ForeignKey(
             "channel_connections.id",
             ondelete="CASCADE",

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -63,7 +65,7 @@ def get_lead_service(
     "/all",
 )
 async def get_leads(
-    channel_id: int | None = Query(
+    channel_id: UUID | None = Query(
         default=None,
     ),
 
@@ -141,8 +143,8 @@ async def get_leads(
     response_model=LeadMessagesResponseDTO,
 )
 async def get_lead_messages(
-    lead_id: int,
-    channel_id:int,
+    lead_id: UUID,
+    channel_id:UUID,
 
     message_service: MessageService = Depends(
         get_message_service
@@ -188,11 +190,11 @@ async def create_lead_manual(
 
     try:
 
-        tenant_id = 1
+        user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
 
         created_lead = (
             await lead_service.create_manual_lead(
-                tenant_id=tenant_id,
+                user_id=user_id,
                 lead_data=lead_details,
             )
         )
@@ -211,8 +213,8 @@ async def create_lead_manual(
     response_model=LeadChannelIdentifiersDTO,
 )
 async def get_lead_channel_identifiers(
-    lead_id: int,
-    channel_id: int,
+    lead_id: UUID,
+    channel_id: UUID,
     lead_service: LeadService = Depends(
         get_lead_service
     ),
@@ -249,7 +251,7 @@ async def get_lead_channel_identifiers(
     response_model=ChatSidebarDTO,
 )
 async def get_chat_sidebar(
-    channel_id: int,
+    channel_id: UUID,
     chat_service: ChatService = Depends(
         get_chat_service
     ),

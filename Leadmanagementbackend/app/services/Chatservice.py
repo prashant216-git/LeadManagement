@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.DTOs.Chats import ChatSidebarDTO, ChatSidebarItemDTO
 
 
@@ -13,13 +15,13 @@ class ChatService:
 
     async def get_chat_sidebar(
         self,
-        channel_id: int,
+        channel_id: UUID,
     ) -> ChatSidebarDTO:
 
         leads, _ = (
             self.lead_repository
             .get_leads_by_channel_id(
-                tenant_id=1,
+                user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f"),
                 channel_id=channel_id,
                 limit=100,
                 offset=0,

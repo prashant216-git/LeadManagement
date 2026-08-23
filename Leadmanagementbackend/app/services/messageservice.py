@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -27,12 +28,12 @@ class MessageService:
 
     async def create_message(
             self,
-            lead_id: int | None,
+            lead_id: UUID | None,
             conversation_id:str | None,
-            channel_connection_id: int | None,
+            channel_connection_id: UUID | None,
             provider_message_id: str | None = None,
             rfc_message_id: str | None = None,
-            reply_to_message_id: int | None = None,  # Internal Message.id
+            reply_to_message_id: UUID | None = None,  # Internal Message.id
             direction: MessageDirection | None = None,
             sender_identifier: str | None = None,
             recipient_identifier: str | None = None,
@@ -86,8 +87,8 @@ class MessageService:
 
     async def get_messages_by_lead_id(
             self,
-            lead_id: int,
-            channel_id:int
+            lead_id: UUID,
+            channel_id:UUID
     ) -> LeadMessagesResponseDTO:
 
         lead = (

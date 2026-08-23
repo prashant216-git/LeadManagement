@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,14 +24,14 @@ class LeadRepository:
 
     def get_by_identifier(
             self,
-            tenant_id: int,
-            source_channel_id: int,
-            channel_connection_id: int,
+            user_id: UUID,
+            source_channel_id: UUID,
+            channel_connection_id: UUID,
             email: str | None = None,
             phone_number: str | None = None,
     ):
         conditions = [
-            Lead.tenant_id == tenant_id,
+            Lead.user_id == user_id,
             Lead.source_channel_id == source_channel_id,
             Lead.channel_connection_id == channel_connection_id,
         ]
@@ -61,7 +63,7 @@ class LeadRepository:
 
     def get_by_id(
         self,
-        lead_id: int,
+        lead_id: UUID,
     ):
         result = self.db.execute(
             select(Lead).where(
@@ -73,8 +75,8 @@ class LeadRepository:
 
     def get_leads_by_channel_id(
             self,
-            tenant_id: int,
-            channel_id: int,
+            user_id: UUID,
+            channel_id: UUID,
             limit: int,
             offset: int,
             sort_by: str,
@@ -109,7 +111,7 @@ class LeadRepository:
             )
             .where(
                 Lead.source_channel_id == channel_id,
-                Lead.tenant_id == tenant_id,
+                Lead.user_id == user_id,
             )
         )
 
@@ -120,7 +122,7 @@ class LeadRepository:
                 )
                 .where(
                     Lead.source_channel_id == channel_id,
-                    Lead.tenant_id == tenant_id,
+                    Lead.user_id == user_id,
                 )
             )
         ).scalar_one()
@@ -136,7 +138,7 @@ class LeadRepository:
 
     def get_manual_leads(
             self,
-            tenant_id: int,
+            user_id: UUID,
             limit: int,
             offset: int,
             sort_by: str,
@@ -162,7 +164,7 @@ class LeadRepository:
         query = (
             select(Lead)
             .where(
-                Lead.tenant_id == tenant_id,
+                Lead.user_id == user_id,
                 Lead.source_channel_id.is_(None),
             )
         )
@@ -173,7 +175,7 @@ class LeadRepository:
                     func.count(Lead.id)
                 )
                 .where(
-                    Lead.tenant_id == tenant_id,
+                    Lead.user_id == user_id,
                     Lead.source_channel_id.is_(None),
                 )
             )

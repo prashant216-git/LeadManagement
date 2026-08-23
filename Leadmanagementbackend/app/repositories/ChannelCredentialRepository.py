@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +13,7 @@ class ChannelCredentialRepository:
 
     def get_by_connection_id(
         self,
-        connection_id: int,
+        connection_id: UUID,
     ) -> ChannelCredential | None:
 
         result = self.db.execute(

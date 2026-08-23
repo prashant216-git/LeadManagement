@@ -1,12 +1,13 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
 class Leadetails(BaseModel):
-    connection_id:int | None=None
+    connection_id:UUID | None=None
     source_identifier:str | None=None
-    id: int
+    id: UUID
     name: str | None = None
     email: str | None = None
     phone_number: str | None = None
@@ -14,7 +15,7 @@ class Leadetails(BaseModel):
 
 
 class LeadlistDTO(BaseModel):
-    channel_id: int | None=None
+    channel_id: UUID | None=None
     Leaddetails: list[Leadetails] = Field(
         default_factory=list
     )

@@ -1,9 +1,11 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
 class ChannelIdentifierDTO(BaseModel):
 
-    connection_id: int
+    connection_id: UUID
 
     identifier: str | None = None
 
@@ -14,8 +16,8 @@ class ChannelIdentifierDTO(BaseModel):
 
 class LeadChannelIdentifiersDTO(BaseModel):
 
-    lead_id: int
+    lead_id: UUID
 
-    channel_id: int
+    channel_id: UUID
 
     identifiers: list[ChannelIdentifierDTO] = []

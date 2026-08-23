@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.DTOs import connection
 
 from app.channel_engine.registry import ChannelProviderRegistry
@@ -115,7 +117,7 @@ class ChannelEngine:
 
     async def get_provider(
         self,
-        connection_id: int,
+        connection_id: UUID,
     ):
         """
         Resolve a provider for an existing connection.

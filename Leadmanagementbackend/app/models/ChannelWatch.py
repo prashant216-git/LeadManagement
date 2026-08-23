@@ -5,7 +5,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
-    String,
+    String, UUID,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -54,7 +54,7 @@ class ChannelWatch(BaseModel):
     # Connection
     # ==========================================================
 
-    channel_connection_id: Mapped[int] = mapped_column(
+    channel_connection_id: Mapped[UUID] = mapped_column(
         ForeignKey(
             "channel_connections.id",
             ondelete="CASCADE",

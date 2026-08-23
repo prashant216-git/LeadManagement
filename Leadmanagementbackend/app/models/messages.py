@@ -7,7 +7,7 @@ from sqlalchemy import (
     Index,
     String,
     Text,
-    JSON,
+    JSON, UUID,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -55,7 +55,7 @@ class Message(BaseModel):
     # LEAD MAPPING
     # ======================================================
 
-    lead_id: Mapped[int | None] = mapped_column(
+    lead_id: Mapped[UUID] = mapped_column(
         ForeignKey(
             "leads.id",
             ondelete="SET NULL",
@@ -76,7 +76,7 @@ class Message(BaseModel):
     # CHANNEL CONNECTION
     # ======================================================
 
-    channel_connection_id: Mapped[int | None] = mapped_column(
+    channel_connection_id: Mapped[UUID] = mapped_column(
         ForeignKey(
             "channel_connections.id",
             ondelete="SET NULL",
@@ -97,7 +97,7 @@ class Message(BaseModel):
     # REPLY TO MESSAGE
     # ======================================================
 
-    reply_to_message_id: Mapped[int | None] = mapped_column(
+    reply_to_message_id: Mapped[UUID] = mapped_column(
         ForeignKey(
             "messages.id",
             ondelete="SET NULL",

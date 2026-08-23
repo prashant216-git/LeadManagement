@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -44,8 +46,8 @@ async def get_dashboard_counts(
         get_dashboard_service
     ),
 ):
-    tenant_id=1
+    user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
 
     return await dashboard_service.get_counts(
-        tenant_id=tenant_id
+        user_id=user_id
     )

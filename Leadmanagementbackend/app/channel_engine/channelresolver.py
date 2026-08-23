@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import httpx
 
 from app.core.config import settings
@@ -32,8 +34,8 @@ class ChannelResolver:
     def resolve_connection_id(
         self,
         identifier: str,
-        channel_id: int,
-    ) -> int:
+        channel_id: UUID,
+    ) -> UUID:
 
         connection =  (
             self.connection_repository
@@ -53,7 +55,7 @@ class ChannelResolver:
 
     def resolve_watch(
         self,
-        connection_id: int,
+        connection_id: UUID,
     ):
 
         watch =  (
@@ -70,7 +72,7 @@ class ChannelResolver:
 
     async def resolve_access_token(
         self,
-        connection_id: int,
+        connection_id: UUID,
     ) -> str:
 
         print("resolving token")
@@ -137,7 +139,7 @@ class ChannelResolver:
     def resolve_channel_id(
             self,
             channel_code: str,
-    ) -> int:
+    ) -> UUID:
 
         channel = (
             self.channel_master_repository
@@ -155,7 +157,7 @@ class ChannelResolver:
 
     async def save_refreshed_credentials(
             self,
-            connection_id: int,
+            connection_id: UUID,
             access_token: str,
             expires_in: int | None = None,
     ):
@@ -212,7 +214,7 @@ class ChannelResolver:
 
     async def refresh_access_token(
             self,
-            connection_id: int,
+            connection_id: UUID,
             refresh_token: str,
     ) -> str:
 
@@ -265,7 +267,7 @@ class ChannelResolver:
 
     async def resolve_refresh_token(
         self,
-        connection_id: int,
+        connection_id: UUID,
     ) -> str:
 
         print("resolving token")
@@ -299,7 +301,7 @@ class ChannelResolver:
     async def resolve_reply_to_message_id(
             self,
             provider_message_id: str | None,
-    ) -> int | None:
+    ) -> UUID | None:
         if not provider_message_id:
             return None
 
@@ -317,7 +319,7 @@ class ChannelResolver:
 
     def resolve_message_id(
             self,
-            message_id: int,
+            message_id: UUID,
     ) -> Message | None:
         result =self.message_repository.get_by_id(message_id)
 

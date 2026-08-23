@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.models import Lead
 from app.models.channel_connection import ChannelConnection
 from app.models.messages import Message
@@ -24,8 +26,8 @@ class MessageRepository:
     def get_by_provider_message_id_and_lead_id(
             self,
             provider_message_id: str,
-            channel_connection_id:int,
-            lead_id: int,
+            channel_connection_id:UUID,
+            lead_id: UUID,
     ) -> Message | None:
         result = self.db.execute(
             select(Message)
@@ -39,8 +41,8 @@ class MessageRepository:
 
     def get_messages_by_lead_id_and_channel_id(
             self,
-            lead_id: int,
-            channel_id: int,
+            lead_id: UUID,
+            channel_id: UUID,
     ) -> list[Message]:
         statement = (
             select(Message)
@@ -65,7 +67,7 @@ class MessageRepository:
 
     def get_latest_message_by_lead_id(
             self,
-            lead_id: int,
+            lead_id: UUID,
     ) -> Message | None:
         result = self.db.execute(
             select(Message)
@@ -95,7 +97,7 @@ class MessageRepository:
 
     def get_by_id(
             self,
-            message_id: int,
+            message_id: UUID,
     ) -> Message | None:
         statement = (
             select(Message)
