@@ -600,6 +600,7 @@ class GmailProvider(BaseChannelProvider):
             accesstoken,
         )
 
+
         # 6. Create/update leads
 
         for message in messages:
@@ -611,20 +612,34 @@ class GmailProvider(BaseChannelProvider):
                 )
                 continue
 
-            sender = self._extract_sender(
+            sender_details = self._extract_sender(
                 message
             )
 
-            if sender is None:
+            if sender_details is None:
                 continue
+
+            sender = sender_details["sender"]
+            recipient = sender_details["recipient"]
+
+            lead_email = sender["email"]
+            lead_name = sender["name"]
+
+            if (
+                    sender["email"].lower()
+                    == email_address.lower()
+            ):
+                if recipient:
+                    lead_email = recipient["email"]
+                    lead_name = recipient["name"]
 
             createdlead = (
                 await self.lead_service
                 .create_or_update_lead(
                     source_channel_id=channelcodeid,
                     identifier=email_address,
-                    email=sender["email"],
-                    name=sender["name"],
+                    email=lead_email,
+                    name=lead_name,
                 )
             )
 
@@ -694,7 +709,7 @@ class GmailProvider(BaseChannelProvider):
                 ),
 
                 recipient_identifier=(
-                    email_address
+                    recipient["email"]
                 ),
 
                 content=(
@@ -969,37 +984,84 @@ class GmailProvider(BaseChannelProvider):
             .get("headers", [])
         )
 
+        sender_data = None
+        recipient_data = None
+
         for header in headers:
 
-            if header["name"].lower() != "from":
-                continue
-
-            sender = header["value"]
-
-            match = re.match(
-                r"^(.*?)\s*<(.+?)>$",
-                sender,
+            header_name = (
+                header["name"].lower()
             )
 
-            if match:
-                return {
-                    "name": (
-                        match.group(1)
-                        .strip()
-                        .strip('"')
-                    ),
-                    "email": (
-                        match.group(2)
-                        .strip()
-                    ),
-                }
+            header_value = header["value"]
 
-            return {
-                "name": None,
-                "email": sender.strip(),
-            }
+            # ==========================================
+            # Sender
+            # ==========================================
 
-        return None
+            if header_name == "from":
+
+                match = re.match(
+                    r"^(.*?)\s*<(.+?)>$",
+                    header_value,
+                )
+
+                if match:
+                    sender_data = {
+                        "name": (
+                            match.group(1)
+                            .strip()
+                            .strip('"')
+                        ),
+                        "email": (
+                            match.group(2)
+                            .strip()
+                        ),
+                    }
+
+                else:
+                    sender_data = {
+                        "name": None,
+                        "email": header_value.strip(),
+                    }
+
+            # ==========================================
+            # Recipient
+            # ==========================================
+
+            elif header_name == "to":
+
+                match = re.match(
+                    r"^(.*?)\s*<(.+?)>$",
+                    header_value,
+                )
+
+                if match:
+                    recipient_data = {
+                        "name": (
+                            match.group(1)
+                            .strip()
+                            .strip('"')
+                        ),
+                        "email": (
+                            match.group(2)
+                            .strip()
+                        ),
+                    }
+
+                else:
+                    recipient_data = {
+                        "name": None,
+                        "email": header_value.strip(),
+                    }
+
+        if sender_data is None:
+            return None
+
+        return {
+            "sender": sender_data,
+            "recipient": recipient_data,
+        }
 
     def _extract_body(
             self,

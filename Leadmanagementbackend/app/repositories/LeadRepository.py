@@ -21,30 +21,39 @@ class LeadRepository:
     # ======================================================
 
     def get_by_identifier(
-        self,
-
-        tenant_id: int,
-        email :str | None = None,
-        phone_number: str | None = None,
+            self,
+            tenant_id: int,
+            source_channel_id: int,
+            channel_connection_id: int,
+            email: str | None = None,
+            phone_number: str | None = None,
     ):
-        """
-        Find a lead belonging to a tenant.
+        conditions = [
+            Lead.tenant_id == tenant_id,
+            Lead.source_channel_id == source_channel_id,
+            Lead.channel_connection_id == channel_connection_id,
+        ]
 
-        For the current implementation the identifier
-        is matched against email or phone number.
-        """
+        if email:
+            conditions.append(
+                Lead.email == email
+            )
+
+        elif phone_number:
+            conditions.append(
+                Lead.phone_number == phone_number
+            )
+
+        else:
+            return None
 
         result = self.db.execute(
-            select(Lead).where(
-                Lead.tenant_id == tenant_id,
-                (
-                    (Lead.email == email)
-                    | (Lead.phone_number == phone_number)
-                ),
-            )
+            select(Lead).where(*conditions)
         )
 
         return result.scalar_one_or_none()
+
+
 
     # ======================================================
     # GET BY ID

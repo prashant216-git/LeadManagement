@@ -62,8 +62,9 @@ class LeadService:
             lead = (
                 self.lead_repository
                 .get_by_identifier(
-
-                    tenant_id=1,
+                    tenant_id=connection.tenant_id,
+                    source_channel_id=source_channel_id,
+                    channel_connection_id=connection.id,
                     email=email,
                     phone_number=phone_number,
                 )
