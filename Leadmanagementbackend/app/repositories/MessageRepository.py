@@ -63,7 +63,22 @@ class MessageRepository:
 
         return result.scalars().all()
 
-    from sqlalchemy import select
+    def get_latest_message_by_lead_id(
+            self,
+            lead_id: int,
+    ) -> Message | None:
+        result = self.db.execute(
+            select(Message)
+            .where(
+                Message.lead_id == lead_id
+            )
+            .order_by(
+                Message.provider_created_at.desc()
+            )
+            .limit(1)
+        )
+
+        return result.scalar_one_or_none()
 
     def get_by_provider_message_id(
             self,

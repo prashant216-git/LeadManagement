@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO
+from app.DTOs.Chats import ChatSidebarDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.MessageDTO import LeadMessagesResponseDTO
 from app.db.session import get_db
@@ -11,6 +12,7 @@ from app.repositories.ChannelConnectionRepository import (
 )
 from app.repositories.LeadRepository import LeadRepository
 from app.repositories.MessageRepository import MessageRepository
+from app.services.Chatservice import ChatService
 from app.services.Leadmanagementservice import LeadService
 from app.services.messageservice import MessageService
 
@@ -29,6 +31,15 @@ def get_message_service(
 
     return MessageService(
         message_repository=message_repository,lead_repository=LeadRepository(db)
+    )
+
+def get_chat_service(
+    db: AsyncSession = Depends(get_db),
+) -> ChatService:
+
+    return ChatService(
+        lead_repository=LeadRepository(db),
+        message_repository=MessageRepository(db),
     )
 def get_lead_service(
     db: AsyncSession = Depends(get_db),
@@ -123,6 +134,7 @@ async def get_leads(
             status_code=500,
             detail="Unable to retrieve leads.",
         )
+
 
 @router.get(
     "/{lead_id}/messages/{channel_id}",
@@ -230,4 +242,20 @@ async def get_lead_channel_identifiers(
             status_code=500,
             detail="Unable to retrieve channel identifiers.",
         )
+
+
+@router.get(
+    "/sidebar/{channel_id}",
+    response_model=ChatSidebarDTO,
+)
+async def get_chat_sidebar(
+    channel_id: int,
+    chat_service: ChatService = Depends(
+        get_chat_service
+    ),
+):
+
+    return await chat_service.get_chat_sidebar(
+        channel_id=channel_id
+    )
 
