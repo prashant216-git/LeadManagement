@@ -507,7 +507,12 @@ class GmailProvider(BaseChannelProvider):
         email_address = notification["emailAddress"]
         history_id = str(notification["historyId"])
 
-        channelcodeid= self.channel_resolver.resolve_channel_id(channel_code="gmail")
+        channelcodeid = (
+            self.channel_resolver
+            .resolve_channel_id(
+                channel_code="gmail"
+            )
+        )
 
         print(channelcodeid)
 
@@ -515,119 +520,211 @@ class GmailProvider(BaseChannelProvider):
 
         print(email_address)
 
-        connectionid =   self.channel_resolver.resolve_connection_id(channel_id=channelcodeid,identifier=email_address)
-        print(connectionid)
+
+
+        try:
+            connectionid = (
+                self.channel_resolver
+                .resolve_connection_id(
+                    channel_id=channelcodeid,
+                    identifier=email_address,
+                )
+            )
+
+        except ValueError as e:
+
+            print(
+                f"Ignoring Gmail notification: {e}"
+            )
+
+            return {
+                "status": "ignored",
+                "reason": "channel_disconnected_or_not_found",
+            }
 
         if connectionid is None:
             return {
                 "status": "ignored",
                 "reason": "channel_disconnected Or Not Found",
             }
-        watch =   self.channel_resolver.resolve_watch(connection_id=connectionid)
+
+        # 3. Resolve watch
+        print(connectionid)
+
+
+        watch = (
+            self.channel_resolver
+            .resolve_watch(
+                connection_id=connectionid
+            )
+        )
+
+        if watch is None:
+            return {
+                "status": "ignored",
+                "reason": "watch_not_found",
+            }
 
         print(watch.provider_cursor)
 
-        accesstoken = await self.channel_resolver.resolve_access_token(connection_id=connectionid)
+        # ======================================================
+        # IMPORTANT:
+        # Don't hit Gmail if notification is already processed
+        # ======================================================
+
+
+
+        # 4. Access token
+
+        accesstoken = (
+            await self.channel_resolver
+            .resolve_access_token(
+                connection_id=connectionid
+            )
+        )
+
+        if not accesstoken:
+            return {
+                "status": "ignored",
+                "reason": "access_token_not_available",
+            }
 
         print(accesstoken)
 
-
-
-        # 4. Get new messages
+        # 5. Get new messages
 
         print("getting new messages")
+
         messages = await self._get_new_messages(
             watch.provider_cursor,
-            accesstoken
+            accesstoken,
         )
 
+        # 6. Create/update leads
 
-
-
-
-        # 5. Create/update leads
         for message in messages:
+
+            # IMPORTANT: check before extracting sender
+            if message is None:
+                print(
+                    "Skipping unavailable Gmail message"
+                )
+                continue
 
             sender = self._extract_sender(
                 message
             )
-            if message is None:
-                print(
-                    "Skipping unavailable Gmail message:",
-                    message,
-                )
-
-                continue
 
             if sender is None:
                 continue
 
-            createdlead=await self.lead_service.create_or_update_lead(
-                source_channel_id=channelcodeid,
-                identifier=email_address,
-                email=sender["email"],
-                name=sender["name"]
+            createdlead = (
+                await self.lead_service
+                .create_or_update_lead(
+                    source_channel_id=channelcodeid,
+                    identifier=email_address,
+                    email=sender["email"],
+                    name=sender["name"],
+                )
             )
 
             print(createdlead.id)
 
-            message_details = self._extract_message_data(message)
+            message_details = (
+                self._extract_message_data(
+                    message
+                )
+            )
 
             reply_to_message_id = None
             direction = MessageDirection.INBOUND
 
-            if message_details["reply_to_message_id"]:
+            if message_details[
+                "reply_to_message_id"
+            ]:
                 reply_to_message_id = (
-                    await self.channel_resolver.resolve_reply_to_message_id(
-                        await self._resolve_rfc_message_id(message_details["reply_to_message_id"],access_token=accesstoken)
+                    await self.channel_resolver
+                    .resolve_reply_to_message_id(
+                        await self._resolve_rfc_message_id(
+                            message_details[
+                                "reply_to_message_id"
+                            ],
+                            access_token=accesstoken,
+                        )
                     )
                 )
 
-            if sender["email"]==email_address:
-                direction = MessageDirection.OUTBOUND
-
-
+            if (
+                    sender["email"].lower()
+                    == email_address.lower()
+            ):
+                direction = (
+                    MessageDirection.OUTBOUND
+                )
 
             await self.message_service.create_message(
                 lead_id=createdlead.id,
+
                 channel_connection_id=connectionid,
 
-                conversation_id=message_details["conversation_id"],
-                rfc_message_id=message_details["reply_to_message_id"],
-
-                provider_message_id=(
-                    message_details["provider_message_id"]
+                conversation_id=(
+                    message_details[
+                        "conversation_id"
+                    ]
                 ),
 
-                reply_to_message_id=reply_to_message_id,
+                rfc_message_id=message_details.get(
+                    "rfc_message_id"
+                ),
+
+                provider_message_id=(
+                    message_details[
+                        "provider_message_id"
+                    ]
+                ),
+
+                reply_to_message_id=(
+                    reply_to_message_id
+                ),
 
                 direction=direction,
 
-                sender_identifier=sender["email"],
+                sender_identifier=(
+                    sender["email"]
+                ),
 
                 recipient_identifier=(
                     email_address
                 ),
 
-                content=message_details["content"],
+                content=(
+                    message_details["content"]
+                ),
 
-                message_type=message_details["message_type"],
+                message_type=(
+                    message_details["message_type"]
+                ),
 
                 provider_created_at=(
-                    message_details["provider_created_at"]
+                    message_details[
+                        "provider_created_at"
+                    ]
                 ),
             )
 
+        # 7. Update watch
 
+        if int(history_id) > int(
+                watch.provider_cursor
+        ):
+            watch.provider_cursor = (
+                history_id
+            )
 
-
-        # 6. Update watch
-
-        if int(history_id) > int(watch.provider_cursor):
-            watch.provider_cursor = history_id
-
-            watch.last_event_at = datetime.now(
-                timezone.utc
+            watch.last_event_at = (
+                datetime.now(
+                    timezone.utc
+                )
             )
 
         self.channel_watch_repository.save(
@@ -1062,18 +1159,25 @@ class GmailProvider(BaseChannelProvider):
 
         return {
             # Gmail conversation/thread
-            "conversation_id": message.get("threadId"),
+            "conversation_id": message.get(
+                "threadId"
+            ),
 
             # Gmail message ID
-            "provider_message_id": message.get("id"),
+            "provider_message_id": message.get(
+                "id"
+            ),
 
-            # Gmail Message-ID of the message being replied to
+            # RFC Message-ID of THIS email
+            "rfc_message_id": header_map.get(
+                "message-id"
+            ),
+
+            # RFC Message-ID of the email
+            # this email is replying to
             "reply_to_message_id": header_map.get(
                 "in-reply-to"
             ),
-
-            # Sender
-
 
             # Message content
             "content": self._extract_body(
@@ -1084,7 +1188,9 @@ class GmailProvider(BaseChannelProvider):
             "message_type": MessageType.TEXT,
 
             # Gmail internal timestamp
-            "provider_created_at": provider_created_at,
+            "provider_created_at": (
+                provider_created_at
+            ),
         }
 
     async def _resolve_rfc_message_id(
