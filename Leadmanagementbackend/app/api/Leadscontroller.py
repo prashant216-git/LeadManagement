@@ -9,6 +9,7 @@ from app.DTOs.Chats import ChatSidebarDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.MessageDTO import LeadMessagesResponseDTO
 from app.db.session import get_db
+from app.dependencies.services import get_lead_service, get_message_service, get_chat_service
 from app.repositories.ChannelConnectionRepository import (
     ChannelConnectionRepository,
 )
@@ -23,42 +24,7 @@ router = APIRouter(
     tags=["Leads"],
 )
 
-def get_message_service(
-    db: AsyncSession = Depends(get_db),
-) -> MessageService:
 
-    message_repository = MessageRepository(
-        db
-    )
-
-    return MessageService(
-        message_repository=message_repository,lead_repository=LeadRepository(db)
-    )
-
-def get_chat_service(
-    db: AsyncSession = Depends(get_db),
-) -> ChatService:
-
-    return ChatService(
-        lead_repository=LeadRepository(db),
-        message_repository=MessageRepository(db),
-    )
-def get_lead_service(
-    db: AsyncSession = Depends(get_db),
-) -> LeadService:
-
-    lead_repository = LeadRepository(db)
-
-    channel_connection_repository = (
-        ChannelConnectionRepository(db)
-    )
-
-    return LeadService(
-        lead_repository=lead_repository,
-        channel_connection_repository=(
-            channel_connection_repository
-        ),
-    )
 
 
 @router.get(

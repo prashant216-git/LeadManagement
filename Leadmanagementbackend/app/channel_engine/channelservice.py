@@ -227,7 +227,7 @@ class ChannelService:
                     ConnectionStatus.FAILED
                 )
 
-                await self.connection_repository.save(
+                self.connection_repository.save(
                     connection
                 )
 

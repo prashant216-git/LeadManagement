@@ -12,6 +12,7 @@ from app.channel_engine.channelresolver import ChannelResolver
 from app.channel_engine.engine import ChannelEngine
 from app.channel_engine.channelservice import ChannelService
 from app.core.config import settings
+from app.dependencies.channelservice import get_channel_service
 
 from app.repositories.ChannelConnectionRepository import (
     ChannelConnectionRepository,
@@ -45,83 +46,6 @@ router = APIRouter(
 # CHANNEL SERVICE
 # ==========================================================
 
-def get_channel_service(
-    db: AsyncSession = Depends(get_db),
-) -> ChannelService:
-
-    # ------------------------------------------------------
-    # Repositories
-    # ------------------------------------------------------
-
-    connection_repository = ChannelConnectionRepository(
-        db
-    )
-
-    channel_master_repository = ChannelMasterRepository(
-        db
-    )
-
-    credential_repository = ChannelCredentialRepository(
-        db
-    )
-    lead_repository = LeadRepository(db)
-    credential_service = CredentialEncryptionService()
-
-
-    # ------------------------------------------------------
-    # Credential service
-    # ------------------------------------------------------
-
-
-
-    channel_watch_repository=ChannelWatchRepository(db)
-    message_repository = MessageRepository(db)
-
-    message_service = MessageService(message_repository=message_repository,
-                                     lead_repository=lead_repository)
-
-
-
-
-    channel_resolver = ChannelResolver(connection_repository=connection_repository,
-                                       credential_repository=credential_repository,
-                                       channel_watch_repository=channel_watch_repository,
-                                       channel_master_repository=channel_master_repository,
-                                       credential_encryption_service=credential_service,message_repository=message_repository )
-
-    # ------------------------------------------------------
-    # Channel Engine
-    # ------------------------------------------------------
-
-    channel_engine = ChannelEngine(
-        connection_repository=connection_repository,
-        credential_repository=credential_repository,
-        credential_service=credential_service,
-        channel_watch_repository=channel_watch_repository,
-        channel_master_repository=channel_master_repository,
-        lead_repository=lead_repository,
-        channel_resolver=channel_resolver,
-        message_service=message_service
-
-
-    )
-
-    # ------------------------------------------------------
-    # Channel Service
-    # ------------------------------------------------------
-
-    return ChannelService(
-        channel_engine=channel_engine,
-        connection_repository=connection_repository,
-        channel_master_repository=channel_master_repository,
-        credentials_repository=credential_repository,
-        credential_encryption_service=credential_service,
-        channel_watch_repository=channel_watch_repository,
-        channel_resolver=channel_resolver,
-        lead_repository=lead_repository
-
-
-    )
 
 
 # ==========================================================

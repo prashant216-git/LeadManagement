@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.DTOs.DashboardCountDTO import DashboardCountDTO
+from app.dependencies.services import get_dashboard_service
 from app.repositories.DashboardRepository import (
     DashboardRepository,
 )
@@ -23,17 +24,7 @@ router = APIRouter(
 )
 
 
-def get_dashboard_service(
-    db: AsyncSession = Depends(get_db),
-) -> DashboardService:
 
-    dashboard_repository = DashboardRepository(
-        db
-    )
-
-    return DashboardService(
-        dashboard_repository=dashboard_repository
-    )
 
 
 @router.get(
