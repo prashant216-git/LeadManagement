@@ -19,6 +19,7 @@ from app.repositories.ChannelCredentialRepository import (
 from app.repositories.ChannelWatchRepository import (
     ChannelWatchRepository,
 )
+from app.repositories.Userrepositories import UserRepository
 
 
 def get_lead_repository(
@@ -55,3 +56,8 @@ def get_channel_watch_repository(
     db: AsyncSession = Depends(get_db),
 ) -> ChannelWatchRepository:
     return ChannelWatchRepository(db)
+
+def get_user_repository(
+    db: AsyncSession = Depends(get_db),
+):
+    return UserRepository(db)

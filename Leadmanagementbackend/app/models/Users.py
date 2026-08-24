@@ -42,6 +42,11 @@ class User(BaseModel):
         index=True,
     )
 
+    password: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False,
+    )
+
     # Status
 
     is_active: Mapped[bool] = mapped_column(

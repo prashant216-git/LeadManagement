@@ -92,13 +92,12 @@ class GmailProvider(BaseChannelProvider):
         if self.connection.connection_status == ConnectionStatus.CONNECTED:
             raise Exception("Channel already connected.")
 
-
-
         scopes = [
             "openid",
             "email",
             "profile",
-            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
         ]
 
         params = {
