@@ -887,7 +887,7 @@ class GmailProvider(BaseChannelProvider):
 
             message_type=MessageType.TEXT,
 
-            provider_created_at=None,
+            provider_created_at=datetime.now(timezone.utc),
         )
 
         return sent_response
