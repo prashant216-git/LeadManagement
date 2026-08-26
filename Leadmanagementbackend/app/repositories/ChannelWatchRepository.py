@@ -52,7 +52,6 @@ class ChannelWatchRepository:
     ) -> ChannelWatch:
 
         self.db.add(watch)
-        self.db.commit()
-        self.db.refresh(watch)
+        self.db.flush()
 
         return watch

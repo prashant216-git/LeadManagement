@@ -30,10 +30,7 @@ class ChannelCredentialRepository:
     ) -> ChannelCredential:
 
         self.db.add(credential)
-
-        self.db.commit()
-
-        self.db.refresh(credential)
+        self.db.flush()
 
         return credential
 

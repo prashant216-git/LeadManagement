@@ -55,7 +55,8 @@ class GmailProvider(BaseChannelProvider):
         lead_service,
 
         channel_resolver,
-        message_service
+        message_service,
+            db
 
     ):
         self.connection = connection
@@ -71,6 +72,7 @@ class GmailProvider(BaseChannelProvider):
         self.message_service = message_service
 
         self.channel_resolver=channel_resolver
+        self.db=db
 
     # ==========================================================
     # Connection Lifecycle
@@ -114,6 +116,7 @@ class GmailProvider(BaseChannelProvider):
             "https://accounts.google.com/o/oauth2/v2/auth?"
             + urlencode(params)
         )
+        print("Authorization URL: ", authorization_url)
 
         return ConnectResponse(
             success=True,
@@ -206,6 +209,8 @@ class GmailProvider(BaseChannelProvider):
             raise ValueError(
                 "Google account email was not returned."
             )
+
+
 
         # ------------------------------------------------------
         # 6. Return normalized provider result
@@ -676,74 +681,79 @@ class GmailProvider(BaseChannelProvider):
                     MessageDirection.OUTBOUND
                 )
 
-            await self.message_service.create_message(
-                lead_id=createdlead.id,
+            try :
 
-                channel_connection_id=connectionid,
+                await self.message_service.create_message(
+                    lead_id=createdlead.id,
 
-                conversation_id=(
-                    message_details[
-                        "conversation_id"
-                    ]
-                ),
+                    channel_connection_id=connectionid,
 
-                rfc_message_id=message_details.get(
-                    "rfc_message_id"
-                ),
+                    conversation_id=(
+                        message_details[
+                            "conversation_id"
+                        ]
+                    ),
 
-                provider_message_id=(
-                    message_details[
-                        "provider_message_id"
-                    ]
-                ),
+                    rfc_message_id=message_details.get(
+                        "rfc_message_id"
+                    ),
 
-                reply_to_message_id=(
-                    reply_to_message_id
-                ),
+                    provider_message_id=(
+                        message_details[
+                            "provider_message_id"
+                        ]
+                    ),
 
-                direction=direction,
+                    reply_to_message_id=(
+                        reply_to_message_id
+                    ),
 
-                sender_identifier=(
-                    sender["email"]
-                ),
+                    direction=direction,
 
-                recipient_identifier=(
-                    recipient["email"]
-                ),
+                    sender_identifier=(
+                        sender["email"]
+                    ),
 
-                content=(
-                    message_details["content"]
-                ),
+                    recipient_identifier=(
+                        recipient["email"]
+                    ),
 
-                message_type=(
-                    message_details["message_type"]
-                ),
+                    content=(
+                        message_details["content"]
+                    ),
 
-                provider_created_at=(
-                    message_details[
-                        "provider_created_at"
-                    ]
-                ),
-            )
+                    message_type=(
+                        message_details["message_type"]
+                    ),
 
-        # 7. Update watch
-
-        if int(history_id) > int(
-                watch.provider_cursor
-        ):
-            watch.provider_cursor = (
-                history_id
-            )
-
-            watch.last_event_at = (
-                datetime.now(
-                    timezone.utc
+                    provider_created_at=(
+                        message_details[
+                            "provider_created_at"
+                        ]
+                    ),
                 )
-            )
 
-        self.channel_watch_repository.save(
-            watch
-        )
+                # 7. Update watch
+
+                if int(history_id) > int(
+                        watch.provider_cursor
+                ):
+                    watch.provider_cursor = (
+                        history_id
+                    )
+
+                    watch.last_event_at = (
+                        datetime.now(
+                            timezone.utc
+                        )
+                    )
+
+                self.channel_watch_repository.save(
+                    watch
+                )
+                self.db.commit()
+            except Exception as e:
+                raise ValueError("error")
 
         return {
             "status": "processed",

@@ -1,8 +1,10 @@
 from fastapi import Depends
+from sqlalchemy.orm import Session
 
 from app.channel_engine.channelresolver import ChannelResolver
 from app.channel_engine.channelservice import ChannelService
 from app.channel_engine.engine import ChannelEngine
+from app.db.session import get_db
 from app.dependencies.channelengine import get_channel_engine
 from app.dependencies.repositories import get_lead_repository, get_channel_connection_repository, \
     get_channel_credential_repository, get_channel_watch_repository, get_channel_master_repository
@@ -41,9 +43,12 @@ def get_channel_service(
     lead_repository: LeadRepository = Depends(
         get_lead_repository
     ),
+    db: Session = Depends(get_db),
+
 ) -> ChannelService:
 
     return ChannelService(
+        db=db,
         channel_engine=channel_engine,
         connection_repository=connection_repository,
         channel_master_repository=channel_master_repository,

@@ -12,6 +12,7 @@ from app.DTOs.connection.connection_response import ConnectResponse
 from app.channel_engine.engine import ChannelEngine
 from datetime import datetime, timezone
 
+from app.db.session import get_db
 from app.enums.channel import (
     ConnectionStatus,
     WatchStatus,
@@ -55,6 +56,8 @@ class ChannelService:
         channel_watch_repository : ChannelWatchRepository,
         channel_resolver : ChannelResolver,
         lead_repository : LeadRepository,
+            db,
+
 
 
     ):
@@ -66,6 +69,7 @@ class ChannelService:
         self.channel_watch_repository = channel_watch_repository
         self.channel_resolver = channel_resolver
         self.lead_repository = lead_repository
+        self.db=db
 
 
     # ==========================================================
@@ -135,6 +139,11 @@ class ChannelService:
                 authorization_url=existing_connection.connection_url,
                 message="Redirect user to Google.")
 
+        if (existing_connection is not None
+                and existing_connection.connection_status
+                == ConnectionStatus.CONNECTING):
+            raise ValueError("already connected")
+
 
 
 
@@ -158,6 +167,7 @@ class ChannelService:
         connection = self.connection_repository.save(
             connection
         )
+        self.db.commit()
 
 
 
@@ -179,6 +189,7 @@ class ChannelService:
             connection.connection_url = result.authorization_url
 
             self.connection_repository.update(connection)
+            self.db.commit()
 
             return result
 
@@ -217,7 +228,9 @@ class ChannelService:
 
 
 
+
             # If data is returned as bytes or JSON string instead of dict:
+
 
 
             connection = self.connection_repository.get_by_oauth_state(
@@ -230,6 +243,9 @@ class ChannelService:
                 self.connection_repository.save(
                     connection
                 )
+                self.db.commit()
+            print(connection.connection_url)
+
 
             raise HTTPException(
                 status_code=400,
@@ -245,7 +261,17 @@ class ChannelService:
 
 
 
+
+
+
+
+
         state=result["state"]
+        channelbyaccountid = self.connection_repository.get_by_account_id(provider_account_id=result.get(
+            "provider_account_id"))
+        print(channelbyaccountid)
+        if channelbyaccountid is not None:
+            raise ValueError("already connected")
 
 
 
@@ -263,6 +289,11 @@ class ChannelService:
             raise ValueError(
                 "No channel connection found for this OAuth state."
             )
+        if connection.connection_status== ConnectionStatus.CONNECTED:
+            raise ValueError(
+                "Already connected"
+            )
+
 
         connection_id=connection.id
 
@@ -298,45 +329,54 @@ class ChannelService:
         # ------------------------------------------------------
         # 5. Save credentials
         # ------------------------------------------------------
-        credential = ChannelCredential(
-            channel_connection_id=connection.id,
-            credential_type=CredentialType.OAUTH,
-            token_type=credentials["token_type"],
-            expires_at=result["expires_at"],
-            last_refreshed_at=datetime.now(timezone.utc),
-            encrypted_payload=encrypted_payload,
-            encryption_key_version=1,
-            credential_version=1,
-            is_active=True,
-        )
-        self.credentials_repository.save(
-            credential
-        )
+        try:
+
+
+                credential = ChannelCredential(
+                    channel_connection_id=connection.id,
+                    credential_type=CredentialType.OAUTH,
+                    token_type=credentials["token_type"],
+                    expires_at=result["expires_at"],
+                    last_refreshed_at=datetime.now(timezone.utc),
+                    encrypted_payload=encrypted_payload,
+                    encryption_key_version=1,
+                    credential_version=1,
+                    is_active=True,
+                )
+
+                self.credentials_repository.save(credential)
+                print("AFTER LOADING CONNECTION:", connection.connection_url)
+
+                connection.connection_status = result["status"]
+
+                connection.provider_account_id = result.get(
+                    "provider_account_id"
+                )
+
+                connection.provider_identifier = result.get(
+                    "provider_identifier"
+                )
+
+                connection.display_name = result.get(
+                    "display_name"
+                )
+
+                connection.connected_at = datetime.now(timezone.utc)
+
+
+                self.connection_repository.update(connection)
+
+
+                self.db.commit()
 
 
 
-        # ------------------------------------------------------
-        # 6. Update connection
-        # ------------------------------------------------------
 
-        connection.connection_status = result["status"]
+        except Exception:
 
-        connection.provider_account_id = (
-            result.get("provider_account_id")
-        )
+            self.db.rollback()
 
-        connection.provider_identifier = (
-            result.get("provider_identifier")
-        )
-
-        connection.display_name = (
-            result.get("display_name")
-        )
-        connection.connected_at=datetime.now(timezone.utc)
-
-        self.connection_repository.update(
-            connection
-        )
+            raise
 
         # ------------------------------------------------------
         # 7. Don't expose credentials to API
@@ -460,43 +500,47 @@ class ChannelService:
         # 5. Update connection
         # ==================================================
 
-        connection.connection_status = (
-            ConnectionStatus.DISCONNECTED
-        )
-
-        connection.disconnected_at = datetime.now(
-            timezone.utc
-        )
-
-        self.connection_repository.save(
-            connection
-        )
-
-        # ==================================================
-        # 6. Resolve watch
-        # ==================================================
-
-        watch = (
-            self.channel_watch_repository
-            .get_by_connection_id(
-                connection_id
-            )
-        )
-
-        # ==================================================
-        # 7. Disable watch
-        # ==================================================
-
-        if watch is not None:
-            watch.status = (
-                WatchStatus.INACTIVE
+        try:
+            connection.connection_status = (
+                ConnectionStatus.DISCONNECTED
             )
 
-            watch.is_active = False
-
-            self.channel_watch_repository.save(
-                watch
+            connection.disconnected_at = datetime.now(
+                timezone.utc
             )
+
+            self.connection_repository.save(
+                connection
+            )
+
+            # ==================================================
+            # Resolve watch
+            # ==================================================
+
+            watch = (
+                self.channel_watch_repository
+                .get_by_connection_id(
+                    connection_id
+                )
+            )
+
+            # ==================================================
+            # Disable watch
+            # ==================================================
+
+            if watch is not None:
+                watch.status = WatchStatus.INACTIVE
+                watch.is_active = False
+
+                self.channel_watch_repository.save(
+                    watch
+                )
+
+            self.db.commit()
+
+        except Exception:
+            self.db.rollback()
+            raise
 
         return {
             "status": "disconnected",

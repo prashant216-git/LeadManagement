@@ -132,16 +132,23 @@ class ChannelConnectionRepository:
 
         return result.scalars().all()
 
+    def get_by_account_id(
+            self,
+
+            provider_account_id: UUID,
+    ):
+        result = self.db.execute(
+            select(ChannelConnection)
+            .where (ChannelConnection.provider_account_id==provider_account_id , ChannelConnection.connection_status==ConnectionStatus.CONNECTED)
+        )
+        return result.scalar_one_or_none()
+
     def save(
-        self,
-        connection: ChannelConnection,
+            self,
+            connection: ChannelConnection,
     ) -> ChannelConnection:
-
         self.db.add(connection)
-
-        self.db.commit()
-
-        self.db.refresh(connection)
+        self.db.flush()
 
         return connection
 
@@ -149,8 +156,6 @@ class ChannelConnectionRepository:
             self,
             connection: ChannelConnection,
     ) -> ChannelConnection:
-        self.db.commit()
-
-        self.db.refresh(connection)
+        self.db.flush()
 
         return connection
