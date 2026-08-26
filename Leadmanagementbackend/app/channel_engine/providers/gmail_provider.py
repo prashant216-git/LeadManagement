@@ -479,6 +479,7 @@ class GmailProvider(BaseChannelProvider):
             )
 
             self.channel_watch_repository.save(watch)
+            self.db.commit()
 
         else:
             watch.provider_cursor = response["historyId"]
@@ -491,6 +492,7 @@ class GmailProvider(BaseChannelProvider):
             watch.is_active = True
 
             self.channel_watch_repository.save(watch)
+            self.db.commit()
 
         return {
             "status": "WATCH_ACTIVE",
