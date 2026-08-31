@@ -66,7 +66,7 @@ class LeadService:
                 .get_by_identifier(
                     user_id=connection.user_id,
                     source_channel_id=source_channel_id,
-                    channel_connection_id=connection.id,
+
                     email=email,
                     phone_number=phone_number,
                 )

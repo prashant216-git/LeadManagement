@@ -33,7 +33,7 @@ class LeadRepository:
         conditions = [
             Lead.user_id == user_id,
             Lead.source_channel_id == source_channel_id,
-            Lead.channel_connection_id == channel_connection_id,
+
         ]
 
         if email:
