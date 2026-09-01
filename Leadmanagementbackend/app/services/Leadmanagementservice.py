@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from math import ceil
 from uuid import UUID
 
@@ -180,6 +181,36 @@ class LeadService:
             user_id: UUID,
             lead_data: CreateManualLeadDTO,
     ) -> Lead:
+
+        lead = None
+
+        # Find existing lead by email
+        lead =await self.lead_repository.get_by_identifier(user_id=user_id,
+
+
+                    email=lead_data.email,
+                    phone_number=lead_data.email,)
+
+        # --------------------------------------------------
+        # Existing lead
+        # --------------------------------------------------
+
+        if lead is not None:
+
+            if lead_data.name:
+                lead.name = lead_data.name
+
+            if lead_data.email:
+                lead.email = lead_data.email
+
+            if lead_data.phone_number:
+                lead.phone_number = lead_data.phone_number
+
+            lead.updated_at = datetime.now(timezone.utc)
+
+            await self.lead_repository.save(lead)
+
+            return lead
 
 
         lead = Lead(

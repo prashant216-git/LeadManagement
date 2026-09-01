@@ -32,9 +32,11 @@ class LeadRepository:
     ):
         conditions = [
             Lead.user_id == user_id,
-            Lead.source_channel_id == source_channel_id,
+
 
         ]
+        if source_channel_id:
+            conditions.append(Lead.source_channel_id == source_channel_id)
 
         if email:
             conditions.append(
