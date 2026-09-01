@@ -25,8 +25,8 @@ class LeadRepository:
     def get_by_identifier(
             self,
             user_id: UUID,
-            source_channel_id: UUID,
-            channel_connection_id: UUID,
+            source_channel_id: UUID | None=None,
+            channel_connection_id: UUID | None = None,
             email: str | None = None,
             phone_number: str | None = None,
     ):
