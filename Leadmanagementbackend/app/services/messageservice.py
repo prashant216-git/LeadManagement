@@ -153,6 +153,20 @@ class MessageService:
             messages=message_details,
         )
 
+    async def get_latest_messages_by_lead(
+            self,
+            lead_id: UUID,
+            limit: int = 5,
+    ) -> list[Message]:
+
+        return (
+            self.message_repository
+            .get_latest_messages_by_lead_id(
+                lead_id=lead_id,
+                limit=limit,
+            )
+        )
+
 
 
 

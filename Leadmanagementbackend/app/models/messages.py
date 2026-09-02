@@ -170,3 +170,7 @@ class Message(BaseModel):
         "ChannelConnection",
         back_populates="messages",
     )
+    ai_draft: Mapped["AIDraft | None"] = relationship(
+        "AIDraft",
+        back_populates="message",
+    )

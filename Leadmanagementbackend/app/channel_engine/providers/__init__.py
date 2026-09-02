@@ -1,1 +1,3 @@
 from app.channel_engine.providers.gmail_provider import GmailProvider
+
+from app.channel_engine.providers.whatsapp_provider import WhatsappProvider

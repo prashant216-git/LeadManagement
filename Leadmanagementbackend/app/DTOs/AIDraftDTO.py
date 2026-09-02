@@ -1,12 +1,12 @@
 # app/DTOs/DraftDTO.py
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class DraftDTO(BaseModel):
-    draft_id: int
-    user_id: int
-    message_id: int
+    draft_id: UUID
+    message_id: UUID
     draft_text: str
     status: str
-    summarytext: str
+    summarytext: str | None=None

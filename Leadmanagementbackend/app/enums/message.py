@@ -19,3 +19,9 @@ class MessageType(str, Enum):
     DOCUMENT = "DOCUMENT"
 
     AUDIO = "AUDIO"
+
+class AIDraftStatus(str, Enum):
+    GENERATED = "GENERATED"
+    EDITED = "EDITED"
+    SENT = "SENT"
+    DISCARDED = "DISCARDED"

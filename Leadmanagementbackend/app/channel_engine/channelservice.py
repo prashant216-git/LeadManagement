@@ -77,9 +77,9 @@ class ChannelService:
     # ==========================================================
 
     async def connect(
-        self,
-        user_id: UUID,
-        channel_code: str,
+            self,
+            user_id: UUID,
+            channel_code: str,
     ):
         """
         Start a new channel connection.
@@ -100,7 +100,7 @@ class ChannelService:
              ↓
             Provider
              ↓
-            OAuth
+            OAuth / Embedded Signup
         """
 
         # ------------------------------------------------------
@@ -118,7 +118,7 @@ class ChannelService:
             )
 
         # ------------------------------------------------------
-        # 2. Check for an existing pending connection
+        # 2. Check existing connection
         # ------------------------------------------------------
 
         existing_connection = (
@@ -130,23 +130,27 @@ class ChannelService:
             )
         )
 
-        if (
-                existing_connection is not None
-                and existing_connection.connection_status
-                == ConnectionStatus.CONNECTING):
-            return ConnectResponse(
-                success=True,
-                authorization_url=existing_connection.connection_url,
-                message="Redirect user to Google.")
+        if existing_connection is not None:
 
-        if (existing_connection is not None
-                and existing_connection.connection_status
-                == ConnectionStatus.CONNECTING):
-            raise ValueError("already connected")
+            if (
+                    existing_connection.connection_status
+                    == ConnectionStatus.CONNECTING
+            ):
+                return ConnectResponse(
+                    success=True,
+                    authorization_url=(
+                        existing_connection.connection_reference
+                    ),
+                    message="Continue channel connection.",
+                )
 
-
-
-
+            if (
+                    existing_connection.connection_status
+                    == ConnectionStatus.CONNECTED
+            ):
+                raise ValueError(
+                    "Channel already connected."
+                )
 
         # ------------------------------------------------------
         # 3. Create pending connection
@@ -155,49 +159,79 @@ class ChannelService:
         from app.models.channel_connection import (
             ChannelConnection,
         )
+
         random_state = secrets.token_urlsafe(32)
 
-        state = f"{random_state}"
+        state = random_state
+
         connection = ChannelConnection(
             user_id=user_id,
             channel_id=channel.id,
             created_by=user_id,
-            oauth_state=state
+            oauth_state=state,
+            connection_status=ConnectionStatus.CONNECTING,
         )
+
         connection = self.connection_repository.save(
             connection
         )
+
         self.db.commit()
-
-
 
         # ------------------------------------------------------
         # 4. Create provider for NEW connection
         # ------------------------------------------------------
 
         try:
-            print(ChannelProviderRegistry._providers)
 
             provider = self.channel_engine.create_provider(
                 channel_code=channel_code,
                 connection=connection,
             )
 
+            # --------------------------------------------------
+            # Provider generates OAuth URL OR Config ID
+            # --------------------------------------------------
 
-            result = await provider.connect(request=None,state=state)
+            result = await provider.connect(
+                request=None,
+                state=state,
+            )
 
-            connection.connection_url = result.authorization_url
+            # --------------------------------------------------
+            # Store returned value
+            #
+            # Gmail:
+            #     authorization_url = Google OAuth URL
+            #
+            # WhatsApp:
+            #     authorization_url = Meta Config ID
+            # --------------------------------------------------
 
-            self.connection_repository.update(connection)
+            connection.connection_reference = (
+                    result.authorization_url
+                    or result.config_id
+            )
+
+            self.connection_repository.update(
+                connection
+            )
+
             self.db.commit()
 
             return result
 
-        except Exception:
+        except Exception as e:
 
-            connection.connection_status = ConnectionStatus.FAILED
+            connection.connection_status = (
+                ConnectionStatus.FAILED
+            )
 
-            self.connection_repository.update(connection)
+            self.connection_repository.update(
+                connection
+            )
+
+            self.db.commit()
 
             raise
 
@@ -244,7 +278,7 @@ class ChannelService:
                     connection
                 )
                 self.db.commit()
-            print(connection.connection_url)
+            print(connection.connection_reference)
 
 
             raise HTTPException(
@@ -342,10 +376,11 @@ class ChannelService:
                     encryption_key_version=1,
                     credential_version=1,
                     is_active=True,
+
                 )
 
                 self.credentials_repository.save(credential)
-                print("AFTER LOADING CONNECTION:", connection.connection_url)
+                print("AFTER LOADING CONNECTION:", connection.connection_reference)
 
                 connection.connection_status = result["status"]
 
@@ -362,6 +397,7 @@ class ChannelService:
                 )
 
                 connection.connected_at = datetime.now(timezone.utc)
+                connection.provider_metadata=result.get("provider_metadata")
 
 
                 self.connection_repository.update(connection)

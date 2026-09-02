@@ -12,6 +12,7 @@ from sqlalchemy import (
     Uuid,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -126,11 +127,18 @@ class ChannelConnection(BaseModel):
     last_health_check_at: Mapped[datetime | None] = mapped_column(
         nullable=True,
     )
+    provider_metadata: Mapped[dict | None] = mapped_column(
+        "metadata",
+        JSONB,
+        nullable=True,
+        default=dict,
+    )
 
-    connection_url: Mapped[str | None] = mapped_column(
+    connection_reference: Mapped[str | None] = mapped_column(
         String(2000),
         nullable=True,
     )
+
 
     oauth_state: Mapped[str | None] = mapped_column(
         String(255),

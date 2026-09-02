@@ -121,6 +121,7 @@ class GmailProvider(BaseChannelProvider):
         return ConnectResponse(
             success=True,
             authorization_url=authorization_url,
+            state=state,
             message="Redirect user to Google.",
         )
 

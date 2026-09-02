@@ -69,3 +69,8 @@ class User(BaseModel):
         back_populates="user",  # ✅ Match singular name on Lead
         cascade="all, delete-orphan",
     )
+    ai_drafts: Mapped[list["AIDraft"]] = relationship(
+        "AIDraft",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )

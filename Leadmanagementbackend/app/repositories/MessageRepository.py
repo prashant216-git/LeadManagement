@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.models import Lead
+from app.models import Lead, messages
 from app.models.channel_connection import ChannelConnection
 from app.models.messages import Message
 
@@ -111,3 +111,25 @@ class MessageRepository:
         )
 
         return result.scalar_one_or_none()
+
+    def get_latest_messages_by_lead_id(
+            self,
+            lead_id: UUID,
+            limit: int = 5,
+    ) -> list[Message]:
+        statement = (
+            select(Message)
+            .where(
+                Message.lead_id == lead_id
+            )
+            .order_by(
+                Message.created_at.desc()
+            )
+            .limit(limit)
+        )
+
+        result = self.db.execute(statement)
+
+        messages = result.scalars().all()
+
+        return list(reversed(messages))

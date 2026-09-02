@@ -1,49 +1,62 @@
 from uuid import UUID
 
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
-from sqlalchemy import ForeignKey
-from sqlalchemy import DateTime
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+from app.enums.message import AIDraftStatus
+from app.models.base_model import BaseModel
 
 
-class AIDraft(Base):
+class AIDraft(BaseModel):
     __tablename__ = "ai_drafts"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True
-    )
-
-    user_id = Column(
+    user_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("users.id"),
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
-    message_id = Column(
+    lead_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("messages.id"),
-        nullable=False
+        ForeignKey("leads.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
-    draft_text = Column(
+    message_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+
+    )
+
+    draft_text: Mapped[str] = mapped_column(
         Text,
-        nullable=False
+        nullable=False,
     )
 
-    status = Column(
+    status: Mapped[str] = mapped_column(
         String(50),
-        default="generated"
+        nullable=False,
+        default=AIDraftStatus.GENERATED,
+        index=True,
     )
 
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
+    user = relationship(
+        "User",
+        back_populates="ai_drafts",
+    )
+
+    message = relationship(
+        "Message",
+        back_populates="ai_draft",
+    )
+
+    lead=relationship(
+        "Lead",
+        back_populates="ai_drafts",
     )

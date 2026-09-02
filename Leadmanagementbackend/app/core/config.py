@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     META_APP_ID: Optional[str] = None
     META_APP_SECRET: Optional[str] = None
     META_REDIRECT_URI: Optional[str] = None
+    META_EMBEDDED_SIGNUP_CONFIG_ID: str
+
+    DEEPSEEK_MODEL: Optional[str]
+    DEEPSEEK_BASE_URL :Optional[str]
+    DEEPSEEK_KEY: Optional[str]
 
     ENCRYPTION_KEY: Optional[str] = None
     DATABASE_URL: Optional[str] = None

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import app.channel_engine.providers
 from starlette.middleware.cors import CORSMiddleware
-
+from app.api.Aicontroller import router as ai_controller
 from app.api import dashboard_controller
 from app.api.channel_controller import router as channel_router
 # from app.api.whatsappwebhook import router as webhook_router
@@ -43,6 +43,6 @@ app.include_router(webhook_controller)
 app.include_router(dashboard_controller)
 app.include_router(lead_controller)
 app.include_router(channel_router)
-
+app.include_router(ai_controller)
 Base.metadata.create_all(bind=engine)
 print("Creating tables...")

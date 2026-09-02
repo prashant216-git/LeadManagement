@@ -1,20 +1,10 @@
-from fastapi import APIRouter, Request, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import PlainTextResponse
 
 from app.channel_engine.channelservice import ChannelService
-from app.channel_engine.engine import ChannelEngine
-from app.db.session import get_db
+from app.core.config import settings
 from app.dependencies.channelservice import get_channel_service
-from app.repositories.ChannelConnectionRepository import ChannelConnectionRepository
-from app.repositories.ChannelCredentialRepository import ChannelCredentialRepository
-from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
-from app.repositories.ChannelWatchRepository import ChannelWatchRepository
-from app.repositories.LeadRepository import LeadRepository
-from app.repositories.MessageRepository import MessageRepository
-from app.services.CredentialEncryptionService import CredentialEncryptionService
-from app.services.Leadmanagementservice import LeadService
-from app.channel_engine.channelresolver import ChannelResolver
-from app.services.messageservice import MessageService
+
 
 router = APIRouter(
     prefix="/webhooks",
@@ -22,20 +12,82 @@ router = APIRouter(
 )
 
 
-@router.post("/{channel_code}")
+@router.api_route(
+    "/{channel_code}",
+    methods=["GET", "POST"],
+)
 async def channel_webhook(
     channel_code: str,
     request: Request,
-channel_service: ChannelService = Depends(
+    channel_service: ChannelService = Depends(
         get_channel_service
     ),
 ):
-    payload = await request.json()
+    try:
 
-    print("CHANNEL:", channel_code)
-    print("PUBSUB BODY:", payload)
-    return await channel_service.handle_notification(
-        channel_code=channel_code,
-        payload=payload,
-    )
+        # ==================================================
+        # GET → WEBHOOK VERIFICATION
+        # ==================================================
 
+        if request.method == "GET":
+
+            query_params = dict(
+                request.query_params
+            )
+
+            hub_mode = query_params.get(
+                "hub.mode"
+            )
+
+            hub_verify_token = query_params.get(
+                "hub.verify_token"
+            )
+
+            hub_challenge = query_params.get(
+                "hub.challenge"
+            )
+
+            if (
+                hub_mode == "subscribe"
+                and hub_verify_token == settings.VERIFY_TOKEN
+            ):
+                return PlainTextResponse(
+                    content=hub_challenge
+                )
+
+            return PlainTextResponse(
+                content="Verification Failed",
+                status_code=403,
+            )
+
+        # ==================================================
+        # POST → WEBHOOK EVENT
+        # ==================================================
+
+        payload = await request.json()
+
+        print(
+            "CHANNEL:",
+            channel_code,
+        )
+
+        print(
+            "WEBHOOK BODY:",
+            payload,
+        )
+
+        return await channel_service.handle_notification(
+            channel_code=channel_code,
+            payload=payload,
+        )
+
+    except Exception as e:
+
+        print(
+            f"Webhook failed [{channel_code}]: {e}"
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Webhook processing failed.",
+        )

@@ -82,3 +82,8 @@ class Lead(BaseModel):
         "Message",
         back_populates="lead",
     )
+    ai_drafts: Mapped[list["AIDraft"]] = relationship(
+        "AIDraft",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+    )
