@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.ai.ai_service import AIService
+from app.enums.message import MessageDirection
 from app.models import Summary
 from app.repositories.MessageRepository import MessageRepository
 from app.repositories.SummaryRepository import SummaryRepository
@@ -23,14 +24,14 @@ class SummaryService:
             lead_id: UUID,
     ) -> tuple[str, str]:
 
-        summary = await self.summary_repo.get_by_lead_id(
+        summary =  self.summary_repo.get_by_lead_id(
             lead_id=lead_id
         )
 
         # No summary exists yet.
         # Generate the initial summaries from the full conversation.
         if not summary:
-            messages = await self.message_repo.get_messages_by_lead_id(
+            messages =  self.message_repo.get_messages_by_lead_id(
                 lead_id=lead_id
             )
 
@@ -48,23 +49,23 @@ class SummaryService:
                 (
                     message
                     for message in reversed(messages)
-                    if message.sender_type == "user"
+                    if message.direction == MessageDirection.INBOUND
                 ),
                 None,
             )
 
             summary = Summary(
                 lead_id=lead_id,
-                user_summary=user_summary,
-                sales_summary=sales_summary,
-                last_summarized_user_message_id=(
+                summary_user=user_summary,
+                summary_sales=sales_summary,
+                last_summarized_message_id=(
                     last_user_message.id
                     if last_user_message
                     else None
                 ),
             )
 
-            await self.summary_repo.create(summary)
+            self.summary_repo.create(summary)
 
             return user_summary, sales_summary
 

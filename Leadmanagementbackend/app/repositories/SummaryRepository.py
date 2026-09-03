@@ -14,7 +14,7 @@ class SummaryRepository:
     ):
         self.db = db
 
-    async def get_by_lead_id(
+    def get_by_lead_id(
         self,
         lead_id: UUID,
     ) -> Summary | None:
@@ -24,28 +24,28 @@ class SummaryRepository:
             .where(Summary.lead_id == lead_id)
         )
 
-        result = await self.db.execute(statement)
+        result =  self.db.execute(statement)
 
         return result.scalar_one_or_none()
 
-    async def create(
+    def create(
         self,
         summary: Summary,
     ) -> Summary:
 
         self.db.add(summary)
 
-        await self.db.flush()
+        self.db.flush()
 
         return summary
 
-    async def update(
+    def update(
         self,
         summary: Summary,
     ) -> Summary:
 
         self.db.add(summary)
 
-        await self.db.flush()
+        self.db.flush()
 
         return summary

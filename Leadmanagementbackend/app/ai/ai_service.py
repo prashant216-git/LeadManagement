@@ -39,6 +39,9 @@ class AIService:
             lead_id: UUID,
             last_message_id: UUID,
     ) -> DraftDTO:
+
+        print(last_message_id)
+        print(lead_id)
         # ---------------------------------------------
         # 1. Fetch relevant data
         # ---------------------------------------------
@@ -59,7 +62,9 @@ class AIService:
                         draft_id=existing_draft.id)
 
         last_messages = await self.messageservice.get_latest_messages_by_lead(lead_id= lead_id,limit=6)
+        print(last_messages)
         last_message= self.channel_resolver.resolve_message_id(last_message_id)
+        print(last_message)
 
         context = self._build_conversation_context(last_messages)
         context = "\n".join([
@@ -98,7 +103,7 @@ class AIService:
         return DraftDTO(status=AIDraftStatus.GENERATED,
                         draft_text=result,
                         message_id=last_message_id,
-                        draft_id=draft.draft_id)
+                        draft_id=draft.id)
 
     async def generate_summary(
             self,
@@ -134,7 +139,7 @@ class AIService:
         else:
             raise ValueError(f"Invalid summary type: {summary_type}")
 
-        result=await self.provider.generate(prompt)
+        result=self.provider.generate(prompt)
 
         return result
 

@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from app.enums.message import MessageDirection
 from app.models import Lead, messages
 from app.models.channel_connection import ChannelConnection
 from app.models.messages import Message
@@ -66,7 +67,7 @@ class MessageRepository:
 
         return result.scalars().all()
 
-    
+
 
     def get_by_provider_message_id(
             self,
@@ -120,7 +121,7 @@ class MessageRepository:
 
         return list(reversed(messages))
 
-    async def get_messages_by_lead_id(
+    def get_messages_by_lead_id(
             self,
             lead_id: UUID,
     ) -> list[Message]:
@@ -134,11 +135,11 @@ class MessageRepository:
             )
         )
 
-        result = await self.db.execute(statement)
+        result =  self.db.execute(statement)
 
         return result.scalars().all()
 
-    async def get_new_user_messages_for_summary(
+    def get_new_user_messages_for_summary(
             self,
             lead_id: UUID,
             last_summarized_user_message_at: datetime | None = None,
@@ -152,9 +153,9 @@ class MessageRepository:
             )
         )
 
-        if role is not None:
+        if role == MessageDirection.INBOUND:
             statement = statement.where(
-                Message.sender_type == role
+                Message.direction == role
             )
 
         if last_summarized_user_message_at is not None:
@@ -167,6 +168,6 @@ class MessageRepository:
             Message.provider_created_at.asc()
         )
 
-        result = await self.db.execute(statement)
+        result =  self.db.execute(statement)
 
         return result.scalars().all()
