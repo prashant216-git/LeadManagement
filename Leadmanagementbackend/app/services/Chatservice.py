@@ -38,7 +38,8 @@ class ChatService:
             message = (
                 self.message_repository
                 .get_latest_message_by_lead_id(
-                    lead_id=lead.id
+                    lead_id=lead.id,
+                    limit=1
                 )
             )
 

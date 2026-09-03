@@ -1,43 +1,54 @@
+from sqlalchemy import ForeignKey, Integer, Text, UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
-from sqlalchemy import Column, UUID
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import DateTime
-from sqlalchemy.sql import func
-from sqlalchemy import ForeignKey
 
-from sqlalchemy import Text
 
 class Summary(Base):
 
     __tablename__ = "summaries"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
-        index=True
+        index=True,
     )
 
-    user_id = Column(
-        UUID,
-        ForeignKey("users.id"),
+    lead_id: Mapped[UUID] = mapped_column(
+        ForeignKey(
+            "leads.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
         unique=True,
-        nullable=False
+        index=True,
     )
 
-    summary = Column(
+    summary_user: Mapped[str | None] = mapped_column(
         Text,
-        nullable=True
+        nullable=True,
     )
 
-    last_summarized_message_id = Column(
-        Integer,
-        nullable=True
+    summary_sales: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
     )
 
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
+    last_summarized_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "messages.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    lead: Mapped["Lead"] = relationship(
+        "Lead",
+        back_populates="summary",
+    )
+
+    last_summarized_message: Mapped["Message | None"] = relationship(
+        "Message",
+        foreign_keys=[last_summarized_message_id],
     )

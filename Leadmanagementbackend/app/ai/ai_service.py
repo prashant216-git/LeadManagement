@@ -4,10 +4,12 @@ from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import result
 
 from app.DTOs.AIDraftDTO import DraftDTO
+from app.ai.prompts.summary_prompt import SALES_SUMMARY_PROMPT, SALES_SUMMARY_UPDATE_PROMPT, USER_SUMMARY_PROMPT, \
+    USER_SUMMARY_UPDATE_PROMPT
 from app.ai.providers.deepseek_provider import DeepSeekProvider
 from app.ai.prompts.draft_prompt import DRAFT_REPLY_PROMPT
 from app.channel_engine.channelresolver import ChannelResolver
-from app.dependencies.services import get_channel_resolver
+
 from app.enums.message import MessageDirection, AIDraftStatus
 from app.models import Message
 from app.repositories.AI_DraftRepository import AIDraftRepository
@@ -97,6 +99,44 @@ class AIService:
                         draft_text=result,
                         message_id=last_message_id,
                         draft_id=draft.draft_id)
+
+    async def generate_summary(
+            self,
+            messages: list[Message],
+            summary_type: str,
+            existing_summary: str | None = None,
+    ) -> str:
+
+        context = self._build_conversation_context(messages)
+
+        if summary_type == "user":
+            if existing_summary:
+                prompt = USER_SUMMARY_UPDATE_PROMPT.format(
+                    existing_summary=existing_summary,
+                    context=context,
+                )
+            else:
+                prompt = USER_SUMMARY_PROMPT.format(
+                    context=context,
+                )
+
+        elif summary_type == "salesperson":
+            if existing_summary:
+                prompt = SALES_SUMMARY_UPDATE_PROMPT.format(
+                    existing_summary=existing_summary,
+                    context=context,
+                )
+            else:
+                prompt = SALES_SUMMARY_PROMPT.format(
+                    context=context,
+                )
+
+        else:
+            raise ValueError(f"Invalid summary type: {summary_type}")
+
+        result=await self.provider.generate(prompt)
+
+        return result
 
     def _build_conversation_context(
             self,

@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from app.models import Lead, messages
@@ -65,22 +66,7 @@ class MessageRepository:
 
         return result.scalars().all()
 
-    def get_latest_message_by_lead_id(
-            self,
-            lead_id: UUID,
-    ) -> Message | None:
-        result = self.db.execute(
-            select(Message)
-            .where(
-                Message.lead_id == lead_id
-            )
-            .order_by(
-                Message.provider_created_at.desc()
-            )
-            .limit(1)
-        )
-
-        return result.scalar_one_or_none()
+    
 
     def get_by_provider_message_id(
             self,
@@ -133,3 +119,54 @@ class MessageRepository:
         messages = result.scalars().all()
 
         return list(reversed(messages))
+
+    async def get_messages_by_lead_id(
+            self,
+            lead_id: UUID,
+    ) -> list[Message]:
+        statement = (
+            select(Message)
+            .where(
+                Message.lead_id == lead_id
+            )
+            .order_by(
+                Message.provider_created_at.asc()
+            )
+        )
+
+        result = await self.db.execute(statement)
+
+        return result.scalars().all()
+
+    async def get_new_user_messages_for_summary(
+            self,
+            lead_id: UUID,
+            last_summarized_user_message_at: datetime | None = None,
+            role: str | None = None,
+    ) -> list[Message]:
+
+        statement = (
+            select(Message)
+            .where(
+                Message.lead_id == lead_id,
+            )
+        )
+
+        if role is not None:
+            statement = statement.where(
+                Message.sender_type == role
+            )
+
+        if last_summarized_user_message_at is not None:
+            statement = statement.where(
+                Message.provider_created_at
+                > last_summarized_user_message_at
+            )
+
+        statement = statement.order_by(
+            Message.provider_created_at.asc()
+        )
+
+        result = await self.db.execute(statement)
+
+        return result.scalars().all()

@@ -6,7 +6,8 @@ from requests import Session
 from app.ai.ai_service import AIService
 from app.channel_engine.channelresolver import ChannelResolver
 from app.db.session import get_db
-from app.dependencies.services import get_message_service, get_channel_resolver
+from app.dependencies.services import get_message_service, get_channel_resolver, get_summary_service, get_ai_service
+from app.services.Summaryservice import SummaryService
 from app.services.messageservice import MessageService
 
 router = APIRouter(
@@ -21,13 +22,10 @@ async def get_draft(
 
     db: Session = Depends(get_db),
 messageservice: MessageService = Depends(get_message_service),
-        channel_resolver : ChannelResolver = Depends(get_channel_resolver)
+        channel_resolver : ChannelResolver = Depends(get_channel_resolver),
+ai_service: AIService = Depends(get_ai_service),
 ):
-    ai_service = AIService(
-        db=db,
-        messageservice=messageservice,
-        channel_resolver=channel_resolver
-    )
+
 
     user_id=UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
 
@@ -45,3 +43,22 @@ messageservice: MessageService = Depends(get_message_service),
         last_message_id=last_message,
 
     )
+
+@router.post("/{lead_id}/summarise")
+async def summarise_lead(
+    lead_id: UUID,
+    summary_service: SummaryService = Depends(
+        get_summary_service
+    ),
+):
+    user_summary, sales_summary = (
+        await summary_service.ensure_summary(
+            lead_id=lead_id
+        )
+    )
+
+    return {
+        "lead_id": lead_id,
+        "user_summary": user_summary,
+        "sales_summary": sales_summary,
+    }

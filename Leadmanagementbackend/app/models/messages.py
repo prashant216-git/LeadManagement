@@ -174,3 +174,4 @@ class Message(BaseModel):
         "AIDraft",
         back_populates="message",
     )
+

@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.ai_service import AIService
 from app.channel_engine.channelresolver import ChannelResolver
 from app.db.session import get_db
 from app.repositories.ChannelConnectionRepository import ChannelConnectionRepository
@@ -8,6 +9,7 @@ from app.repositories.ChannelCredentialRepository import ChannelCredentialReposi
 from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 from app.repositories.DashboardRepository import DashboardRepository
+from app.repositories.SummaryRepository import SummaryRepository
 from app.services.Chatservice import ChatService
 from app.services.CredentialEncryptionService import (
     CredentialEncryptionService,
@@ -17,6 +19,7 @@ from app.repositories.LeadRepository import LeadRepository
 from app.repositories.MessageRepository import MessageRepository
 from app.services.DashboardService import DashboardService
 from app.services.Leadmanagementservice import LeadService
+from app.services.Summaryservice import SummaryService
 from app.services.messageservice import MessageService
 
 from app.dependencies.repositories import (
@@ -118,4 +121,28 @@ def get_channel_resolver(
         message_repository=message_repository,
     )
 
+def get_ai_service(
+    db: AsyncSession = Depends(get_db),
+    message_service: MessageService = Depends(get_message_service),
+    channel_resolver: ChannelResolver = Depends(get_channel_resolver),
+) -> AIService:
+
+    return AIService(
+        db=db,
+        messageservice=message_service,
+        channel_resolver=channel_resolver,
+    )
+def get_summary_service(
+    db: AsyncSession = Depends(get_db),
+    ai_service: AIService = Depends(get_ai_service),
+) -> SummaryService:
+
+    message_repo = MessageRepository(db)
+    summary_repo = SummaryRepository(db)
+
+    return SummaryService(
+        message_repo=message_repo,
+        summary_repo=summary_repo,
+        ai_service=ai_service,
+    )
 

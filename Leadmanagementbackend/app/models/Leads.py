@@ -87,3 +87,10 @@ class Lead(BaseModel):
         back_populates="lead",
         cascade="all, delete-orphan",
     )
+
+    summary : Mapped["Summary | None"] = relationship(
+        "Summary",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
