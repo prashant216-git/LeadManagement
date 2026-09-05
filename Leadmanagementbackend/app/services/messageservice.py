@@ -41,7 +41,7 @@ class MessageService:
             message_type: MessageType | None = None,
             provider_created_at: datetime | None = None,
             provider_metadata: dict | None = None,
-    ) -> Message:
+    ) -> tuple[Message, bool]:
 
         lock_key = (
             f"{lead_id}:"
@@ -61,7 +61,7 @@ class MessageService:
             )
 
             if existing_message:
-                return existing_message
+                return existing_message , False
 
             message = Message(
                 lead_id=lead_id,
@@ -80,10 +80,11 @@ class MessageService:
                 content=content,
                 message_type=message_type,
                 provider_created_at=provider_created_at,
-                
-            )
 
-            return self.message_repository.create(message)
+            )
+            created_message=self.message_repository.create(message)
+
+            return created_message,True
 
     async def get_messages_by_lead_id(
             self,
