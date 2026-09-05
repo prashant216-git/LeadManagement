@@ -14,7 +14,7 @@ from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 from app.repositories.LeadRepository import LeadRepository
 from app.services.CredentialEncryptionService import CredentialEncryptionService
 from app.services.messageservice import MessageService
-from socketmanager.websocketmanager import websocketmanager
+from app.socketmanager.websocketmanager import websocketmanager
 
 
 def get_channel_engine(
