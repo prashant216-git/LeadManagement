@@ -14,6 +14,7 @@ from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 from app.repositories.LeadRepository import LeadRepository
 from app.services.CredentialEncryptionService import CredentialEncryptionService
 from app.services.messageservice import MessageService
+from socketmanager.websocketmanager import websocketmanager
 
 
 def get_channel_engine(
@@ -44,6 +45,8 @@ def get_channel_engine(
     db: Session = Depends(get_db),
 ) -> ChannelEngine:
 
+    websockmanager=websocketmanager()
+
     return ChannelEngine(
         connection_repository=connection_repository,
         credential_repository=credential_repository,
@@ -53,5 +56,6 @@ def get_channel_engine(
         lead_repository=lead_repository,
         channel_resolver=channel_resolver,
         message_service=message_service,
-        db=db
+        db=db,
+        webmanager=websockmanager
     )
