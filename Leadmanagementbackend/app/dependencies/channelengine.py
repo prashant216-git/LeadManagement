@@ -6,7 +6,8 @@ from app.channel_engine.engine import ChannelEngine
 from app.db.session import get_db
 from app.dependencies.repositories import get_lead_repository, get_channel_connection_repository, \
     get_channel_credential_repository, get_channel_watch_repository, get_channel_master_repository
-from app.dependencies.services import get_message_service, get_channel_resolver, get_credential_encryption_service
+from app.dependencies.services import get_message_service, get_channel_resolver, get_credential_encryption_service, \
+    get_websocket_manager
 from app.repositories.ChannelConnectionRepository import ChannelConnectionRepository
 from app.repositories.ChannelCredentialRepository import ChannelCredentialRepository
 from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
@@ -43,9 +44,10 @@ def get_channel_engine(
         get_message_service
     ),
     db: Session = Depends(get_db),
+    webmanager :websocketmanager =Depends(get_websocket_manager)
 ) -> ChannelEngine:
 
-    websockmanager=websocketmanager()
+
 
     return ChannelEngine(
         connection_repository=connection_repository,
@@ -57,5 +59,5 @@ def get_channel_engine(
         channel_resolver=channel_resolver,
         message_service=message_service,
         db=db,
-        webmanager=websockmanager
+        webmanager=webmanager
     )

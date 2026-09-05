@@ -28,6 +28,7 @@ from app.dependencies.repositories import (
     get_channel_connection_repository, get_channel_credential_repository, get_channel_watch_repository,
     get_channel_master_repository,
 )
+from app.socketmanager.websocketmanager import websocketmanager
 
 
 def get_credential_encryption_service(
@@ -145,4 +146,10 @@ def get_summary_service(
         summary_repo=summary_repo,
         ai_service=ai_service,
     )
+
+websocket_manager = websocketmanager()
+
+
+def get_websocket_manager() -> websocketmanager:
+    return websocket_manager
 
