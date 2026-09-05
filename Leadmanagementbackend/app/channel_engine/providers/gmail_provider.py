@@ -750,6 +750,7 @@ class GmailProvider(BaseChannelProvider):
 
                 )
                 print("executed successfully")
+                print(createdlead.id)
 
                 await self.web_socket_manager.send_to_lead(lead_id=createdlead.id,data=message)
 
