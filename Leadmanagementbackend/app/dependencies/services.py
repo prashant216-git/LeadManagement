@@ -151,5 +151,6 @@ websocket_manager = websocketmanager()
 
 
 def get_websocket_manager() -> websocketmanager:
+    print("MANAGER:", id(websocket_manager))
     return websocket_manager
 

@@ -219,6 +219,7 @@ class ChannelEngine:
                 channel_code
             )
         )
+        print("ENGINE MANAGER:", id(self.web_socket_manager))
         provider_class=provider_class(
             connection=connection,
             credentials=None,
