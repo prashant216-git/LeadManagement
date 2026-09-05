@@ -686,7 +686,7 @@ class GmailProvider(BaseChannelProvider):
 
             try :
 
-                createdmessage=await self.message_service.create_message(
+                createdmessage,is_new =await self.message_service.create_message(
                     lead_id=createdlead.id,
 
                     channel_connection_id=connectionid,
@@ -735,6 +735,9 @@ class GmailProvider(BaseChannelProvider):
                         ]
                     ),
                 )
+                if not is_new:
+                    print("Duplicate message - skipping websocket")
+                    continue
                 print("saved successfully")
                 message=MessageDetailsDTO(
                     id=createdmessage.id,
