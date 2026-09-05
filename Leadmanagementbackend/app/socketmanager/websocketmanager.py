@@ -41,7 +41,7 @@ class websocketmanager:
         disconnected=[]
         for websocket in connectionsthislead:
             try :
-                print("datais"+data)
+                print(data)
                 await websocket.send_json(data.model_dump(mode="json"))
             except Exception as e:
                 print(e)
