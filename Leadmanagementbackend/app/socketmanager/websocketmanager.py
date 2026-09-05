@@ -34,6 +34,7 @@ class websocketmanager:
         print("entered .......... sedningwebsocet")
 
         print(self.connections)
+        lead_id=str(lead_id)
 
         connectionsthislead = self.connections[lead_id]
         print(connectionsthislead)
