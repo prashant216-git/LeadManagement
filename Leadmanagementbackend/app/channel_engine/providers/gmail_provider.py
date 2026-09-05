@@ -10,6 +10,8 @@ from secrets import token_urlsafe
 from urllib.parse import urlencode
 import base64
 from email.utils import make_msgid
+
+from app.DTOs.MessageDTO import MessageDetailsDTO
 from app.DTOs.connection.callbackerror import CallbackError, CallbackException
 from app.channel_engine.BaseChannelProvider import BaseChannelProvider
 from app.channel_engine.registry import ChannelProviderRegistry
@@ -56,7 +58,8 @@ class GmailProvider(BaseChannelProvider):
 
         channel_resolver,
         message_service,
-            db
+            db,
+            websocketmanager ,
 
     ):
         self.connection = connection
@@ -73,6 +76,7 @@ class GmailProvider(BaseChannelProvider):
 
         self.channel_resolver=channel_resolver
         self.db=db
+        self.web_socket_manager=websocketmanager
 
     # ==========================================================
     # Connection Lifecycle
@@ -686,7 +690,7 @@ class GmailProvider(BaseChannelProvider):
 
             try :
 
-                await self.message_service.create_message(
+                createdmessage=await self.message_service.create_message(
                     lead_id=createdlead.id,
 
                     channel_connection_id=connectionid,
@@ -735,6 +739,22 @@ class GmailProvider(BaseChannelProvider):
                         ]
                     ),
                 )
+                message=MessageDetailsDTO(
+                    id=createdmessage.id,
+                    direction=createdmessage.direction,
+                    sender_identifier=createdmessage.sender_identifier,
+                    recipient_identifier=createdmessage.recipient_identifier,
+                    content=createdmessage.content,
+                    message_type=createdmessage.message_type,
+                    repliedmessageid=createdmessage.reply_to_message_id,
+                    provider_created_at=createdmessage.provider_created_at,
+
+
+
+                )
+
+                self.web_socket_manager.send_to_lead(lead_id=createdlead.id,data=message)
+
 
                 # 7. Update watch
 

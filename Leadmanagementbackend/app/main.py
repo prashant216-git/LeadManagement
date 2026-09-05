@@ -17,6 +17,7 @@ from app.api.dashboard_controller import router as dashboard_controller
 from app.api.channel_webhook_controller import router as webhook_controller
 from app.api.Leadscontroller import router as lead_controller
 # from app.api.AIREPLYHOOK import router as replyrouter
+from app.api.websockets import router as webscoket_router
 app = FastAPI()
 origins = [
     "http://localhost:3000",  # React
@@ -24,7 +25,9 @@ origins = [
     "https://veloratechnologies.in",
     "https://api.veloratechnologies.in",
     "https://www.veloratechnologies.in",
-    "https://crm.veloratechnologies.in"
+    "https://crm.veloratechnologies.in",
+"https://api-ai.silexatechnologies.com"
+    "https://crm.silexatechnologies.com"
 ]
 
 app.add_middleware(
@@ -39,6 +42,7 @@ app.add_middleware(
 # # app.include_router(airouter)
 # # app.include_router(usersrouter)
 app.include_router(webhook_controller)
+app.include_router(webscoket_router)
 # app.include_router(replyrouter)
 app.include_router(dashboard_controller)
 app.include_router(lead_controller)
