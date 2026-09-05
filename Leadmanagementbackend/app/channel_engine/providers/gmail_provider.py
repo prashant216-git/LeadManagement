@@ -749,8 +749,11 @@ class GmailProvider(BaseChannelProvider):
 
 
                 )
+                print("executed successfully")
 
-                self.web_socket_manager.send_to_lead(lead_id=createdlead.id,data=message)
+                await self.web_socket_manager.send_to_lead(lead_id=createdlead.id,data=message)
+
+                print("after websocket")
 
 
                 # 7. Update watch
