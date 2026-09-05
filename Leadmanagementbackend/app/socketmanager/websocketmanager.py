@@ -29,12 +29,15 @@ class websocketmanager:
     async def send_to_lead(self,lead_id:str , data:MessageDetailsDTO):
         print("entered .......... sedningwebsocet")
         connections = self.connections[lead_id]
+        print(connections)
         disconnected=[]
         for websocket in connections:
             try :
                 print("datais"+data)
                 await websocket.send_json(data)
             except Exception as e:
+                print(e)
+
                 disconnected.append(websocket)
         for websocket in disconnected:
             self.disconnect(lead_id,websocket)
