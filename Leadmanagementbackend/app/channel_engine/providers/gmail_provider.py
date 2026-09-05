@@ -525,7 +525,7 @@ class GmailProvider(BaseChannelProvider):
             )
         )
 
-        print(channelcodeid)
+
 
         # 2. Resolve connection
 
@@ -560,7 +560,7 @@ class GmailProvider(BaseChannelProvider):
             }
 
         # 3. Resolve watch
-        print(connectionid)
+
 
 
         watch = (
@@ -576,7 +576,7 @@ class GmailProvider(BaseChannelProvider):
                 "reason": "watch_not_found",
             }
 
-        print(watch.provider_cursor)
+
 
         # ======================================================
         # IMPORTANT:
@@ -600,11 +600,7 @@ class GmailProvider(BaseChannelProvider):
                 "reason": "access_token_not_available",
             }
 
-        print(accesstoken)
 
-        # 5. Get new messages
-
-        print("getting new messages")
 
         messages = await self._get_new_messages(
             watch.provider_cursor,
@@ -654,7 +650,7 @@ class GmailProvider(BaseChannelProvider):
                 )
             )
 
-            print(createdlead.id)
+
 
             message_details = (
                 self._extract_message_data(
@@ -739,6 +735,7 @@ class GmailProvider(BaseChannelProvider):
                         ]
                     ),
                 )
+                print("saved successfully")
                 message=MessageDetailsDTO(
                     id=createdmessage.id,
                     direction=createdmessage.direction,
@@ -930,7 +927,7 @@ class GmailProvider(BaseChannelProvider):
             history_id: str,
             access_token: str,
     ):
-        print(access_token)
+
         response = await self.client.get(
             "https://gmail.googleapis.com/gmail/v1/users/me/history",
             headers={
@@ -944,8 +941,7 @@ class GmailProvider(BaseChannelProvider):
                 "historyTypes": "messageAdded",
             },
         )
-        print("newmessage extraction done")
-        print("getnewmessage",response)
+
 
         response.raise_for_status()
 
@@ -976,7 +972,7 @@ class GmailProvider(BaseChannelProvider):
             access_token: str,
     ):
 
-        print("getting single messages")
+
         response = await self.client.get(
             f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message_id}",
             headers={
@@ -991,7 +987,7 @@ class GmailProvider(BaseChannelProvider):
             },
         )
 
-        print("get_message",response)
+
 
         if response.status_code == 404:
             print(
