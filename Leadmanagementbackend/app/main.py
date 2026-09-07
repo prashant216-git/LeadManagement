@@ -6,13 +6,7 @@ from app.api import dashboard_controller
 from app.api.channel_controller import router as channel_router
 # from app.api.whatsappwebhook import router as webhook_router
 from app.db.database import Base, engine
-from app.models.Leads import Lead
-from app.models.messages import Message
-from app.models.summary import Summary
-from app.models.Ai_Draft import AIDraft
-# from app.api.AIWebhook import router as airouter
-# from app.api.UsersRoute import router as usersrouter
-from app.core.config import settings
+from app.api.meeting_router import router as meeting_router
 from app.api.dashboard_controller import router as dashboard_controller
 from app.api.channel_webhook_controller import router as webhook_controller
 from app.api.Leadscontroller import router as lead_controller
@@ -43,7 +37,7 @@ app.add_middleware(
 # # app.include_router(usersrouter)
 app.include_router(webhook_controller)
 app.include_router(webscoket_router)
-# app.include_router(replyrouter)
+app.include_router(meeting_router)
 app.include_router(dashboard_controller)
 app.include_router(lead_controller)
 app.include_router(channel_router)

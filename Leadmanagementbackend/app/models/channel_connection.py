@@ -185,3 +185,9 @@ class ChannelConnection(BaseModel):
         "Message",
         back_populates="channel_connection",
     )
+
+    meetings: Mapped[list["LeadMeeting"]] = relationship(
+        "LeadMeeting",
+        back_populates="channel_connection",
+        cascade="all, delete-orphan",
+    )

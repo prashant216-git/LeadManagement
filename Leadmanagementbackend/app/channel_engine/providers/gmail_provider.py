@@ -1,6 +1,8 @@
 import json
 import re
 import secrets
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 from email.mime.text import MIMEText
 from email.utils import make_msgid
 import base64
@@ -10,6 +12,9 @@ from secrets import token_urlsafe
 from urllib.parse import urlencode
 import base64
 from email.utils import make_msgid
+
+
+from uuid import UUID, uuid4
 
 from app.DTOs.MessageDTO import MessageDetailsDTO
 from app.DTOs.connection.callbackerror import CallbackError, CallbackException
@@ -65,7 +70,7 @@ class GmailProvider(BaseChannelProvider):
         self.connection = connection
         self.credentials = credentials
 
-        self.connection_repository = connection_repository
+        self.connection_repository  = connection_repository
         self.credential_repository = credential_repository
         self.encryption_service = encryption_service
         self.channel_watch_repository = channel_watch_repository
@@ -104,6 +109,7 @@ class GmailProvider(BaseChannelProvider):
             "profile",
             "https://www.googleapis.com/auth/gmail.readonly",
             "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/calendar"
         ]
 
         params = {
@@ -1400,3 +1406,85 @@ class GmailProvider(BaseChannelProvider):
         response.raise_for_status()
 
         return response.json()
+
+    import httpx
+
+    async def create_meeting(
+            self,
+            connection_id: UUID,
+            title: str,
+            description: str | None,
+            start_time: datetime,
+            end_time: datetime,
+            attendee_email: str,
+    ) -> dict:
+
+        access_token = await self.channel_resolver.resolve_access_token(
+            connection_id=connection_id,
+        )
+
+        event = {
+            "summary": title,
+            "description": description,
+            "start": {
+                "dateTime": start_time.isoformat(),
+                "timeZone": "Asia/Kolkata",
+            },
+            "end": {
+                "dateTime": end_time.isoformat(),
+                "timeZone": "Asia/Kolkata",
+            },
+            "attendees": [
+                {
+                    "email": attendee_email,
+                }
+            ],
+            "conferenceData": {
+                "createRequest": {
+                    "requestId": f"lead-meeting-{uuid4()}",
+                    "conferenceSolutionKey": {
+                        "type": "hangoutsMeet",
+                    },
+                }
+            },
+        }
+
+        url = (
+            "https://www.googleapis.com/calendar/v3"
+            "/calendars/primary/events"
+        )
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                params={
+                    "conferenceDataVersion": "1",
+                    "sendUpdates": "all",
+                },
+                json=event,
+            )
+            if response.status_code >= 400:
+                print("STATUS:", response.status_code)
+                print("GOOGLE ERROR:", response.text)
+
+            response.raise_for_status()
+
+        response.raise_for_status()
+
+        created_event = response.json()
+
+        return {
+            "event_id": created_event["id"],
+            "meeting_link": (
+                created_event
+                .get("conferenceData", {})
+                .get("entryPoints", [{}])[0]
+                .get("uri")
+            ),
+            "html_link": created_event.get("htmlLink"),
+        }
+

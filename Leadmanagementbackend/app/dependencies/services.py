@@ -3,12 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.ai_service import AIService
 from app.channel_engine.channelresolver import ChannelResolver
+
 from app.db.session import get_db
+
 from app.repositories.ChannelConnectionRepository import ChannelConnectionRepository
 from app.repositories.ChannelCredentialRepository import ChannelCredentialRepository
 from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 from app.repositories.DashboardRepository import DashboardRepository
+from app.repositories.LeadMeetingRepository import LeadMeetingRepository
 from app.repositories.SummaryRepository import SummaryRepository
 from app.services.Chatservice import ChatService
 from app.services.CredentialEncryptionService import (
@@ -19,6 +22,7 @@ from app.repositories.LeadRepository import LeadRepository
 from app.repositories.MessageRepository import MessageRepository
 from app.services.DashboardService import DashboardService
 from app.services.Leadmanagementservice import LeadService
+from app.services.MeetingService import MeetingService
 from app.services.Summaryservice import SummaryService
 from app.services.messageservice import MessageService
 
@@ -153,4 +157,7 @@ websocket_manager = websocketmanager()
 def get_websocket_manager() -> websocketmanager:
     print("MANAGER:", id(websocket_manager))
     return websocket_manager
+
+
+
 

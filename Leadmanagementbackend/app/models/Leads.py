@@ -94,3 +94,9 @@ class Lead(BaseModel):
         cascade="all, delete-orphan",
         uselist=False,
     )
+
+    meetings: Mapped[list["LeadMeeting"]] = relationship(
+        "LeadMeeting",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+    )
