@@ -185,7 +185,7 @@ class LeadService:
         lead = None
 
         # Find existing lead by email
-        lead =await self.lead_repository.get_by_identifier(user_id=user_id,
+        lead =self.lead_repository.get_by_identifier(user_id=user_id,
 
 
                     email=lead_data.email,
