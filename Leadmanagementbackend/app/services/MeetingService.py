@@ -40,6 +40,10 @@ class MeetingService:
             end_time: datetime,
     ) -> LeadMeeting:
 
+        existing_meeting = self.meeting_repository.get_by_time(lead_id=lead_id,start_time=start_time,end_time=end_time)
+        if existing_meeting:
+            raise ValueError("Meeting already exists.")
+
         lead = self.lead_repository.get_by_id(
             lead_id=lead_id
         )
@@ -71,6 +75,9 @@ class MeetingService:
             raise ValueError(
                 "Lead does not have an email address."
             )
+
+        if end_time < start_time:
+            raise ValueError("Meeting creation time is before start time.")
 
         provider = self.channel_engine.create_provider(
 
@@ -123,3 +130,23 @@ class MeetingService:
         return self.meeting_repository.get_by_lead_id(
             lead_id=lead_id
         )
+
+    async def check_meeting_availability(
+            self,
+            user_id: UUID,
+            start_time: datetime,
+            end_time: datetime,
+    ) -> bool:
+
+        if end_time <= start_time:
+            raise ValueError(
+                "End time must be after start time."
+            )
+
+        exists = self.meeting_repository.has_overlap(
+            user_id=user_id,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        return not exists

@@ -1,8 +1,10 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models import Lead
 from app.models.lead_meeting import LeadMeeting
 
 
@@ -67,6 +69,77 @@ class LeadMeetingRepository:
         result = self.db.execute(statement)
 
         return list(result.scalars().all())
+
+    def get_by_time(
+            self,
+            lead_id: UUID,
+            start_time: datetime,
+            end_time: datetime,
+    ) -> LeadMeeting | None:
+        statement = (
+            select(LeadMeeting)
+            .where(
+                LeadMeeting.lead_id == lead_id,
+                LeadMeeting.start_time == start_time,
+                LeadMeeting.end_time == end_time,
+            )
+        )
+
+        result = self.db.execute(statement)
+
+        return result.scalar_one_or_none()
+
+    def get_by_start_time(
+            self,
+
+            user_id: UUID,
+            start_time: datetime,
+    ) -> LeadMeeting | None:
+        statement = (
+            select(LeadMeeting)
+            .join(
+                Lead,
+                Lead.id == LeadMeeting.lead_id,
+            )
+            .where(
+
+                Lead.user_id == user_id,
+                LeadMeeting.start_time == start_time,
+            )
+        )
+
+        result = self.db.execute(statement)
+
+        return result.scalar_one_or_none()
+
+    def has_overlap(
+            self,
+            user_id: UUID,
+            start_time: datetime,
+            end_time: datetime,
+    ) -> bool:
+        statement = (
+            select(LeadMeeting)
+            .join(
+                Lead,
+                Lead.id == LeadMeeting.lead_id,
+            )
+            .where(
+                # Lead.user_id == user_id,
+                LeadMeeting.start_time < end_time,
+                LeadMeeting.end_time > start_time,
+            )
+        )
+
+        result = self.db.execute(statement)
+        meetings = result.scalars().all()
+
+        print("USER ID:", user_id)
+        print("REQUEST START:", start_time)
+        print("REQUEST END:", end_time)
+        print("MATCHED MEETINGS:", meetings)
+
+        return len(meetings) > 0
 
 
     def save(self, meeting: LeadMeeting) -> LeadMeeting:
