@@ -36,3 +36,16 @@ class MeetingResponseDTO(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UpdateMeetingDTO(BaseModel):
+    title: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=255,
+    )
+
+    description: str | None = None
+
+    start_time: datetime | None = None
+
+    end_time: datetime | None = None

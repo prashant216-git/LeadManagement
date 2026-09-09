@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.DTOs.MeetingDTO import (
     CreateMeetingDTO,
-    MeetingResponseDTO,
+    MeetingResponseDTO, UpdateMeetingDTO,
 )
 from app.DTOs.Meeting_checkDTO import MeetingAvailabilityDTO
 from app.services.MeetingService import MeetingService
@@ -88,3 +88,31 @@ end_time: datetime,
     return MeetingAvailabilityDTO(
         available=available
     )
+
+@router.patch(
+    "/{meeting_id}",
+    response_model=MeetingResponseDTO,
+)
+async def update_meeting(
+    meeting_id: UUID,
+    request: UpdateMeetingDTO,
+    meeting_service: MeetingService = Depends(
+        get_meeting_service
+    ),
+):
+    try:
+
+        return await meeting_service.update_meeting(
+            meeting_id=meeting_id,
+            title=request.title,
+            description=request.description,
+            start_time=request.start_time,
+            end_time=request.end_time,
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )

@@ -1488,3 +1488,72 @@ class GmailProvider(BaseChannelProvider):
             "html_link": created_event.get("htmlLink"),
         }
 
+    from datetime import datetime
+    from uuid import UUID
+
+    import httpx
+
+    async def update_meeting(
+            self,
+            connection_id: UUID,
+            provider_event_id: str,
+            title: str,
+            description: str | None,
+            start_time: datetime,
+            end_time: datetime,
+    ) -> dict:
+
+        access_token = await self.channel_resolver.resolve_access_token(
+            connection_id=connection_id,
+        )
+
+        event = {
+            "summary": title,
+            "description": description,
+            "start": {
+                "dateTime": start_time.isoformat(),
+                "timeZone": "Asia/Kolkata",
+            },
+            "end": {
+                "dateTime": end_time.isoformat(),
+                "timeZone": "Asia/Kolkata",
+            },
+        }
+
+        url = (
+            "https://www.googleapis.com/calendar/v3"
+            f"/calendars/primary/events/{provider_event_id}"
+        )
+
+        async with httpx.AsyncClient() as client:
+            response = await client.patch(
+                url,
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                json=event,
+                params={
+                    "sendUpdates": "all",
+                },
+            )
+
+        response.raise_for_status()
+
+        updated_event = response.json()
+
+        return {
+            "event_id": updated_event["id"],
+            "title": updated_event.get("summary"),
+            "description": updated_event.get("description"),
+            "start_time": updated_event["start"]["dateTime"],
+            "end_time": updated_event["end"]["dateTime"],
+            "meeting_link": (
+                updated_event
+                .get("conferenceData", {})
+                .get("entryPoints", [{}])[0]
+                .get("uri")
+            ),
+            "html_link": updated_event.get("htmlLink"),
+        }
+
