@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: Optional[str] = None
     DATABASE_URL: Optional[str] = None
 
+    TEMPORAL_HOST: str 
+    TEMPORAL_NAMESPACE: str
+    TEMPORAL_TASK_QUEUE: str
+
     # JWT_SECRET_KEY: str
     # JWT_ALGORITHM: str = "HS256"
     #

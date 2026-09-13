@@ -443,10 +443,11 @@ class GmailProvider(BaseChannelProvider):
         raise NotImplementedError()
 
     async def setup_watch(self,identifier:str,channel_id:int):
+        print(f"Setting up watch for {identifier}")
 
-        connectionid=self.channel_resolver.resolve_connection_id(identifier=identifier,channel_id=channel_id)
+        self.connectionid=self.channel_resolver.resolve_connection_id(identifier=identifier,channel_id=channel_id)
 
-        access_token=await self.channel_resolver.resolve_access_token(connection_id=connectionid)
+        access_token=await self.channel_resolver.resolve_access_token(connection_id=self.connectionid)
 
         response = await self.client.post(
             "https://gmail.googleapis.com/gmail/v1/users/me/watch",
@@ -465,7 +466,7 @@ class GmailProvider(BaseChannelProvider):
         data = response.json()
 
         watch = self.channel_watch_repository.get_by_connection_id(
-            self.connection.id
+            self.connectionid,
         )
 
         now = datetime.now(timezone.utc)
@@ -493,9 +494,9 @@ class GmailProvider(BaseChannelProvider):
             self.db.commit()
 
         else:
-            watch.provider_cursor = response["historyId"]
+            watch.provider_cursor = data["historyId"]
             watch.expires_at = datetime.fromtimestamp(
-                int(response["expiration"]) / 1000,
+                int(data["expiration"]) / 1000,
                 tz=timezone.utc,
             )
             watch.last_renewed_at = now
@@ -507,7 +508,7 @@ class GmailProvider(BaseChannelProvider):
 
         return {
             "status": "WATCH_ACTIVE",
-            "connection_id": self.connection.id,
+            "connection_id": self.connectionid,
         }
 
     async def handle_notification(
