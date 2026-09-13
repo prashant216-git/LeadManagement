@@ -1,8 +1,10 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
 
 from app.models.ChannelWatch import ChannelWatch
+from app.models.channel_connection import ChannelConnection
 
 
 class ChannelWatchRepository:
@@ -41,6 +43,32 @@ class ChannelWatchRepository:
         )
 
         return result.scalar_one_or_none()
+
+    def get_watches_expiring_before(
+            self,
+            expiry_limit: datetime,
+    ):
+        statement = (
+            select(
+                ChannelWatch,
+                ChannelConnection.id,
+                ChannelConnection.provider_identifier,
+                ChannelConnection.channel_id,
+            )
+            .join(
+                ChannelConnection,
+                ChannelConnection.id
+                == ChannelWatch.channel_connection_id,
+            )
+            .where(
+                ChannelWatch.expires_at <= expiry_limit,
+                ChannelWatch.is_active.is_(True),
+            )
+        )
+
+        result = self.db.execute(statement)
+
+        return result.all()
 
     # ==========================================================
     # Save watch

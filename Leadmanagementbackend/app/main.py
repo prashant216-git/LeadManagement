@@ -20,8 +20,10 @@ origins = [
     "https://api.veloratechnologies.in",
     "https://www.veloratechnologies.in",
     "https://crm.veloratechnologies.in",
-"https://api-ai.silexatechnologies.com"
-    "https://crm.silexatechnologies.com"
+"https://api-ai.silexatechnologies.com",
+    "https://crm.silexatechnologies.com",
+    "https://www.veloratechnologies.in"
+
 ]
 
 app.add_middleware(
