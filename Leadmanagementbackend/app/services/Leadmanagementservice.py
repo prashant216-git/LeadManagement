@@ -108,7 +108,7 @@ class LeadService:
             channel_id: UUID,
             page: int = 1,
             page_size: int = 20,
-            sort_by: str = "created_at",
+            sort_by: str = "updated_at",
             sort_order: str = "desc",
     ) -> LeadlistDTO:
 
@@ -153,7 +153,7 @@ class LeadService:
                     phone_number=lead_details.phone_number,
 
                     created_at=(
-                        lead_details.created_at
+                        lead_details.updated_at
                     ),
                 )
             )
@@ -208,7 +208,7 @@ class LeadService:
 
             lead.updated_at = datetime.now(timezone.utc)
 
-            await self.lead_repository.save(lead)
+            self.lead_repository.save(lead)
 
             return lead
 

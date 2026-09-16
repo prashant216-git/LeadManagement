@@ -4,7 +4,7 @@ import secrets
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from email.mime.text import MIMEText
-from email.utils import make_msgid
+from email.utils import make_msgid, parseaddr
 import base64
 from datetime import datetime, timedelta, timezone
 from os import access
@@ -639,6 +639,7 @@ class GmailProvider(BaseChannelProvider):
             lead_email = sender["email"]
             lead_name = sender["name"]
 
+
             if (
                     sender["email"].lower()
                     == email_address.lower()
@@ -646,6 +647,19 @@ class GmailProvider(BaseChannelProvider):
                 if recipient:
                     lead_email = recipient["email"]
                     lead_name = recipient["name"]
+            message_details = (
+                self._extract_message_data(
+                    message
+                )
+            )
+            if (
+                    message_details["is_noreply"]
+                    or message_details["is_promotional"]
+            ):
+                print(
+                    f"Skipping ignored email from {sender["email"]}"
+                )
+                continue
 
             createdlead = (
                 await self.lead_service
@@ -659,11 +673,8 @@ class GmailProvider(BaseChannelProvider):
 
 
 
-            message_details = (
-                self._extract_message_data(
-                    message
-                )
-            )
+
+
 
             reply_to_message_id = None
             direction = MessageDirection.INBOUND
@@ -1276,6 +1287,50 @@ class GmailProvider(BaseChannelProvider):
             print(header_map.get(
                 "in-reply-to"))
 
+            # New flags
+            is_noreply = False
+            is_promotional = False
+
+            # Check sender address
+            sender_header = header_map.get("from", "").lower()
+
+            if any(
+                    value in sender_header
+                    for value in (
+                            "noreply@",
+                            "no-reply@",
+                            "donotreply@",
+                            "do-not-reply@",
+                    )
+            ):
+                is_noreply = True
+
+            # Mailing-list/promotional indicators
+            if any(
+                    header_name in header_map
+                    for header_name in (
+                            "list-unsubscribe",
+                            "list-id",
+                            "list-post",
+                    )
+            ):
+                is_promotional = True
+
+            # Bulk email indicator
+            if header_map.get("precedence", "").lower() in {
+                "bulk",
+                "list",
+                "junk",
+            }:
+                is_promotional = True
+
+            provider_created_at = None
+
+            if message.get("internalDate"):
+                provider_created_at = datetime.fromtimestamp(
+                    int(message["internalDate"]) / 1000
+                )
+
         return {
             # Gmail conversation/thread
             "conversation_id": message.get(
@@ -1310,6 +1365,8 @@ class GmailProvider(BaseChannelProvider):
             "provider_created_at": (
                 provider_created_at
             ),
+            "is_noreply": is_noreply,
+            "is_promotional": is_promotional,
         }
 
     async def _resolve_rfc_message_id(
@@ -1557,4 +1614,5 @@ class GmailProvider(BaseChannelProvider):
             ),
             "html_link": updated_event.get("htmlLink"),
         }
+
 

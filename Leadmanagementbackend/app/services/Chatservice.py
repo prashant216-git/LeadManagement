@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from app.DTOs.Chats import ChatSidebarDTO, ChatSidebarItemDTO
@@ -25,7 +26,7 @@ class ChatService:
                 channel_id=channel_id,
                 limit=100,
                 offset=0,
-                sort_by="created_at",
+                sort_by="updated_at",
                 sort_order="desc",
             )
         )
@@ -60,6 +61,10 @@ class ChatService:
                         else None
                     ),
                 )
+            )
+            chats.sort(
+                key=lambda chat: chat.latest_message_time or datetime.min,
+                reverse=True
             )
 
         return ChatSidebarDTO(

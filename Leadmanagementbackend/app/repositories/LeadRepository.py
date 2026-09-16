@@ -85,6 +85,7 @@ class LeadRepository:
             sort_order: str,
     ):
         allowed_sort_fields = {
+            "updated_at": Lead.updated_at,
             "created_at": Lead.created_at,
             "name": Lead.name,
             "email": Lead.email,
@@ -147,6 +148,7 @@ class LeadRepository:
             sort_order: str,
     ):
         allowed_sort_fields = {
+            "updated_at": Lead.updated_at,
             "created_at": Lead.created_at,
             "name": Lead.name,
             "email": Lead.email,
