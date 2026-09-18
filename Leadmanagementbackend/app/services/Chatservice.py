@@ -17,12 +17,13 @@ class ChatService:
     async def get_chat_sidebar(
         self,
         channel_id: UUID,
+            user_id: UUID,
     ) -> ChatSidebarDTO:
 
         leads, _ = (
             self.lead_repository
             .get_leads_by_channel_id(
-                user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f"),
+                user_id = user_id,
                 channel_id=channel_id,
                 limit=100,
                 offset=0,

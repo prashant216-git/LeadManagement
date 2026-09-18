@@ -8,6 +8,8 @@ from app.models.channel_connection import ChannelConnection
 from sqlalchemy import select, func
 
 from app.models.channel_master import ChannelMaster
+from app.models.lead_status import LeadStatus
+from app.models.lead_status_master import LeadStatusMaster
 
 
 class LeadRepository:
@@ -106,12 +108,18 @@ class LeadRepository:
             select(
                 Lead,
                 ChannelConnection.provider_identifier,
+                LeadStatusMaster.status_name,
+                LeadStatus.updated_at
             )
             .outerjoin(
-                ChannelConnection,
-                Lead.channel_connection_id
-                == ChannelConnection.id,
+                LeadStatus,
+                Lead.id == LeadStatus.lead_id,
             )
+            .outerjoin(
+                LeadStatusMaster,
+                LeadStatus.status_id == LeadStatusMaster.id,
+            )
+            
             .where(
                 Lead.source_channel_id == channel_id,
                 Lead.user_id == user_id,

@@ -12,6 +12,9 @@ class Leadetails(BaseModel):
     email: str | None = None
     phone_number: str | None = None
     created_at: datetime | None = None
+    status: str | None = None
+    lead_updated_at: datetime | None = None
+    lead_status_updated_at :datetime | None = None
 
 
 class LeadlistDTO(BaseModel):

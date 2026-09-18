@@ -100,3 +100,9 @@ class Lead(BaseModel):
         back_populates="lead",
         cascade="all, delete-orphan",
     )
+
+    lead_statuses: Mapped[list["LeadStatus"]] = relationship(
+        "LeadStatus",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+    )

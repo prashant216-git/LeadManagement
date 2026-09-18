@@ -12,6 +12,8 @@ from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
 from app.repositories.ChannelWatchRepository import ChannelWatchRepository
 from app.repositories.DashboardRepository import DashboardRepository
 from app.repositories.LeadMeetingRepository import LeadMeetingRepository
+from app.repositories.LeadStatusMasterRepository import LeadStatusMasterRepository
+from app.repositories.LeadStatusRepository import LeadStatusRepository
 from app.repositories.SummaryRepository import SummaryRepository
 from app.services.Chatservice import ChatService
 from app.services.CredentialEncryptionService import (
@@ -21,6 +23,7 @@ from app.services.CredentialEncryptionService import (
 from app.repositories.LeadRepository import LeadRepository
 from app.repositories.MessageRepository import MessageRepository
 from app.services.DashboardService import DashboardService
+from app.services.LeadStatusService import LeadStatusService
 from app.services.Leadmanagementservice import LeadService
 from app.services.MeetingService import MeetingService
 from app.services.Summaryservice import SummaryService
@@ -149,6 +152,25 @@ def get_summary_service(
         message_repo=message_repo,
         summary_repo=summary_repo,
         ai_service=ai_service,
+    )
+
+def get_lead_status_service(
+    db: AsyncSession = Depends(get_db),
+) -> LeadStatusService:
+
+    lead_repository = LeadRepository(db)
+
+    lead_status_repository = LeadStatusRepository(db)
+
+    lead_status_master_repository = (
+        LeadStatusMasterRepository(db)
+    )
+
+    return LeadStatusService(
+        lead_repository=lead_repository,
+        lead_status_repository=lead_status_repository,
+        lead_status_master_repository=lead_status_master_repository,
+        db=db,
     )
 
 websocket_manager = websocketmanager()

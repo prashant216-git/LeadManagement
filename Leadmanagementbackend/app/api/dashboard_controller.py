@@ -37,7 +37,7 @@ async def get_dashboard_counts(
         get_dashboard_service
     ),
 ):
-    user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
+    user_id = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
 
     return await dashboard_service.get_counts(
         user_id=user_id

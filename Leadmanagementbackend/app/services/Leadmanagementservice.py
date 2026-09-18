@@ -119,7 +119,7 @@ class LeadService:
         all_leads, total = (
             self.lead_repository
             .get_leads_by_channel_id(
-                user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f"),
+                user_id = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f"),
                 channel_id=channel_id,
                 limit=page_size,
                 offset=offset,
@@ -133,7 +133,14 @@ class LeadService:
         for (
                 lead_details,
                 source_identifier,
+                status_name,
+            status_updated_at
         ) in all_leads:
+
+
+
+
+
             valid_leads.append(
                 Leadetails(
                     connection_id=(
@@ -152,9 +159,14 @@ class LeadService:
 
                     phone_number=lead_details.phone_number,
 
+                    status =status_name,
+
                     created_at=(
-                        lead_details.updated_at
+                        lead_details.created_at
                     ),
+                    lead_updated_at=lead_details.updated_at,
+
+                    lead_status_updated_at=status_updated_at,
                 )
             )
 

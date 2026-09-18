@@ -74,3 +74,16 @@ class User(BaseModel):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    lead_statuses: Mapped[list["LeadStatusMaster"]] = relationship(
+        "LeadStatusMaster",
+        foreign_keys="LeadStatusMaster.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    created_lead_statuses: Mapped[list["LeadStatusMaster"]] = relationship(
+        "LeadStatusMaster",
+        foreign_keys="LeadStatusMaster.created_by",
+        back_populates="created_by_user",
+    )
