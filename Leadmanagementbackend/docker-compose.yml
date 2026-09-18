@@ -4,12 +4,25 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: silexa-compose
+    image: silexa-app:latest
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
       TEMPORAL_HOST: temporal-client:7233
+    depends_on:
+      temporal-client:
+        condition: service_started
+    restart: unless-stopped
+  temporal-worker:
+    image: silexa-app:latest
+    container_name: temporal-worker
+    env_file:
+      - .env
+    environment:
+      TEMPORAL_HOST: temporal-client:7233
+    command: python -m app.schedulers.temporal.worker
     depends_on:
       temporal-client:
         condition: service_started
