@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 
 from app.repositories.LeadRepository import LeadRepository
+from app.repositories.LeadStatusMasterRepository import LeadStatusMasterRepository
+from app.repositories.LeadStatusRepository import LeadStatusRepository
 from app.repositories.MessageRepository import MessageRepository
 from app.repositories.ChannelConnectionRepository import (
     ChannelConnectionRepository,
@@ -61,3 +63,13 @@ def get_user_repository(
     db: AsyncSession = Depends(get_db),
 ):
     return UserRepository(db)
+
+def get_lead_status_repository(
+    db: AsyncSession = Depends(get_db),
+):
+    return LeadStatusRepository(db)
+
+def get_lead_status_master_repository(
+db: AsyncSession = Depends(get_db),
+):
+    return LeadStatusMasterRepository(db)

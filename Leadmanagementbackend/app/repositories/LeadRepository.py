@@ -174,7 +174,17 @@ class LeadRepository:
         )
 
         query = (
-            select(Lead)
+            select(Lead,LeadStatusMaster.status_name,
+                LeadStatus.updated_at)
+            .outerjoin(
+                LeadStatus,
+                Lead.id == LeadStatus.lead_id,
+            )
+            .outerjoin(
+                LeadStatusMaster,
+                LeadStatus.status_id == LeadStatusMaster.id,
+            )
+
             .where(
                 Lead.user_id == user_id,
                 Lead.source_channel_id.is_(None),
@@ -200,11 +210,7 @@ class LeadRepository:
             .limit(limit)
         )
 
-        return (
-            result.scalars().all(),
-            total,
-        )
-
+        return result.all(), total
     # ======================================================
     # SAVE
     # ======================================================

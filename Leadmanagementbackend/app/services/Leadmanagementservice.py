@@ -10,6 +10,8 @@ from app.models import Lead
 from app.core.lock import (
     lead_lock_manager,
 )
+from app.models.lead_status import LeadStatus
+from app.repositories.LeadStatusRepository import LeadStatusRepository
 
 
 class LeadService:
@@ -18,11 +20,15 @@ class LeadService:
         self,
         lead_repository,
         channel_connection_repository,
+            lead_status_repository,
+            lead_status_master_repository
     ):
         self.lead_repository = lead_repository
         self.channel_connection_repository = (
             channel_connection_repository
         )
+        self.lead_status_repository : LeadStatusRepository =lead_status_repository
+        self.lead_status_master_repository=lead_status_master_repository
 
     async def create_or_update_lead(
             self,
@@ -34,7 +40,6 @@ class LeadService:
 
     ):
 
-        print("entered leadservice")
 
         connection = (
             self.channel_connection_repository
@@ -44,6 +49,8 @@ class LeadService:
 
             )
         )
+
+
 
         if connection is None:
             raise ValueError(
@@ -73,6 +80,8 @@ class LeadService:
                 )
             )
 
+
+
             if lead is not None:
                 print("got old")
 
@@ -84,6 +93,7 @@ class LeadService:
 
                 if phone_number:
                     lead.phone_number = phone_number
+
 
                 self.lead_repository.update(lead)
                 return lead
@@ -99,9 +109,34 @@ class LeadService:
                 phone_number=phone_number,
             )
 
-            return self.lead_repository.save(
+
+            result= self.lead_repository.save(
                 lead
             )
+            try:
+                default_status = (
+                    self.lead_status_master_repository
+                    .get_by_user_id_default(
+                        user_id=connection.user_id
+                    )
+                )
+
+                if default_status:
+                    lead_status = LeadStatus(
+                        lead_id=result.id,
+                        status_id=default_status.id,
+                        update_by=connection.user_id,
+                    )
+
+                    self.lead_status_repository.save(lead_status)
+
+            except Exception as exc:
+                print(
+                    f"Failed to assign status to lead "
+                    f"{lead.id}: {exc}"
+                )
+            return lead
+
 
     async def get_lead_by_channel_id(
             self,
@@ -166,7 +201,7 @@ class LeadService:
                     ),
                     lead_updated_at=lead_details.updated_at,
 
-                    lead_status_updated_at=status_updated_at,
+                    lead_status_updated_at= status_updated_at ,
                 )
             )
 
@@ -233,9 +268,33 @@ class LeadService:
             phone_number=lead_data.phone_number,
         )
 
-        return self.lead_repository.save(
+        result = self.lead_repository.save(
             lead
         )
+        try:
+            default_status = (
+                self.lead_status_master_repository
+                .get_by_user_id_default(
+                    user_id=user_id
+                )
+            )
+
+            if default_status:
+                lead_status = LeadStatus(
+                    lead_id=result.id,
+                    status_id=default_status.id,
+                    update_by=user_id,
+                )
+                print("creating lead status")
+
+                self.lead_status_repository.save(lead_status)
+
+        except Exception as exc:
+            print(
+                f"Failed to assign status to lead "
+                f"{lead.id}: {exc}"
+            )
+        return lead
 
     async def get_manual_leads(
             self,
@@ -252,7 +311,7 @@ class LeadService:
         all_leads, total = (
             self.lead_repository
             .get_manual_leads(
-                user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f"),
+                user_id = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f"),
                 limit=page_size,
                 offset=offset,
                 sort_by=sort_by,
@@ -262,7 +321,7 @@ class LeadService:
 
         valid_leads = []
 
-        for lead_details in all_leads:
+        for (lead_details , status,updated_at) in all_leads:
             valid_leads.append(
                 Leadetails(
                     connection_id=(
@@ -280,6 +339,12 @@ class LeadService:
                     phone_number=lead_details.phone_number,
 
                     created_at=lead_details.created_at,
+
+                    status=status,
+
+                    lead_updated_at=lead_details.updated_at,
+
+                    lead_status_updated_at=updated_at,
                 )
             )
 

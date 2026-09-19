@@ -87,3 +87,10 @@ class User(BaseModel):
         foreign_keys="LeadStatusMaster.created_by",
         back_populates="created_by_user",
     )
+
+    updated_lead_statuses: Mapped[list["LeadStatus"]] = relationship(
+        "LeadStatus",
+        foreign_keys="LeadStatus.update_by",
+        back_populates="updated_by_user",
+    )
+

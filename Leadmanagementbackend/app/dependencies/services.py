@@ -33,7 +33,7 @@ from app.dependencies.repositories import (
     get_lead_repository,
     get_message_repository,
     get_channel_connection_repository, get_channel_credential_repository, get_channel_watch_repository,
-    get_channel_master_repository,
+    get_channel_master_repository, get_lead_status_repository, get_lead_status_master_repository,
 )
 from app.socketmanager.websocketmanager import websocketmanager
 
@@ -63,6 +63,8 @@ def get_lead_service(
     channel_connection_repository: ChannelConnectionRepository = Depends(
         get_channel_connection_repository
     ),
+    lead_status_repository: LeadStatusRepository = Depends(get_lead_status_repository),
+        lead_status_master_repository: LeadStatusMasterRepository = Depends(get_lead_status_master_repository)
 ) -> LeadService:
 
     return LeadService(
@@ -70,6 +72,8 @@ def get_lead_service(
         channel_connection_repository=(
             channel_connection_repository
         ),
+        lead_status_repository=lead_status_repository,
+        lead_status_master_repository=lead_status_master_repository
     )
 
 def get_chat_service(

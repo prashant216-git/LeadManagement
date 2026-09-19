@@ -26,6 +26,13 @@ class LeadStatus(BaseModel):
         index=True,
     )
 
+    update_by: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+
     __table_args__ = (
         Index(
             "uq_lead_status_lead",
@@ -46,4 +53,9 @@ class LeadStatus(BaseModel):
     status = relationship(
         "LeadStatusMaster",
         back_populates="statuses",
+    )
+    updated_by_user = relationship(
+        "User",
+        foreign_keys=[update_by],
+        back_populates="updated_lead_statuses",
     )
