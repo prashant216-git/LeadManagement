@@ -36,6 +36,7 @@ class SummaryRepository:
         self.db.add(summary)
 
         self.db.flush()
+        self.db.commit()
 
         return summary
 
@@ -47,5 +48,6 @@ class SummaryRepository:
         self.db.add(summary)
 
         self.db.flush()
+        self.db.commit()
 
         return summary

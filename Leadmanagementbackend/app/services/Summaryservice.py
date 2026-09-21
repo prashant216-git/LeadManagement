@@ -117,4 +117,5 @@ class SummaryService:
 
         await self.summary_repo.update(summary)
 
+
         return user_summary, sales_summary
