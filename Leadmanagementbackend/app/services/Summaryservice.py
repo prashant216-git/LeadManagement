@@ -85,8 +85,8 @@ class SummaryService:
         # Return the existing summaries without calling AI.
         if len(new_user_messages) < 10:
             return (
-                summary.user_summary,
-                summary.sales_summary,
+                summary.summary_user,
+                summary.summary_sales,
             )
 
         # 10 or more new USER messages.
@@ -99,21 +99,21 @@ class SummaryService:
         user_summary = await self.ai_service.generate_summary(
             messages=messages,
             summary_type="user",
-            existing_summary=summary.user_summary,
+            existing_summary=summary.summary_user,
         )
 
         sales_summary = await self.ai_service.generate_summary(
             messages=messages,
             summary_type="salesperson",
-            existing_summary=summary.sales_summary,
+            existing_summary=summary.summary_sales,
         )
 
         last_message=new_user_messages[-1]
 
 
-        summary.user_summary = user_summary
-        summary.sales_summary = sales_summary
-        summary.last_summarized_user_message_id = last_message.id
+        summary.summary_user = user_summary
+        summary.summary_sales = sales_summary
+        summary.last_summarized_message_id = last_message.id
 
         self.summary_repo.update(summary)
 

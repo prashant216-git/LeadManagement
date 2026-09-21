@@ -34,7 +34,7 @@ class Summary(Base):
         nullable=True,
     )
 
-    last_summarized_message_id: Mapped[int | None] = mapped_column(
+    last_summarized_message_id: Mapped[UUID | None] = mapped_column(
         ForeignKey(
             "messages.id",
             ondelete="SET NULL",
