@@ -71,7 +71,7 @@ class SummaryService:
 
         # Summary already exists.
         # Check how many new USER messages have arrived.
-        last_message_summarized=self.message_repo.get_by_id(summary.last_summarized_user_message_id)
+        last_message_summarized=self.message_repo.get_by_id(summary.last_summarized_message_id)
         new_user_messages = (
             await self.message_repo.get_new_user_messages_for_summary(
                 lead_id=lead_id,
