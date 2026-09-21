@@ -49,6 +49,8 @@ class ChannelEngine:
             message_service,
             db,
             webmanager,
+            lead_service,
+
     ):
         self.connection_repository = connection_repository
         self.credential_repository = credential_repository
@@ -60,6 +62,7 @@ class ChannelEngine:
         self.message_service=message_service
         self.db=db
         self.web_socket_manager=webmanager
+        self.lead_service=lead_service
 
     # ==========================================================
     # NEW CONNECTION
@@ -108,8 +111,7 @@ class ChannelEngine:
             connection_repository=self.connection_repository,
             channel_watch_repository=self.channel_watch_repository,
             channel_master_repository=self.channel_master_repository,
-            lead_service=LeadService(channel_connection_repository=self.connection_repository,
-                                     lead_repository=self.lead_repository),
+            lead_service=self.lead_service,
            channel_resolver=self.channel_resolver,
             message_service=self.message_service,db=self.db,
         websocketmanager=self.web_socket_manager
