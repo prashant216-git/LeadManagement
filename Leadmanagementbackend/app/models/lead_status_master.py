@@ -43,6 +43,11 @@ class LeadStatusMaster(BaseModel):
         index=True,
     )
 
+    colour : Mapped[str] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
     user = relationship(
         "User",
         foreign_keys=[user_id],

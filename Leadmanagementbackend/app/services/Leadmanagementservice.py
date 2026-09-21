@@ -162,10 +162,13 @@ class LeadService:
                 sort_order=sort_order,
             )
         )
+
         default_status = (
             self.lead_status_master_repository
             .get_by_user_id_default(user_id=UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f"))
         )
+
+
 
         valid_leads = []
 
@@ -175,6 +178,8 @@ class LeadService:
                 status_name,
             status_updated_at
         ) in all_leads:
+
+
             if status_name is None:
                 if default_status is not None:
                     lead_status = LeadStatus(
@@ -186,8 +191,8 @@ class LeadService:
                     try:
                         self.lead_status_repository.save(lead_status)
 
-                        status = default_status.status_name
-                        updated_at = lead_status.updated_at
+                        status_name = default_status.status_name
+                        status_updated_at = lead_status.updated_at
 
                     except Exception as exc:
                         print(
@@ -200,6 +205,8 @@ class LeadService:
 
 
             valid_leads.append(
+
+
                 Leadetails(
                     connection_id=(
                         lead_details.channel_connection_id

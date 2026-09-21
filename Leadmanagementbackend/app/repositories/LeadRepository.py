@@ -119,12 +119,17 @@ class LeadRepository:
                 LeadStatusMaster,
                 LeadStatus.status_id == LeadStatusMaster.id,
             )
+            .outerjoin(
+                ChannelConnection,
+                ChannelConnection.id == Lead.channel_connection_id )
             
             .where(
                 Lead.source_channel_id == channel_id,
                 Lead.user_id == user_id,
             )
         )
+
+
 
         total = (
             self.db.execute(
@@ -144,6 +149,9 @@ class LeadRepository:
             .offset(offset)
             .limit(limit)
         )
+
+
+
 
         return result.all(), total
 
