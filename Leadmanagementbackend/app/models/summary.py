@@ -1,18 +1,14 @@
 from sqlalchemy import ForeignKey, Integer, Text, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.database import Base
+from app.models.base_model import BaseModel
 
 
-class Summary(Base):
+class Summary(BaseModel):
 
     __tablename__ = "summaries"
 
-    id: Mapped[UUID] = mapped_column(
-        UUID,
-        primary_key=True,
-        index=True,
-    )
+
 
     lead_id: Mapped[UUID] = mapped_column(
         ForeignKey(

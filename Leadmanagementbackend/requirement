@@ -16,3 +16,4 @@ google-auth
 temporalio
 tzdata
 openai
+uvicorn[standard]
