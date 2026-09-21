@@ -73,7 +73,7 @@ class SummaryService:
         # Check how many new USER messages have arrived.
         last_message_summarized=self.message_repo.get_by_id(summary.last_summarized_message_id)
         new_user_messages = (
-            await self.message_repo.get_new_user_messages_for_summary(
+            self.message_repo.get_new_user_messages_for_summary(
                 lead_id=lead_id,
                 last_summarized_user_message_at=last_message_summarized.provider_created_at,
                 role="user",
@@ -91,7 +91,7 @@ class SummaryService:
 
         # 10 or more new USER messages.
         # Generate updated summaries using the FULL conversation.
-        messages = await self.message_repo.get_new_user_messages_for_summary(
+        messages = self.message_repo.get_new_user_messages_for_summary(
             lead_id=lead_id,
             last_summarized_user_message_at=last_message_summarized.provider_created_at
         )
@@ -115,7 +115,7 @@ class SummaryService:
         summary.sales_summary = sales_summary
         summary.last_summarized_user_message_id = last_message.id
 
-        await self.summary_repo.update(summary)
+        self.summary_repo.update(summary)
 
 
         return user_summary, sales_summary
