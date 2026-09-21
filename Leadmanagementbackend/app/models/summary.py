@@ -8,7 +8,7 @@ class Summary(Base):
 
     __tablename__ = "summaries"
 
-    id: Mapped[int] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         Integer,
         primary_key=True,
         index=True,
