@@ -9,6 +9,8 @@ class ChatSidebarItemDTO(BaseModel):
     name: str | None = None
     email: str | None = None
     phone_number: str | None = None
+    status: str | None = None
+
 
     latest_message: str | None = None
     latest_message_time: datetime | None = None

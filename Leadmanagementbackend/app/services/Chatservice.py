@@ -31,11 +31,24 @@ class ChatService:
                 sort_order="desc",
             )
         )
-        leads = [lead for lead, _ in leads]
+        leads = [
+            {
+                "lead": lead,
+                "status": status_name,
+                "status_updated_at": status_updated_at,
+            }
+            for (
+                lead,
+                _,
+                status_name,
+                status_updated_at,
+            ) in leads
+        ]
 
         chats = []
 
-        for lead in leads:
+        for leads in leads:
+            lead=leads["lead"]
 
             message = (
                 self.message_repository
@@ -61,6 +74,7 @@ class ChatService:
                         if message
                         else None
                     ),
+                    status=leads["status"],
                 )
             )
             chats.sort(

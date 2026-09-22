@@ -76,9 +76,11 @@ class SummaryService:
             self.message_repo.get_new_user_messages_for_summary(
                 lead_id=lead_id,
                 last_summarized_user_message_at=last_message_summarized.provider_created_at,
-                role="user",
-                ),
+                role="INBOUND",
+                )
             )
+
+        print(len(new_user_messages))
 
 
         # Less than 10 new USER messages.

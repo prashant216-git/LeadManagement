@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.enums.message import MessageDirection
 from app.models import Lead, messages
+from app.models.base_model import BaseModel
 from app.models.channel_connection import ChannelConnection
 from app.models.messages import Message
 
@@ -152,13 +153,23 @@ class MessageRepository:
                 Message.lead_id == lead_id,
             )
         )
+        print(lead_id)
 
         if role == MessageDirection.INBOUND:
+            print("here inside inbound")
             statement = statement.where(
-                Message.direction == role
+                Message.direction == MessageDirection.INBOUND
             )
+        print(role)
+
 
         if last_summarized_user_message_at is not None:
+            print(
+                "last_summarized:",
+                last_summarized_user_message_at,
+                "tzinfo:",
+                last_summarized_user_message_at.tzinfo,
+            )
             statement = statement.where(
                 Message.provider_created_at
                 > last_summarized_user_message_at
@@ -167,6 +178,7 @@ class MessageRepository:
         statement = statement.order_by(
             Message.provider_created_at.asc()
         )
+
 
         result =  self.db.execute(statement)
 
