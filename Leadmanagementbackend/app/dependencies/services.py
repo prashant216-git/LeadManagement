@@ -5,6 +5,7 @@ from app.ai.ai_service import AIService
 from app.channel_engine.channelresolver import ChannelResolver
 
 from app.db.session import get_db
+from app.dependencies.temporal import get_temporal_scheduler
 
 from app.repositories.ChannelConnectionRepository import ChannelConnectionRepository
 from app.repositories.ChannelCredentialRepository import ChannelCredentialRepository
@@ -15,6 +16,7 @@ from app.repositories.LeadMeetingRepository import LeadMeetingRepository
 from app.repositories.LeadStatusMasterRepository import LeadStatusMasterRepository
 from app.repositories.LeadStatusRepository import LeadStatusRepository
 from app.repositories.SummaryRepository import SummaryRepository
+from app.schedulers.temporal.scheduler_dynamic import TemporalScheduler
 from app.services.Chatservice import ChatService
 from app.services.CredentialEncryptionService import (
     CredentialEncryptionService,
@@ -26,6 +28,7 @@ from app.services.DashboardService import DashboardService
 from app.services.LeadStatusService import LeadStatusService
 from app.services.Leadmanagementservice import LeadService
 from app.services.MeetingService import MeetingService
+from app.services.ScheduledMessageservice import ScheduledMessageService
 from app.services.Summaryservice import SummaryService
 from app.services.messageservice import MessageService
 
@@ -34,6 +37,7 @@ from app.dependencies.repositories import (
     get_message_repository,
     get_channel_connection_repository, get_channel_credential_repository, get_channel_watch_repository,
     get_channel_master_repository, get_lead_status_repository, get_lead_status_master_repository,
+    get_scheduled_message_repository,
 )
 from app.socketmanager.websocketmanager import websocketmanager
 
@@ -178,6 +182,20 @@ def get_lead_status_service(
     )
 
 websocket_manager = websocketmanager()
+
+def get_scheduled_message_service(
+    scheduled_message_repository=Depends(
+        get_scheduled_message_repository
+    ),
+    temporal_scheduler: TemporalScheduler = Depends(
+        get_temporal_scheduler
+    ),
+) -> ScheduledMessageService:
+
+    return ScheduledMessageService(
+        scheduled_message_repository=scheduled_message_repository,
+        temporal_dyanmic_repository=temporal_scheduler,
+    )
 
 
 def get_websocket_manager() -> websocketmanager:

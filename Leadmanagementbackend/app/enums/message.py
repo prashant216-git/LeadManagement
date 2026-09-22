@@ -25,3 +25,11 @@ class AIDraftStatus(str, Enum):
     EDITED = "EDITED"
     SENT = "SENT"
     DISCARDED = "DISCARDED"
+
+
+class ScheduledMessageStatus(str, Enum):
+    SCHEDULED = "SCHEDULED"
+    PROCESSING = "PROCESSING"
+    SENT = "SENT"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"

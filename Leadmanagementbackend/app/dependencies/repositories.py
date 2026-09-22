@@ -21,6 +21,7 @@ from app.repositories.ChannelCredentialRepository import (
 from app.repositories.ChannelWatchRepository import (
     ChannelWatchRepository,
 )
+from app.repositories.Schedulled_message_service import ScheduledMessageRepository
 from app.repositories.Userrepositories import UserRepository
 
 
@@ -73,3 +74,6 @@ def get_lead_status_master_repository(
 db: AsyncSession = Depends(get_db),
 ):
     return LeadStatusMasterRepository(db)
+
+def get_scheduled_message_repository(db: AsyncSession = Depends(get_db)):
+    return ScheduledMessageRepository(db)

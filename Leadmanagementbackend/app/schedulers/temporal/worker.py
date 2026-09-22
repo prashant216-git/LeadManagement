@@ -5,7 +5,11 @@ import asyncio
 from temporalio.worker import Worker
 
 from app.core.config import settings
+from app.schedulers.temporal.activities.SchedulerMessageActivity import send_scheduled_message
 from app.schedulers.temporal.client import get_temporal_client
+from app.schedulers.temporal.workflows.SchedulerMessageWorkflow import (
+    ScheduledMessageWorkflow,
+)
 
 from app.schedulers.temporal.workflows.gmail_watch_renewal_workflow import (
     GmailWatchRenewalWorkflow,
@@ -27,9 +31,11 @@ async def create_temporal_worker():
         task_queue=settings.TEMPORAL_TASK_QUEUE,
         workflows=[
             GmailWatchRenewalWorkflow,
+            ScheduledMessageWorkflow,
         ],
         activities=[
             renew_expiring_channel_watches,
+            send_scheduled_message,
         ],
     )
 

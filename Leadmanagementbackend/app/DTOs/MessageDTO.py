@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.enums.message import (
     MessageDirection,
-    MessageType,
+    MessageType, ScheduledMessageStatus,
 )
 
 
@@ -39,3 +39,28 @@ class LeadMessagesResponseDTO(BaseModel):
     lead_phone: str | None = None
 
     messages: list[MessageDetailsDTO]
+
+
+
+
+
+class ScheduledMessageCreate(BaseModel):
+    user_id: UUID
+    lead_id: UUID
+    channel_connection_id: UUID
+    content: str
+    scheduled_at: datetime
+
+
+class ScheduledMessageResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    lead_id: UUID
+    channel_connection_id: UUID
+    content: str
+    scheduled_at: datetime
+    status: ScheduledMessageStatus
+
+    model_config = {
+        "from_attributes": True
+    }

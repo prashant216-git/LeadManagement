@@ -20,7 +20,10 @@ from app.repositories.ChannelMasterRepositories import (
     ChannelMasterRepository,
 )
 from app.repositories.LeadRepository import LeadRepository
+from app.repositories.LeadStatusMasterRepository import LeadStatusMasterRepository
+from app.repositories.LeadStatusRepository import LeadStatusRepository
 from app.repositories.MessageRepository import MessageRepository
+from app.services.Leadmanagementservice import LeadService
 
 from app.services.messageservice import MessageService
 from app.channel_engine.channelresolver import ChannelResolver
@@ -80,6 +83,9 @@ async def renew_expiring_channel_watches() -> dict:
             message_repository=message_repository,
             lead_repository=lead_repository,
         )
+        lead_status_repository=LeadStatusRepository(db)
+        lead_status_master_repository=LeadStatusMasterRepository(db)
+
 
         websocket_manager = websocketmanager()
 
@@ -94,6 +100,14 @@ async def renew_expiring_channel_watches() -> dict:
             channel_master_repository=channel_master_repository,
             credential_encryption_service=credential_service,
             message_repository=message_repository,
+        )
+        lead_service=LeadService(
+            lead_repository=lead_repository,
+            channel_connection_repository=(
+                channel_connection_repository
+            ),
+            lead_status_repository=lead_status_repository,
+            lead_status_master_repository=lead_status_master_repository
         )
 
         # -------------------------------------------------
@@ -111,6 +125,7 @@ async def renew_expiring_channel_watches() -> dict:
             message_service=message_service,
             db=db,
             webmanager=websocket_manager,
+            lead_service=lead_service
         )
 
         # --------------------------------------------------
