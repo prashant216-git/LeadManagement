@@ -194,7 +194,7 @@ def get_scheduled_message_service(
 
     return ScheduledMessageService(
         scheduled_message_repository=scheduled_message_repository,
-        temporal_dyanmic_repository=temporal_scheduler,
+        temporal_dyanmic_registrar=temporal_scheduler,
     )
 
 
