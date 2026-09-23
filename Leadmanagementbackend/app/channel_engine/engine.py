@@ -222,6 +222,7 @@ class ChannelEngine:
                 channel_code
             )
         )
+        print("transfeered to falanadamka")
 
         provider_class=self.create_provider(channel_code=channel_code)
 
