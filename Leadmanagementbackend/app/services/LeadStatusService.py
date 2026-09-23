@@ -74,6 +74,7 @@ class LeadStatusService:
         status_name: str | None,
         is_active: bool | None,
         is_default: bool | None,
+            colour: str | None
     ) -> LeadStatusMaster:
 
         if not status_name:
@@ -111,6 +112,7 @@ class LeadStatusService:
             is_active=is_active,
             is_default=is_default,
             created_by=user_id,
+            colour=colour
         )
 
         self.lead_status_master_repository.save(
