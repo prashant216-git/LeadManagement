@@ -191,7 +191,7 @@ async def get_all_channels(
     service: ChannelService = Depends(get_channel_service),
 ):
     try:
-        user_id = UUID("9ad69636-f013-49f6-9cce-00f2828dbc6f")
+        user_id = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
         return await service.get_all_channels(user_id=user_id)
     except Exception as e:
         raise HTTPException(
