@@ -250,6 +250,7 @@ class ChannelService:
 
 
         try:
+            print("tranferred to enginer")
             result = await self.channel_engine.handle_callback(
                 channel_code=channel_code,
                 query_params=query_params,

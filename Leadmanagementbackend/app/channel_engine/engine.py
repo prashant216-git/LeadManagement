@@ -222,22 +222,9 @@ class ChannelEngine:
                 channel_code
             )
         )
+        print("transfeered to falanadamka")
 
-        provider_class=provider_class(
-            connection=connection,
-            credentials=None,
-            encryption_service=CredentialEncryptionService,
-            credential_repository=ChannelCredentialRepository,
-            connection_repository=ChannelConnectionRepository,
-            channel_watch_repository=self.channel_watch_repository,
-            channel_master_repository=self.channel_master_repository,
-            channel_resolver=self.channel_resolver,
-            message_service=self.message_service,
-            lead_service=LeadService(channel_connection_repository=self.connection_repository,lead_repository=self.lead_repository),
-            db=self.db,
-            websocketmanager=self.web_socket_manager
-
-        )
+        provider_class=self.create_provider(channel_code=channel_code)
 
         return await provider_class.handle_callback(
             query_params=query_params,
