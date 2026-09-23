@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from app.models import Lead
 from app.models.scheduled_message import ScheduledMessage
 
 
@@ -36,6 +37,8 @@ class ScheduledMessageRepository:
         return self.db.execute(
             statement
         ).scalar_one_or_none()
+
+
 
     def update(
         self,

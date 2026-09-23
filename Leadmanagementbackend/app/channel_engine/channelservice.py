@@ -595,7 +595,7 @@ class ChannelService:
             self,
             lead_id: UUID,
             channel_id: UUID,
-            identifier: str,
+            connection_id: UUID,
             content: str,
             reply_to_message_id:UUID
     ):
@@ -622,11 +622,7 @@ class ChannelService:
 
         connection = (
             self.connection_repository
-            .get_by_provider_identifier(
-                channel_id=channel_id,
-                provider_account_identifier=identifier,
-            )
-        )
+            .get_by_id(connection_id))
 
         if not connection:
             raise ValueError(

@@ -254,7 +254,7 @@ async def send_message(
 
                 channel_id=body.channel_id,
 
-                identifier=body.identifier,
+                connection_id=body.connection_id,
 
                 content=body.content,
 

@@ -8,7 +8,7 @@ class SendMessageDTO(BaseModel):
 
     channel_id: UUID
 
-    identifier: str
+    connection_id: UUID
 
     content: str
 

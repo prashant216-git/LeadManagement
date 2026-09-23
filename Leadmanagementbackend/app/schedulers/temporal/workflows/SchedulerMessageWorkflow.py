@@ -4,7 +4,10 @@ from temporalio import workflow
 
 from datetime import timedelta
 
-from app.schedulers.temporal.activities.SchedulerMessageActivity import send_scheduled_message
+with workflow.unsafe.imports_passed_through():
+    from app.schedulers.temporal.activities.SchedulerMessageActivity import (
+        send_scheduled_message,
+    )
 
 
 @workflow.defn
