@@ -33,3 +33,10 @@ class ScheduledMessageStatus(str, Enum):
     SENT = "SENT"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+
+class QuickMessageType(str, Enum):
+    IMAGE = "IMAGE"
+    VIDEO = "VIDEO"
+    DOCUMENT = "DOCUMENT"
+    AUDIO = "AUDIO"
+    TEXT = "TEXT"
