@@ -16,7 +16,7 @@ class Quick_message_attachement_config(BaseModel):
         nullable=False,
     )
 
-    attachment_id: Mapped[UUID] = mapped_column(
+    attachment_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("Attachments.id"),
         nullable=True,
     )

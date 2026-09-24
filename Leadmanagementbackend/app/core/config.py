@@ -41,6 +41,13 @@ class Settings(BaseSettings):
     TEMPORAL_NAMESPACE: str
     TEMPORAL_TASK_QUEUE: str
 
+    GCP_PROJECT_ID: str
+    GCP_PRIVATE_KEY_ID: str
+    GCP_PRIVATE_KEY: str
+    GCP_CLIENT_EMAIL: str
+    GCP_CLIENT_ID: str
+    GCP_BUCKET_NAME: str
+
     # JWT_SECRET_KEY: str
     # JWT_ALGORITHM: str = "HS256"
     #

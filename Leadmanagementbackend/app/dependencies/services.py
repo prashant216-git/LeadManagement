@@ -37,9 +37,13 @@ from app.dependencies.repositories import (
     get_message_repository,
     get_channel_connection_repository, get_channel_credential_repository, get_channel_watch_repository,
     get_channel_master_repository, get_lead_status_repository, get_lead_status_master_repository,
-    get_scheduled_message_repository,
+    get_scheduled_message_repository, get_quick_message_repository, get_attachment_repository,
 )
 from app.socketmanager.websocketmanager import websocketmanager
+from repositories.AttachementRepository import AttachmentRepository
+from repositories.QuickMessageRepository import QuickMessageRepository
+from services.AttachementService import AttachmentService
+from services.QuickMessageService import QuickMessageAttachmentService
 
 
 def get_credential_encryption_service(
@@ -201,6 +205,27 @@ def get_scheduled_message_service(
 def get_websocket_manager() -> websocketmanager:
     print("MANAGER:", id(websocket_manager))
     return websocket_manager
+def get_attachment_service() -> AttachmentService:
+    return AttachmentService()
+
+
+def get_quick_message_service(
+    db: AsyncSession = Depends(get_db),
+    quick_message_repository: QuickMessageRepository = Depends(
+        get_quick_message_repository
+    ),
+    attachment_repository: AttachmentRepository = Depends(
+        get_attachment_repository
+    ),
+) -> QuickMessageAttachmentService:
+
+    return QuickMessageAttachmentService(
+        db=db,
+        repository=quick_message_repository,
+        attachment_repository=attachment_repository,
+        attachment_service=AttachmentService(),
+    )
+
 
 
 

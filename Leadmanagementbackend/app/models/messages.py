@@ -157,6 +157,11 @@ class Message(BaseModel):
         nullable=True,
     )
 
+    attachment_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("Attachments.id"),
+        nullable=True,
+    )
+
     # ======================================================
     # RELATIONSHIPS
     # ======================================================

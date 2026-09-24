@@ -2,10 +2,12 @@ import asyncio
 from datetime import timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
-
+from google.oauth2 import service_account
 from fastapi import UploadFile
 from google.cloud import storage
 from functools import partial
+
+from core.config import settings
 
 
 class AttachmentService:
@@ -19,8 +21,25 @@ class AttachmentService:
     }
 
     def __init__(self):
-        self.client = storage.Client()
-        self.bucket = self.client.bucket("YOUR_BUCKET_NAME")
+        credentials = service_account.Credentials.from_service_account_info(
+            {
+                "type": "service_account",
+                "project_id": settings.GCP_PROJECT_ID,
+                "private_key_id": settings.GCP_PRIVATE_KEY_ID,
+                "private_key": settings.GCP_PRIVATE_KEY.replace("\\n", "\n"),
+                "client_email": settings.GCP_CLIENT_EMAIL,
+                "client_id": settings.GCP_CLIENT_ID,
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        )
+        self.client = storage.Client(
+            project=settings.GCP_PROJECT_ID,
+            credentials=credentials,
+        )
+
+        self.bucket = self.client.bucket(
+            settings.GCP_BUCKET_NAME
+        )
 
     async def upload(
         self,

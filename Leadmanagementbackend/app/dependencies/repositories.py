@@ -23,6 +23,8 @@ from app.repositories.ChannelWatchRepository import (
 )
 from app.repositories.Scheduled_message_repository import ScheduledMessageRepository
 from app.repositories.Userrepositories import UserRepository
+from repositories.AttachementRepository import AttachmentRepository
+from repositories.QuickMessageRepository import QuickMessageRepository
 
 
 def get_lead_repository(
@@ -76,3 +78,16 @@ db: AsyncSession = Depends(get_db),
     return LeadStatusMasterRepository(db)
 def get_scheduled_message_repository(db: AsyncSession = Depends(get_db)):
     return ScheduledMessageRepository(db)
+
+def get_quick_message_repository(
+    db: AsyncSession = Depends(get_db),
+) -> QuickMessageRepository:
+
+    return QuickMessageRepository(db)
+
+
+def get_attachment_repository(
+    db: AsyncSession = Depends(get_db),
+) -> AttachmentRepository:
+
+    return AttachmentRepository(db)
