@@ -40,4 +40,8 @@ class Attachment(BaseModel):
     file_size: Mapped[int] = mapped_column(
         nullable=False,
     )
+    temporary_url: Mapped[str |None] = mapped_column(
+        Text,
+        nullable=True,
+    )
 

@@ -75,6 +75,9 @@ class AttachmentRepository:
         message_id: UUID,
     ) -> Attachment:
 
+        print(message_id)
+
+
         result = self.db.execute(
             select(Attachment)
             .where(
@@ -85,4 +88,4 @@ class AttachmentRepository:
             )
         )
 
-        return list(result.scalars().all())
+        return result.scalar_one_or_none()

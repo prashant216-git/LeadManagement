@@ -123,12 +123,18 @@ class QuickMessageAttachmentService:
 
             attachment_url = None
 
-            if attachment:
+            if  attachment and attachment.temporary_url:
+                attachment_url = attachment.temporary_url
+
+            elif attachment:
                 attachment_url = (
                     self.attachment_service.generate_signed_url(
                         attachment.file_path
                     )
                 )
+                attachment.temporary_url = attachment_url
+                self.db.commit()
+
 
             items.append(
                 QuickMessageResponse(
