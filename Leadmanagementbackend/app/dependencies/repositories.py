@@ -23,8 +23,8 @@ from app.repositories.ChannelWatchRepository import (
 )
 from app.repositories.Scheduled_message_repository import ScheduledMessageRepository
 from app.repositories.Userrepositories import UserRepository
-from repositories.AttachementRepository import AttachmentRepository
-from repositories.QuickMessageRepository import QuickMessageRepository
+from app.repositories.AttachementRepository import AttachmentRepository
+from app.repositories.QuickMessageRepository import QuickMessageRepository
 
 
 def get_lead_repository(

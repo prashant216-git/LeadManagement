@@ -3,13 +3,13 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from enums.message import QuickMessageType
-from models.base_model import BaseModel
+from app.enums.message import QuickMessageType
+from app.models.base_model import BaseModel
 
 
 class Quick_message_attachement_config(BaseModel):
 
-    __tablename__ = "Quick_message_attachement_config"
+    __tablename__ = "quick_message_attachement_config"
 
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id"),
@@ -17,7 +17,7 @@ class Quick_message_attachement_config(BaseModel):
     )
 
     attachment_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("Attachments.id"),
+        ForeignKey("attachments.id"),
         nullable=True,
     )
 

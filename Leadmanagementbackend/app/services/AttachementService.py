@@ -7,7 +7,7 @@ from fastapi import UploadFile
 from google.cloud import storage
 from functools import partial
 
-from core.config import settings
+from app.core.config import settings
 
 
 class AttachmentService:
@@ -21,6 +21,10 @@ class AttachmentService:
     }
 
     def __init__(self):
+        private_key = settings.GCP_PRIVATE_KEY.replace("\\n", "\n")
+
+        print(repr(private_key[:80]))
+        print(repr(private_key[-50:]))
         credentials = service_account.Credentials.from_service_account_info(
             {
                 "type": "service_account",
@@ -101,6 +105,8 @@ class AttachmentService:
         file_path: str,
         expiration_minutes: int = 300,
     ) -> str:
+
+        print("generating signed url")
 
         blob = self.bucket.blob(file_path)
 

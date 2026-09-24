@@ -40,10 +40,10 @@ from app.dependencies.repositories import (
     get_scheduled_message_repository, get_quick_message_repository, get_attachment_repository,
 )
 from app.socketmanager.websocketmanager import websocketmanager
-from repositories.AttachementRepository import AttachmentRepository
-from repositories.QuickMessageRepository import QuickMessageRepository
-from services.AttachementService import AttachmentService
-from services.QuickMessageService import QuickMessageAttachmentService
+from app.repositories.AttachementRepository import AttachmentRepository
+from app.repositories.QuickMessageRepository import QuickMessageRepository
+from app.services.AttachementService import AttachmentService
+from app.services.QuickMessageService import QuickMessageAttachmentService
 
 
 def get_credential_encryption_service(

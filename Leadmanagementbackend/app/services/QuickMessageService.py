@@ -1,24 +1,25 @@
+import traceback
 from uuid import UUID
 
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from DTOs.QuickMessageDTO import QuickMessageResponse, ListResponse
-from enums.message import QuickMessageType
-from models.Attachements import Attachment
-from models.Quick_message_attachement_config import (
+from app.DTOs.QuickMessageDTO import QuickMessageResponse, ListResponse
+from app.enums.message import QuickMessageType
+from app.models.Attachements import Attachment
+from app.models.Quick_message_attachement_config import (
     Quick_message_attachement_config,
 )
-from repositories.AttachementRepository import AttachmentRepository
-from repositories.QuickMessageRepository import QuickMessageRepository
-from services.AttachementService import AttachmentService
+from app.repositories.AttachementRepository import AttachmentRepository
+from app.repositories.QuickMessageRepository import QuickMessageRepository
+from app.services.AttachementService import AttachmentService
 
 
 class QuickMessageAttachmentService:
 
     def __init__(
         self,
-        db: AsyncSession,
+        db,
         repository: QuickMessageRepository,
         attachment_repository: AttachmentRepository,
         attachment_service: AttachmentService,
@@ -52,7 +53,7 @@ class QuickMessageAttachmentService:
                 updated_by=user_id,
             )
 
-            quick_message = await self.repository.save(
+            quick_message = self.repository.save(
                 quick_message
             )
 
@@ -76,19 +77,22 @@ class QuickMessageAttachmentService:
                     file_size=uploaded_file["file_size"],
                 )
 
-                await self.attachment_repository.save(
+                self.attachment_repository.save(
                     attachment_model
                 )
 
             # Everything succeeded
-            await self.db.commit()
+            self.db.commit()
+
 
             return quick_message
 
         except Exception:
 
+            print(traceback.format_exc())
+
             # Rollback database transaction
-            await self.db.rollback()
+            self.db.rollback()
 
             # DB rollback cannot remove GCP object,
             # so remove it manually
@@ -104,15 +108,16 @@ class QuickMessageAttachmentService:
     async def get_by_user_id(
             self,
             user_id: UUID,
-    ) -> QuickMessageResponse.ListResponse:
+    ) -> ListResponse:
 
-        quick_messages = await self.repository.get_all_by_user(user_id)
+        quick_messages = self.repository.get_all_by_user(user_id)
+        print(len(quick_messages))
 
         items = []
 
         for message in quick_messages:
 
-            attachment = await self.attachment_repository.get_by_message(
+            attachment = self.attachment_repository.get_by_message(
                 message.id
             )
 

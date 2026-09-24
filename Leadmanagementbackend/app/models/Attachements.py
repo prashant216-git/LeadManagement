@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base_model import BaseModel
+from app.models.base_model import BaseModel
 
 
 class Attachment(BaseModel):
