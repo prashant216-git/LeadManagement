@@ -17,3 +17,4 @@ temporalio
 tzdata
 openai
 uvicorn[standard]
+google-cloud-storage

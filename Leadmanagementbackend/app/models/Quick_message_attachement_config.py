@@ -9,25 +9,29 @@ from models.base_model import BaseModel
 
 class Quick_message_attachement_config(BaseModel):
 
+    __tablename__ = "Quick_message_attachement_config"
+
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )
 
-    Message_text: Mapped[Text] = mapped_column(
+    attachment_id: Mapped[UUID] = mapped_column(
+        ForeignKey("Attachments.id"),
+        nullable=True,
+    )
+
+    Message_text: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
 
-    Title: Mapped[Text] = mapped_column(
+    Title: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
-    attachment_url: Mapped[Text] = mapped_column(
-        Text,
-        nullable=True,
-    )
-    attachment_type: Mapped[Text] = mapped_column(
+
+    attachment_type: Mapped[str | None] = mapped_column(
         nullable=True,
         default=QuickMessageType.TEXT
     )
