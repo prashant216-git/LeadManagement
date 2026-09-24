@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Form, UploadFile, File, Depends
 from uuid import UUID
 
+from DTOs.QuickMessageDTO import QuickMessageResponse
 from dependencies.services import get_quick_message_service
 from enums.message import QuickMessageType
 from services.QuickMessageService import QuickMessageAttachmentService
@@ -48,3 +49,12 @@ async def create_quick_message(
 
     except Exception as e:
         raise e
+
+@router.get("/user", response_model=QuickMessageResponse.ListResponse)
+async def get_quick_messages_by_user(
+    user_id: UUID = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f"),
+    service: QuickMessageAttachmentService = Depends(
+        get_quick_message_service
+    ),
+):
+    return await service.get_by_user_id(user_id)

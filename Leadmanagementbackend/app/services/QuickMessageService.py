@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from DTOs.QuickMessageDTO import QuickMessageResponse, ListResponse
 from enums.message import QuickMessageType
 from models.Attachements import Attachment
 from models.Quick_message_attachement_config import (
@@ -99,3 +100,40 @@ class QuickMessageAttachmentService:
                     pass
 
             raise
+
+    async def get_by_user_id(
+            self,
+            user_id: UUID,
+    ) -> QuickMessageResponse.ListResponse:
+
+        quick_messages = await self.repository.get_all_by_user(user_id)
+
+        items = []
+
+        for message in quick_messages:
+
+            attachment = await self.attachment_repository.get_by_message(
+                message.id
+            )
+
+            attachment_url = None
+
+            if attachment:
+                attachment_url = (
+                    self.attachment_service.generate_signed_url(
+                        attachment.file_path
+                    )
+                )
+
+            items.append(
+                QuickMessageResponse(
+                    id=message.id,
+                    message_text=message.Message_text,
+                    title=message.Title,
+                    attachment_type=message.attachment_type,
+                    is_active=message.is_active,
+                    attachment_url=attachment_url,
+                )
+            )
+
+        return ListResponse(items=items)
