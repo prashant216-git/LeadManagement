@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-
+from app.api.QuickMessagecontroller import router as quick_message_controller
 import app.channel_engine.providers
 
 from app.api.Aicontroller import router as ai_controller
@@ -74,6 +74,8 @@ app.include_router(channel_router)
 app.include_router(ai_controller)
 app.include_router(lead_status_controller)
 app.include_router(schedules_router)
+
+app.include_router(quick_message_controller)
 
 
 
