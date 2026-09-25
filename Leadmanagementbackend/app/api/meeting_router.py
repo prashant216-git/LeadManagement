@@ -56,7 +56,7 @@ async def get_meetings_by_lead(
     ),
 ):
     try:
-        return meeting_service.get_meetings_by_lead_id(
+        return await meeting_service.get_meetings_by_lead_id(
             lead_id=lead_id
         )
 
