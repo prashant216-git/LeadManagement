@@ -46,7 +46,7 @@ async def create_meeting(
             detail=str(e),
         )
 @router.get(
-    "/{lead_id}}",
+    "/{lead_id}",
     response_model=MeetingResponseDTO,
 )
 async def get_meetings_by_lead(
