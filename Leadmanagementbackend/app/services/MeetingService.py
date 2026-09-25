@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from DTOs.MeetingDTO import MeetingResponseDTO
+from app.DTOs.MeetingDTO import MeetingResponseDTO
 from app.models.lead_meeting import LeadMeeting
 from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
 from app.repositories.LeadMeetingRepository import (
