@@ -47,13 +47,14 @@ async def create_meeting(
         )
 @router.get(
     "/{lead_id}",
-    response_model=MeetingResponseDTO,
+    response_model=list[MeetingResponseDTO],
 )
 async def get_meetings_by_lead(
     lead_id: UUID,
     meeting_service: MeetingService = Depends(
         get_meeting_service
     ),
+
 
 ):
     try:

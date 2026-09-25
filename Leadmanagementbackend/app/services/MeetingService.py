@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from DTOs.MeetingDTO import MeetingResponseDTO
 from app.models.lead_meeting import LeadMeeting
 from app.repositories.ChannelMasterRepositories import ChannelMasterRepository
 from app.repositories.LeadMeetingRepository import (
@@ -118,7 +119,7 @@ class MeetingService:
     async def get_meetings_by_lead_id(
             self,
             lead_id: UUID,
-    ) -> list[LeadMeeting]:
+    ) -> list[MeetingResponseDTO]:
 
         lead = self.lead_repository.get_by_id(
             lead_id=lead_id
@@ -127,9 +128,28 @@ class MeetingService:
         if lead is None:
             raise ValueError("Lead not found.")
 
-        return self.meeting_repository.get_by_lead_id(
+        results=self.meeting_repository.get_by_lead_id(
             lead_id=lead_id
         )
+        meetings=[]
+        for result in results:
+            meetingResponseDTO=MeetingResponseDTO(
+                id=result.id,
+                lead_id=result.lead_id,
+                channel_connection_id=result.channel_connection_id,
+                start_time=result.start_time,
+                end_time=result.end_time,
+                meeting_link=result.meeting_link,
+                status=result.status,
+                provider_event_id=result.provider_event_id,
+                title=result.title,
+                description=result.description
+
+            )
+            meetings.append(meetingResponseDTO)
+        return meetings
+
+
 
     async def check_meeting_availability(
             self,
