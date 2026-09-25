@@ -15,6 +15,7 @@ class LeadStatusUpdateDTO(BaseModel):
     status_name: str | None = None
     is_active: bool | None = None
     is_default: bool | None = None
+    colour : str | None = None
 
 
 class LeadStatusResponseDTO(BaseModel):

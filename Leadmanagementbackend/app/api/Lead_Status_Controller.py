@@ -89,6 +89,7 @@ async def edit_status(
             status_name=request.status_name,
             is_active=request.is_active,
             is_default=request.is_default,
+            colour=request.colour,
         )
 
     except ValueError as e:

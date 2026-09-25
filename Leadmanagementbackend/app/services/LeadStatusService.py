@@ -135,6 +135,7 @@ class LeadStatusService:
             status_name: str | None,
             is_active: bool | None,
             is_default: bool | None,
+            colour : str | None
     ) -> LeadStatusMaster:
 
         statuses = (
@@ -193,6 +194,9 @@ class LeadStatusService:
 
         if is_active is not None:
             status.is_active = is_active
+
+        if colour is not None:
+            status.colour=colour
 
         # ----------------------------------------------
         # Make this status default
