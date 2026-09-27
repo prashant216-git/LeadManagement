@@ -57,7 +57,7 @@ async def schedule_message(
     "/schedule-message/cancel/{scheduled_message_id}",
     response_model=CancelledScheduledMessageResponse,
     
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
 )
 async def schedule_message(
 scheduled_message_id: UUID,

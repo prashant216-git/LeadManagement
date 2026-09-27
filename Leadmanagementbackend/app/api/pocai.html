@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Auto Reply Module - Product Concept & POC</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #202124;
+            background: #f3f4f6;
+            line-height: 1.55;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 18mm;
+            background: white;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .cover {
+            min-height: 261mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover::before {
+            content: "";
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            right: -120px;
+            top: -100px;
+            background: #eef2ff;
+        }
+
+        .cover::after {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            left: -100px;
+            bottom: -80px;
+            background: #f0fdf4;
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #4f46e5;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 38px;
+            line-height: 1.15;
+            margin: 0 0 18px;
+            color: #111827;
+        }
+
+        .cover-subtitle {
+            font-size: 19px;
+            color: #6b7280;
+            max-width: 620px;
+            margin-bottom: 45px;
+        }
+
+        .document-info {
+            border-left: 4px solid #4f46e5;
+            padding: 12px 18px;
+            background: #f8fafc;
+            max-width: 500px;
+        }
+
+        .document-info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            font-size: 25px;
+            margin: 0 0 18px;
+            color: #111827;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 9px;
+        }
+
+        h3 {
+            font-size: 18px;
+            color: #374151;
+            margin-top: 24px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin: 8px 0 14px;
+        }
+
+        ul {
+            margin-top: 8px;
+            padding-left: 22px;
+        }
+
+        li {
+            margin-bottom: 7px;
+        }
+
+        .intro-box {
+            background: #f5f7ff;
+            border: 1px solid #dfe3ff;
+            border-radius: 10px;
+            padding: 18px;
+            margin: 20px 0;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 17px;
+            background: #fff;
+        }
+
+        .feature-card .number {
+            font-size: 12px;
+            font-weight: bold;
+            color: #4f46e5;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+        }
+
+        .feature-card h3 {
+            margin-top: 7px;
+        }
+
+        .timeline {
+            margin: 20px 0;
+        }
+
+        .timeline-row {
+            display: flex;
+            align-items: stretch;
+            margin-bottom: 12px;
+        }
+
+        .time {
+            width: 85px;
+            font-weight: bold;
+            color: #4f46e5;
+            padding: 13px 10px;
+        }
+
+        .event {
+            flex: 1;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 13px 16px;
+        }
+
+        .arrow {
+            text-align: center;
+            font-size: 22px;
+            color: #9ca3af;
+            margin: 4px 0;
+        }
+
+        .mockup {
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 22px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,.06);
+        }
+
+        .mockup-header {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 13px 18px;
+            font-weight: bold;
+        }
+
+        .mockup-body {
+            padding: 20px;
+        }
+
+        .form-row {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 7px;
+            color: #374151;
+        }
+
+        .input,
+        .textarea,
+        .select {
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            padding: 10px 12px;
+            background: white;
+            color: #374151;
+        }
+
+        .select {
+            width: 210px;
+        }
+
+        .textarea {
+            min-height: 80px;
+        }
+
+        .toggle {
+            display: inline-flex;
+            width: 44px;
+            height: 24px;
+            border-radius: 20px;
+            background: #4f46e5;
+            position: relative;
+            vertical-align: middle;
+        }
+
+        .toggle::after {
+            content: "";
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            right: 3px;
+            top: 3px;
+        }
+
+        .radio {
+            display: inline-block;
+            margin-right: 22px;
+        }
+
+        .radio::before {
+            content: "●";
+            color: #4f46e5;
+            margin-right: 7px;
+        }
+
+        .radio.off::before {
+            content: "○";
+            color: #9ca3af;
+        }
+
+        .advanced {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 15px;
+            color: #4f46e5;
+            font-weight: bold;
+        }
+
+        .buttons {
+            text-align: right;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 9px 18px;
+            border-radius: 7px;
+            margin-left: 8px;
+            font-size: 13px;
+        }
+
+        .button.secondary {
+            border: 1px solid #d1d5db;
+        }
+
+        .button.primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .code-box {
+            background: #111827;
+            color: #e5e7eb;
+            padding: 18px;
+            border-radius: 9px;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            margin: 18px 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 18px;
+            background: #fff;
+        }
+
+        .info-card h3 {
+            margin-top: 0;
+        }
+
+        .phase {
+            border-left: 4px solid #4f46e5;
+            padding: 15px 18px;
+            margin: 15px 0;
+            background: #f9fafb;
+        }
+
+        .phase h3 {
+            margin: 0 0 6px;
+        }
+
+        .phase p {
+            margin: 4px 0;
+        }
+
+        .flow {
+            margin: 25px auto;
+            max-width: 620px;
+        }
+
+        .flow-box {
+            border: 1px solid #c7d2fe;
+            background: #eef2ff;
+            border-radius: 9px;
+            padding: 13px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            font-size: 22px;
+            color: #6b7280;
+            height: 28px;
+        }
+
+        .flow-decision {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .flow-decision > div {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .yes {
+            background: #f0fdf4;
+        }
+
+        .no {
+            background: #fef2f2;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 8mm;
+            left: 18mm;
+            right: 18mm;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 7px;
+            font-size: 10px;
+            color: #9ca3af;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 15px;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 11px;
+            font-weight: bold;
+            margin: 3px;
+        }
+
+        .note {
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
+            padding: 13px 16px;
+            margin: 18px 0;
+        }
+
+        .success {
+            border-left: 4px solid #10b981;
+            background: #ecfdf5;
+            padding: 13px 16px;
+            margin: 18px 0;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .page {
+                margin: 0;
+                width: auto;
+                min-height: 0;
+                box-shadow: none;
+                page-break-after: always;
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- COVER -->
+<section class="page">
+    <div class="cover">
+        <div class="cover-content">
+
+            <div class="logo">
+                PRODUCT CONCEPT & PROOF OF CONCEPT
+            </div>
+
+            <h1>Auto Reply Module</h1>
+
+            <div class="cover-subtitle">
+                Flexible automated customer response configuration
+                across integrated communication channels.
+            </div>
+
+            <div class="document-info">
+                <strong>Purpose</strong>
+                Define the proposed user experience, core functionality,
+                business rules and phased rollout approach for the Auto Reply module.
+            </div>
+
+            <div style="margin-top:35px;">
+                <span class="tag">Gmail</span>
+                <span class="tag">Outlook</span>
+                <span class="tag">WhatsApp</span>
+                <span class="tag">Static Reply</span>
+                <span class="tag">AI Reply</span>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>Auto Reply Module</span>
+        <span>Product Concept</span>
+    </div>
+</section>
+
+
+<!-- OBJECTIVE -->
+<section class="page page-break">
+
+    <h2>1. Objective</h2>
+
+    <div class="intro-box">
+        The Auto Reply module allows organizations to configure automatic
+        responses for incoming customer messages across their integrated
+        communication channels such as Gmail, Outlook, WhatsApp and other
+        supported channels.
+    </div>
+
+    <p>
+        The objective is to ensure customers receive a timely response when
+        a salesperson is unavailable, while still allowing the organization
+        to control when, where and how automatic replies are sent.
+    </p>
+
+    <h3>Core capabilities</h3>
+
+    <div class="feature-grid">
+
+        <div class="feature-card">
+            <div class="number">01</div>
+            <h3>Channel Based</h3>
+            <p>
+                Configure Auto Reply independently for different communication
+                channels.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="number">02</div>
+            <h3>Static Reply</h3>
+            <p>
+                Send a predefined message whenever the configured conditions
+                are satisfied.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="number">03</div>
+            <h3>AI Reply</h3>
+            <p>
+                Generate contextual responses using the existing AI Draft
+                Generation capability.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="number">04</div>
+            <h3>Response Delay</h3>
+            <p>
+                Automatically respond only when a customer message remains
+                unanswered for the configured period.
+            </p>
+        </div>
+
+    </div>
+
+    <h3>Product principle</h3>
+
+    <p>
+        The backend and core engine can support future automation capabilities,
+        while the initial user interface remains simple. Advanced controls can
+        be introduced progressively without changing the fundamental product
+        concept.
+    </p>
+
+</section>
+
+
+<!-- USER JOURNEY -->
+<section class="page page-break">
+
+    <h2>2. User Journey</h2>
+
+    <p>
+        The user accesses Auto Reply from the communication or organization
+        settings area.
+    </p>
+
+    <div class="code-box">Settings
+    ↓
+Communication
+    ↓
+Auto Reply
+    ↓
+Enable / Configure Auto Reply</div>
+
+    <div class="mockup">
+
+        <div class="mockup-header">
+            Auto Reply
+        </div>
+
+        <div class="mockup-body">
+
+            <div class="form-row">
+                <span class="label">
+                    Automatically respond to customers when your team is
+                    unable to respond.
+                </span>
+
+                <span class="toggle"></span>
+                <strong style="margin-left:8px;">Enabled</strong>
+            </div>
+
+            <div class="form-row">
+                <span class="label">Channel</span>
+
+                <div class="select">
+                    WhatsApp &nbsp;&nbsp; ▼
+                </div>
+            </div>
+
+            <div class="form-row">
+
+                <span class="label">
+                    Reply when customer message remains unanswered for
+                </span>
+
+                <div class="input" style="width:130px;">
+                    30 minutes
+                </div>
+
+            </div>
+
+            <div class="form-row">
+
+                <span class="label">Reply Type</span>
+
+                <span class="radio">Static Reply</span>
+                <span class="radio off">AI Reply</span>
+
+            </div>
+
+            <div class="form-row">
+
+                <span class="label">Message</span>
+
+                <div class="textarea">
+                    Thanks for contacting us. Our team is currently
+                    assisting other customers and will get back to you shortly.
+                </div>
+
+            </div>
+
+            <div class="advanced">
+                Advanced Settings ▼
+            </div>
+
+            <div class="buttons">
+                <span class="button secondary">Cancel</span>
+                <span class="button primary">Save</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- CHANNEL -->
+<section class="page page-break">
+
+    <h2>3. Channel Configuration</h2>
+
+    <p>
+        Auto Reply can be configured independently for each integrated
+        communication channel.
+    </p>
+
+    <div class="two-column">
+
+        <div class="info-card">
+            <h3>Gmail</h3>
+            <p>Auto Reply: <strong>Enabled</strong></p>
+            <p>Response Type: AI</p>
+            <p>Delay: 30 minutes</p>
+        </div>
+
+        <div class="info-card">
+            <h3>Outlook</h3>
+            <p>Auto Reply: <strong>Disabled</strong></p>
+            <p>Configuration is retained for future use.</p>
+        </div>
+
+        <div class="info-card">
+            <h3>WhatsApp</h3>
+            <p>Auto Reply: <strong>Enabled</strong></p>
+            <p>Response Type: Static</p>
+            <p>Delay: 15 minutes</p>
+        </div>
+
+        <div class="info-card">
+            <h3>Future Channels</h3>
+            <p>
+                Additional supported communication channels can use the same
+                Auto Reply concept.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="success">
+        <strong>Business benefit:</strong>
+        Organizations can use different response strategies depending on
+        the communication channel.
+    </div>
+
+</section>
+
+
+<!-- TRIGGER -->
+<section class="page page-break">
+
+    <h2>4. Response Timing & Trigger</h2>
+
+    <p>
+        The Auto Reply is triggered when a customer message remains
+        unanswered by a salesperson for the configured period.
+    </p>
+
+    <div class="timeline">
+
+        <div class="timeline-row">
+            <div class="time">10:00 AM</div>
+            <div class="event">
+                <strong>Customer sends message</strong><br>
+                "Hi, is this property still available?"
+            </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="timeline-row">
+            <div class="time">10:00–10:30</div>
+            <div class="event">
+                No salesperson response.
+            </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="timeline-row">
+            <div class="time">10:30 AM</div>
+            <div class="event">
+                <strong>Auto Reply is triggered</strong>
+            </div>
+        </div>
+
+    </div>
+
+    <h3>Important behavior</h3>
+
+    <div class="note">
+        If the salesperson responds before the configured waiting period,
+        the Auto Reply should not be sent.
+    </div>
+
+    <div class="code-box">Customer
+    ↓
+Customer Message
+    ↓
+Start Waiting Period
+    ↓
+Did Salesperson Respond?
+    ├── YES → Stop
+    └── NO  → Send Auto Reply</div>
+
+    <p>
+        The timing should be associated with the latest customer message
+        that remains unanswered rather than simply relying on the last
+        activity timestamp of the conversation.
+    </p>
+
+</section>
+
+
+<!-- REPLY TYPE -->
+<section class="page page-break">
+
+    <h2>5. Reply Type</h2>
+
+    <h3>Option A — Static Reply</h3>
+
+    <p>
+        The organization defines a fixed response that will be sent whenever
+        the Auto Reply conditions are satisfied.
+    </p>
+
+    <div class="info-card">
+        <strong>Example:</strong>
+        <p>
+            "Thank you for reaching out. Our sales team is currently
+            unavailable and will get back to you shortly."
+        </p>
+    </div>
+
+    <h3>Option B — AI Reply</h3>
+
+    <p>
+        The organization can use the existing AI Draft Generation capability
+        to generate a contextual response.
+    </p>
+
+    <div class="mockup">
+
+        <div class="mockup-header">
+            AI Reply Configuration
+        </div>
+
+        <div class="mockup-body">
+
+            <div class="form-row">
+                <span class="label">Reply Type</span>
+                <span class="radio off">Static Reply</span>
+                <span class="radio">AI Reply</span>
+            </div>
+
+            <div class="form-row">
+                <span class="label">AI Instructions</span>
+
+                <div class="textarea">
+                    Respond professionally and briefly.<br><br>
+                    Use the conversation context.<br><br>
+                    Do not make promises about availability or pricing
+                    unless the information is available.
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="success">
+        The existing AI Draft Generation capability can be reused as the
+        response-generation layer instead of creating a separate AI engine.
+    </div>
+
+</section>
+
+
+<!-- BUSINESS RULES -->
+<section class="page page-break">
+
+    <h2>6. Important Business Rules</h2>
+
+    <h3>Salesperson has already responded</h3>
+
+    <div class="code-box">Customer → Message
+Salesperson → Response
+Auto Reply → NOT triggered</div>
+
+    <p>
+        This prevents duplicate or confusing responses.
+    </p>
+
+    <h3>Multiple customer messages</h3>
+
+    <div class="code-box">10:00 Customer → Hi
+10:05 Customer → Is this available?
+10:10 Customer → Anyone there?</div>
+
+    <p>
+        The system should consider the latest unanswered customer activity
+        when determining the response timing.
+    </p>
+
+    <h3>Prevent automated response loops</h3>
+
+    <p>
+        The system must distinguish between customer messages, salesperson
+        messages and messages generated by the Auto Reply system.
+    </p>
+
+    <div class="note">
+        An Auto Reply message must never trigger another Auto Reply.
+    </div>
+
+    <h3>Conversation handling</h3>
+
+    <p>
+        Future versions can use conversation status such as Open,
+        Waiting for Salesperson, Closed or other organization-defined
+        statuses to determine whether automation should operate.
+    </p>
+
+</section>
+
+
+<!-- ADVANCED -->
+<section class="page page-break">
+
+    <h2>7. Advanced Settings — Future Scope</h2>
+
+    <p>
+        Advanced options can be introduced gradually without making the
+        initial configuration screen complex.
+    </p>
+
+    <div class="feature-grid">
+
+        <div class="feature-card">
+            <h3>Business Hours</h3>
+            <p>
+                Automatically use different behavior during and outside
+                business hours.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Frequency Limits</h3>
+            <p>
+                Control how frequently automatic responses can be sent.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Conversation Status</h3>
+            <p>
+                Restrict Auto Reply to specific conversation states.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Assignment Rules</h3>
+            <p>
+                Apply automation differently to assigned and unassigned
+                conversations.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>AI Fallback</h3>
+            <p>
+                Define what happens when AI generation fails.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Multiple Rules</h3>
+            <p>
+                Support different Auto Reply rules for different scenarios.
+            </p>
+        </div>
+
+    </div>
+
+    <h3>Example future configuration</h3>
+
+    <div class="code-box">Advanced Settings
+
+☑ Only send outside business hours
+
+Business Hours:
+Monday – Saturday
+09:00 AM – 06:00 PM
+
+Maximum Auto Replies:
+1 per conversation
+
+Conversation Status:
+☑ Waiting for Salesperson
+
+AI Failure:
+Send fallback static message</div>
+
+</section>
+
+
+<!-- USER SCENARIO -->
+<section class="page page-break">
+
+    <h2>8. Example Business Scenario</h2>
+
+    <h3>WhatsApp Auto Reply</h3>
+
+    <div class="two-column">
+
+        <div class="info-card">
+            <h3>Configuration</h3>
+
+            <p>
+                <strong>Channel:</strong><br>
+                WhatsApp
+            </p>
+
+            <p>
+                <strong>Status:</strong><br>
+                Enabled
+            </p>
+
+            <p>
+                <strong>Reply after:</strong><br>
+                30 minutes
+            </p>
+
+            <p>
+                <strong>Reply type:</strong><br>
+                Static
+            </p>
+        </div>
+
+        <div class="info-card">
+            <h3>Configured Message</h3>
+
+            <p>
+                "Thanks for contacting us. Our team is currently busy
+                assisting other customers. We will get back to you shortly."
+            </p>
+        </div>
+
+    </div>
+
+    <h3>Customer interaction</h3>
+
+    <div class="timeline">
+
+        <div class="timeline-row">
+            <div class="time">10:00</div>
+            <div class="event">
+                Customer: "Hi, is this property still available?"
+            </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="timeline-row">
+            <div class="time">10:30</div>
+            <div class="event">
+                No salesperson response detected.
+            </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="timeline-row">
+            <div class="time">10:30</div>
+            <div class="event">
+                <strong>Auto Reply sent.</strong>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- FLOW -->
+<section class="page page-break">
+
+    <h2>9. Overall Product Flow</h2>
+
+    <div class="flow">
+
+        <div class="flow-box">
+            CUSTOMER MESSAGE
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-box">
+            AUTO REPLY ENGINE
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-box">
+            IS AUTO REPLY REQUIRED?
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-decision">
+
+            <div class="no">
+                <strong>NO</strong>
+                <br><br>
+                Stop
+            </div>
+
+            <div class="yes">
+                <strong>YES</strong>
+                <br><br>
+                Continue
+            </div>
+
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-box">
+            WAIT CONFIGURED PERIOD
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-box">
+            HAS SALESPERSON RESPONDED?
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-decision">
+
+            <div class="yes">
+                <strong>YES</strong>
+                <br><br>
+                Stop
+            </div>
+
+            <div class="no">
+                <strong>NO</strong>
+                <br><br>
+                Generate Response
+            </div>
+
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-box">
+            STATIC RESPONSE OR AI RESPONSE
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-box">
+            SEND VIA CHANNEL
+            <br>
+            Gmail / Outlook / WhatsApp
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ROLLOUT -->
+<section class="page page-break">
+
+    <h2>10. Progressive Product Rollout</h2>
+
+    <p>
+        The module can be released incrementally. This keeps the initial
+        experience simple while allowing the product to evolve into a more
+        powerful automation platform.
+    </p>
+
+    <div class="phase">
+        <h3>Phase 1 — Core Auto Reply</h3>
+        <p>• Enable / Disable</p>
+        <p>• Channel selection</p>
+        <p>• Response delay</p>
+        <p>• Static reply</p>
+        <p>• AI reply</p>
+        <p>• Duplicate-response protection</p>
+    </div>
+
+    <div class="phase">
+        <h3>Phase 2 — Business Controls</h3>
+        <p>• Business hours</p>
+        <p>• Outside-hours response</p>
+        <p>• Conversation status</p>
+        <p>• Assignment-based conditions</p>
+    </div>
+
+    <div class="phase">
+        <h3>Phase 3 — Advanced Controls</h3>
+        <p>• Frequency limits</p>
+        <p>• AI fallback</p>
+        <p>• Multiple rules</p>
+        <p>• Rule priority</p>
+        <p>• Exclusions</p>
+        <p>• Team/user-level configuration</p>
+    </div>
+
+    <div class="phase">
+        <h3>Phase 4 — Intelligent Automation</h3>
+        <p>• Context-aware AI responses</p>
+        <p>• Lead information</p>
+        <p>• Property information</p>
+        <p>• Conversation history</p>
+        <p>• Condition-based responses</p>
+    </div>
+
+</section>
+
+
+<!-- FINAL -->
+<section class="page page-break">
+
+    <h2>11. Product Direction</h2>
+
+    <div class="intro-box">
+
+        <h3 style="margin-top:0;">
+            Flexible backend. Simple user experience. Progressive capability.
+        </h3>
+
+        <p>
+            The Auto Reply module should provide a simple configuration
+            experience initially while keeping the underlying product
+            architecture flexible enough to support advanced automation
+            capabilities in future releases.
+        </p>
+
+    </div>
+
+    <h3>Core concept</h3>
+
+    <div class="code-box">                    AUTO REPLY
+                         │
+            ┌────────────┼────────────┐
+            │            │            │
+         Trigger     Conditions    Response
+            │            │            │
+         Delay        Channel      Static
+         Message      Status       AI
+                      Schedule     Future
+                      Limits
+                         │
+                         ↓
+                  Channel Adapter
+                         │
+             ┌───────────┼───────────┐
+             ↓           ↓           ↓
+           Gmail      Outlook      WhatsApp</div>
+
+    <h3>Key principle</h3>
+
+    <p>
+        The product should not expose every possible configuration on day
+        one. The initial release should focus on the core user need:
+        automatically responding to an unanswered customer message.
+    </p>
+
+    <p>
+        As business requirements evolve, advanced controls can be introduced
+        through additional settings without fundamentally changing the
+        Auto Reply experience.
+    </p>
+
+    <div class="success">
+        <strong>Expected outcome:</strong>
+        A scalable Auto Reply capability that is easy for organizations
+        to configure today and flexible enough to support increasingly
+        sophisticated automation in future releases.
+    </div>
+
+</section>
+
+</body>
+</html>
