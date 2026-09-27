@@ -45,28 +45,6 @@ async def create_meeting(
             status_code=400,
             detail=str(e),
         )
-@router.get(
-    "/{lead_id}",
-    response_model=list[MeetingResponseDTO],
-)
-async def get_meetings_by_lead(
-    lead_id: UUID,
-    meeting_service: MeetingService = Depends(
-        get_meeting_service
-    ),
-
-
-):
-    try:
-        return await meeting_service.get_meetings_by_lead_id(
-            lead_id=lead_id
-        )
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=404,
-            detail=str(e),
-        )
 
 @router.get(
     "/availability",
@@ -90,6 +68,30 @@ end_time: datetime,
     return MeetingAvailabilityDTO(
         available=available
     )
+@router.get(
+    "/{lead_id}",
+    response_model=list[MeetingResponseDTO],
+)
+async def get_meetings_by_lead(
+    lead_id: UUID,
+    meeting_service: MeetingService = Depends(
+        get_meeting_service
+    ),
+
+
+):
+    try:
+        return await meeting_service.get_meetings_by_lead_id(
+            lead_id=lead_id
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        )
+
+
 
 @router.patch(
     "/{meeting_id}",

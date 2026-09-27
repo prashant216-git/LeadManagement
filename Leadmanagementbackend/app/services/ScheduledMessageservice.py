@@ -51,3 +51,4 @@ class ScheduledMessageService:
         )
 
         return scheduled_message
+
