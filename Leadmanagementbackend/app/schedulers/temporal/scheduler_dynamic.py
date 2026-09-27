@@ -72,11 +72,23 @@ class TemporalScheduler:
         print("NEXT ACTION TIMES:", description.info.next_action_times)
         print("=========================")
 
-    async def cancel(
-            self,
-            schedule_id: str,
-    ):
+    async def cancel(self, schedule_id: str):
+        print("CANCELLING SCHEDULE:", schedule_id)
+
         handle = self.client.get_schedule_handle(schedule_id)
 
+        # Verify it exists before deleting
+        description = await handle.describe()
+        print("FOUND SCHEDULE:", description.info)
+
         await handle.delete()
+
+        print("DELETE COMPLETED:", schedule_id)
+
+        # Verify it is gone
+        try:
+            await handle.describe()
+            print("WARNING: SCHEDULE STILL EXISTS")
+        except Exception as e:
+            print("SCHEDULE NO LONGER EXISTS:", type(e).__name__, str(e))
 

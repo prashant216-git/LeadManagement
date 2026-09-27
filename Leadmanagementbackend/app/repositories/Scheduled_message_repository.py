@@ -26,15 +26,24 @@ class ScheduledMessageRepository:
     def get_by_id(
         self,
         scheduled_message_id: UUID,
-            user_id: UUID,
+            user_id: UUID | None = None,
     ) -> ScheduledMessage | None:
-
-        statement = (
-            select(ScheduledMessage)
-            .where(
-                ScheduledMessage.id == scheduled_message_id , ScheduledMessage.user_id==user_id
+        if user_id:
+            statement = (
+                select(ScheduledMessage)
+                .where(
+                    ScheduledMessage.id == scheduled_message_id, ScheduledMessage.user_id == user_id
+                )
             )
-        )
+        else:
+            statement = (
+                select(ScheduledMessage)
+                .where(
+                    ScheduledMessage.id == scheduled_message_id
+                )
+            )
+
+
 
         return self.db.execute(
             statement
