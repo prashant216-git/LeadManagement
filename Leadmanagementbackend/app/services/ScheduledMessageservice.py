@@ -56,7 +56,7 @@ class ScheduledMessageService:
 
     async def get_by_lead_id(self, lead_id: UUID) -> list[ScheduledMessageResponse] | None:
 
-        schedule_messages=self.scheduled_message_repository.get_by_lead_id_scheduled(lead_id=lead_id)
+        schedule_messages=self.scheduled_message_repository.get_by_lead_id_all(lead_id=lead_id)
 
         valid_messages=[]
 
@@ -79,7 +79,7 @@ class ScheduledMessageService:
     ) -> ScheduledMessage:
 
         scheduled_message = (
-            await self.scheduled_message_repository.get_by_id(
+            self.scheduled_message_repository.get_by_id(
                 scheduled_message_id=scheduled_message_id,user_id=user_id
             )
         )
@@ -100,7 +100,7 @@ class ScheduledMessageService:
         # Update DB
         scheduled_message.status = ScheduledMessageStatus.CANCELLED
 
-        await self.scheduled_message_repository.update(
+        self.scheduled_message_repository.update(
             scheduled_message
         )
 
