@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 
 from app.models.scheduled_message import ScheduledMessage
-from enums.message import ScheduledMessageStatus
+
 
 
 class ScheduledMessageRepository:
