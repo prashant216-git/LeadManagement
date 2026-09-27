@@ -64,3 +64,17 @@ class ScheduledMessageResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class CancelledScheduledMessageResponse(BaseModel):
+    id: UUID
+
+    lead_id: UUID
+    channel_connection_id: UUID
+    content: str
+    scheduled_at: datetime
+    cancelled_at: datetime
+    status: str
+
+    model_config = {
+        "from_attributes": True
+    }

@@ -72,3 +72,11 @@ class TemporalScheduler:
         print("NEXT ACTION TIMES:", description.info.next_action_times)
         print("=========================")
 
+    async def cancel(
+            self,
+            schedule_id: str,
+    ):
+        handle = self.client.get_schedule_handle(schedule_id)
+
+        await handle.delete()
+

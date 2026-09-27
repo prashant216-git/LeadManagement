@@ -72,5 +72,38 @@ class ScheduledMessageService:
             ))
         return valid_messages
 
+    async def cancel_message(
+            self,
+            scheduled_message_id: UUID,
+    ) -> ScheduledMessage:
+
+        scheduled_message = (
+            await self.scheduled_message_repository.get_by_id(
+                scheduled_message_id
+            )
+        )
+
+        if not scheduled_message:
+            raise ValueError("Scheduled message not found")
+
+        if scheduled_message.status != ScheduledMessageStatus.SCHEDULED:
+            raise ValueError("Scheduled message cannot be cancelled")
+
+        schedule_id = f"scheduled-message-{scheduled_message.id}"
+
+        # Cancel Temporal schedule first
+        await self.temporal_dyanmic_registrar.cancel(
+            schedule_id=schedule_id
+        )
+
+        # Update DB
+        scheduled_message.status = ScheduledMessageStatus.CANCELLED
+
+        await self.scheduled_message_repository.update(
+            scheduled_message
+        )
+
+        return scheduled_message
+
 
 
