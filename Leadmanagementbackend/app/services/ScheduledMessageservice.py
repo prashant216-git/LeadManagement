@@ -75,11 +75,12 @@ class ScheduledMessageService:
     async def cancel_message(
             self,
             scheduled_message_id: UUID,
+            user_id:UUID
     ) -> ScheduledMessage:
 
         scheduled_message = (
             await self.scheduled_message_repository.get_by_id(
-                scheduled_message_id
+                scheduled_message_id=scheduled_message_id,user_id=user_id
             )
         )
 

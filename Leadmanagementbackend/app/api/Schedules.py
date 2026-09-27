@@ -26,8 +26,9 @@ async def schedule_message(
         get_scheduled_message_service
     ),
 ):
+    user_id=UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
     scheduled_message = await service.schedule_message(
-        user_id=request.user_id,
+        user_id=user_id,
         lead_id=request.lead_id,
         channel_connection_id=request.channel_connection_id,
         content=request.content,
@@ -64,7 +65,8 @@ scheduled_message_id: UUID,
         get_scheduled_message_service
     ),
 ):
-    cancelled_message = await service.cancel_message(scheduled_message_id=scheduled_message_id)
+    user_id=UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
+    cancelled_message = await service.cancel_message(scheduled_message_id=scheduled_message_id,user_id=user_id)
 
 
 

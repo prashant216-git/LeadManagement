@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from app.models import Lead
+
 from app.models.scheduled_message import ScheduledMessage
 from enums.message import ScheduledMessageStatus
 
@@ -26,12 +26,13 @@ class ScheduledMessageRepository:
     def get_by_id(
         self,
         scheduled_message_id: UUID,
+            user_id: UUID,
     ) -> ScheduledMessage | None:
 
         statement = (
             select(ScheduledMessage)
             .where(
-                ScheduledMessage.id == scheduled_message_id
+                ScheduledMessage.id == scheduled_message_id , ScheduledMessage.user_id==user_id
             )
         )
 
