@@ -45,7 +45,7 @@ class LeadMessagesResponseDTO(BaseModel):
 
 
 class ScheduledMessageCreate(BaseModel):
-    user_id: UUID
+
     lead_id: UUID
     channel_connection_id: UUID
     content: str
