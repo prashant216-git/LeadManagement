@@ -1,6 +1,8 @@
 from datetime import datetime
 from uuid import UUID
 
+from app.DTOs.MessageDTO import ScheduledMessageResponse
+
 from app.models.scheduled_message import (
     ScheduledMessage,
     ScheduledMessageStatus,
@@ -51,4 +53,24 @@ class ScheduledMessageService:
         )
 
         return scheduled_message
+
+    async def get_by_lead_id(self, lead_id: UUID) -> list[ScheduledMessageResponse] | None:
+
+        schedule_messages=self.scheduled_message_repository.get_by_lead_id_scheduled(lead_id=lead_id)
+
+        valid_messages=[]
+
+        for scheduled_message in schedule_messages:
+            valid_messages.append(ScheduledMessageResponse(
+                id=scheduled_message.id,
+                lead_id=scheduled_message.lead_id,
+                content=scheduled_message.content,
+                channel_connection_id=scheduled_message.channel_connection_id,
+                scheduled_at=scheduled_message.scheduled_at,
+                status=scheduled_message.status,
+
+            ))
+        return valid_messages
+
+
 

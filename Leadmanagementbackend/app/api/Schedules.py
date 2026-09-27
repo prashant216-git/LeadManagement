@@ -35,3 +35,24 @@ async def schedule_message(
     )
 
     return scheduled_message
+
+@router.get(
+    "/schedule-message/{lead_id}",
+
+    response_model=list[ScheduledMessageResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def schedule_message(
+    lead_id: UUID,
+    service: ScheduledMessageService = Depends(
+        get_scheduled_message_service
+    ),
+):
+    result= await service.get_by_lead_id(lead_id=lead_id)
+
+
+
+    return result
+
+
+

@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from app.models import Lead
 from app.models.scheduled_message import ScheduledMessage
+from enums.message import ScheduledMessageStatus
 
 
 class ScheduledMessageRepository:
@@ -37,6 +38,13 @@ class ScheduledMessageRepository:
         return self.db.execute(
             statement
         ).scalar_one_or_none()
+
+    def get_by_lead_id_all(self, lead_id: UUID) -> list[ScheduledMessage] | None:
+        statement = (select(ScheduledMessage).where(ScheduledMessage.lead_id==lead_id, ))
+        result =self.db.execute(statement)
+
+        return list(result.scalars().all())
+
 
 
 

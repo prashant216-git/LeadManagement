@@ -54,7 +54,7 @@ class ScheduledMessageCreate(BaseModel):
 
 class ScheduledMessageResponse(BaseModel):
     id: UUID
-    user_id: UUID
+
     lead_id: UUID
     channel_connection_id: UUID
     content: str
