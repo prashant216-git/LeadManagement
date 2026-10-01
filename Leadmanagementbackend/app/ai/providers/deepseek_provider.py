@@ -1,4 +1,5 @@
-from openai import OpenAI
+
+from openai import AsyncOpenAI
 
 from app.ai.providers.base_provider import BaseAIProvider
 from app.core.config import settings
@@ -7,29 +8,31 @@ from app.core.config import settings
 class DeepSeekProvider(BaseAIProvider):
 
     def __init__(self):
-        self.client = OpenAI(
+        self.client = AsyncOpenAI(
             api_key=settings.DEEPSEEK_KEY,
             base_url=settings.DEEPSEEK_BASE_URL,
+            timeout=30.0,
         )
 
-    def generate(
+    async def generate(
         self,
         system_prompt: str,
-
     ) -> str:
 
-        print(system_prompt)
+        print("DeepSeek request started")
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=settings.DEEPSEEK_MODEL,
             messages=[
                 {
                     "role": "system",
                     "content": system_prompt,
                 },
-
             ],
             temperature=0.3,
         )
 
+        print("DeepSeek response received")
+
         return response.choices[0].message.content.strip()
+

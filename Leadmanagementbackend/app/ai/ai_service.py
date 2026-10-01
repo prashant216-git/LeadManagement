@@ -83,7 +83,7 @@ class AIService:
             context=context
         )
 
-        result=self.provider.generate(prompt)
+        result=await self.provider.generate(prompt)
 
         draft = AIDraft(
             lead_id=lead_id,
@@ -139,7 +139,7 @@ class AIService:
         else:
             raise ValueError(f"Invalid summary type: {summary_type}")
 
-        result=self.provider.generate(prompt)
+        result= await  self.provider.generate(prompt)
 
         return result
 
