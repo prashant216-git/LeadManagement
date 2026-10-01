@@ -123,8 +123,10 @@ class QuickMessageAttachmentService:
 
             attachment_url = None
 
-            if  attachment and attachment.temporary_url:
-                attachment_url = attachment.temporary_url
+            if  attachment :
+                if attachment[0].temporary_url:
+                    attachment_url = attachment[0].temporary_url
+
 
             elif attachment:
                 attachment_url = (
@@ -132,7 +134,7 @@ class QuickMessageAttachmentService:
                         attachment.file_path
                     )
                 )
-                attachment.temporary_url = attachment_url
+                attachment[0].temporary_url = attachment_url
                 self.db.commit()
 
 

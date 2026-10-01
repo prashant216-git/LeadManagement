@@ -73,7 +73,7 @@ class AttachmentRepository:
     def get_by_message(
         self,
         message_id: UUID,
-    ) -> Attachment:
+    ) -> list[Attachment]:
 
         print(message_id)
 
@@ -88,4 +88,15 @@ class AttachmentRepository:
             )
         )
 
-        return result.scalar_one_or_none()
+        return result.scalars().all()
+
+    def get_attachments_by_ids(
+            self,
+            attachment_ids: list[UUID],
+    ) -> list[Attachment]:
+        attachments = self.db.execute(
+            select(Attachment)
+            .where(Attachment.id.in_(attachment_ids))
+        )
+
+        return attachments.scalars().all()

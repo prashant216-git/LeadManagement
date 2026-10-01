@@ -12,6 +12,8 @@ from app.repositories.MessageRepository import MessageRepository
 
 from app.enums.message import MessageDirection
 from app.enums.message import MessageType
+from app.repositories.AttachementRepository import AttachmentRepository
+from app.services.AttachementService import AttachmentService
 
 
 class MessageService:
@@ -20,11 +22,16 @@ class MessageService:
             self,
             message_repository: MessageRepository,
             lead_repository: LeadRepository,
+            attachment_repository: AttachmentRepository,
+            db
     ):
         self.message_repository = (
             message_repository
         )
         self.lead_repository = lead_repository
+        self.attachment_repository = attachment_repository
+        self.attachment_service = AttachmentService()
+        self.db=db
 
     async def create_message(
             self,
@@ -114,6 +121,25 @@ class MessageService:
         message_details = []
 
         for message in messages:
+            attachments = self.attachment_repository.get_by_message(
+                message.id
+            )
+
+            attachment_url = []
+
+            for attachment in attachments:
+                if attachment and attachment.temporary_url:
+                    attachment_url.append(attachment.temporary_url)
+
+                elif attachment:
+                    attachment_url = (
+                        self.attachment_service.generate_signed_url(
+                            attachment.file_path
+                        )
+                    )
+                    attachment_url.append(attachment.temporary_url)
+                    self.db.commit()
+
             message_details.append(
                 MessageDetailsDTO(
                     id=message.id,
@@ -132,6 +158,8 @@ class MessageService:
 
                     message_type=message.message_type,
 
+                    attachment_urls=attachment_url,
+
                     repliedmessageid=(
                         message.reply_to_message_id
                     ),
@@ -139,6 +167,7 @@ class MessageService:
                     provider_created_at=(
                         message.provider_created_at
                     ),
+
                 )
             )
 

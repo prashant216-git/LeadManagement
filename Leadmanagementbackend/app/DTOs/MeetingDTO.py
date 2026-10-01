@@ -17,6 +17,8 @@ class CreateMeetingDTO(BaseModel):
 
     start_time: datetime
     end_time: datetime
+    attendee_email : str | None = None
+    to_cc : list[str] | None = None
 
 
 class MeetingResponseDTO(BaseModel):

@@ -16,6 +16,8 @@ from app.services.CredentialEncryptionService import CredentialEncryptionService
 from app.services.Leadmanagementservice import LeadService
 from app.services.messageservice import MessageService
 from app.socketmanager.websocketmanager import websocketmanager
+from app.repositories.AttachementRepository import AttachmentRepository
+from app.services.AttachementService import AttachmentService
 
 
 def build_channel_service(db: AsyncSession) -> ChannelService:
@@ -26,6 +28,9 @@ def build_channel_service(db: AsyncSession) -> ChannelService:
     lead_repository = LeadRepository(db)
     lead_status_repository = LeadStatusRepository(db)
     lead_status_master_repository = LeadStatusMasterRepository(db)
+    attachement_repository = AttachmentRepository(db)
+
+    attachement_service = AttachmentService()
 
     credential_service = CredentialEncryptionService()
 
@@ -33,6 +38,8 @@ def build_channel_service(db: AsyncSession) -> ChannelService:
     message_service = MessageService(
         message_repository=message_repository,
         lead_repository=lead_repository,
+        attachment_repository=attachement_repository,
+        db=db
     )
     websocket_manager = websocketmanager()
 
@@ -43,6 +50,8 @@ def build_channel_service(db: AsyncSession) -> ChannelService:
         channel_master_repository=channel_master_repository,
         credential_encryption_service=credential_service,
         message_repository=message_repository,
+        attachement_repository=attachement_repository,
+        attachement_service=attachement_service
     )
 
     lead_service = LeadService(

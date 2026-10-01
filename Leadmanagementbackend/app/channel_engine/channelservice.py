@@ -42,6 +42,7 @@ from app.repositories.ChannelMasterRepositories import (
 )
 
 from app.DTOs.channelreponseDTO import ChannelResponseDTO
+from app.repositories.AttachementRepository import AttachmentRepository
 
 
 class ChannelService:
@@ -60,6 +61,7 @@ class ChannelService:
 
 
 
+
     ):
         self.channel_engine = channel_engine
         self.connection_repository = connection_repository
@@ -70,6 +72,7 @@ class ChannelService:
         self.channel_resolver = channel_resolver
         self.lead_repository = lead_repository
         self.db=db
+        self.attachment_repository = AttachmentRepository(db=self.db)
 
 
     # ==========================================================
@@ -594,10 +597,11 @@ class ChannelService:
     async def send_message(
             self,
             lead_id: UUID,
-            channel_id: UUID,
+
             connection_id: UUID,
             content: str,
-            reply_to_message_id:UUID
+            reply_to_message_id:UUID,
+            attachment_ids: list[UUID] | None = None,
     ):
 
         lead = (
@@ -610,16 +614,6 @@ class ChannelService:
                 "Lead not found."
             )
 
-        channel = (
-            self.channel_master_repository
-            .get_by_id(channel_id)
-        )
-
-        if not channel:
-            raise ValueError(
-                "Channel not found."
-            )
-
         connection = (
             self.connection_repository
             .get_by_id(connection_id))
@@ -628,6 +622,17 @@ class ChannelService:
             raise ValueError(
                 "No active connection found."
             )
+
+        channel=self.channel_master_repository.get_by_id(connection.channel_id)
+
+
+
+        if not channel:
+            raise ValueError(
+                "Channel not found."
+            )
+
+
 
         provider = self.channel_engine.create_provider(
             channel_code=channel.code,
@@ -638,13 +643,38 @@ class ChannelService:
             raise ValueError(
                 f"Provider not found for {channel.code}"
             )
-
-        return await provider.send_message(
+        result = await provider.send_message(
             reply_to_message_id=reply_to_message_id,
             connection=connection,
             lead=lead,
             content=content,
+            attachment_ids=attachment_ids,
         )
+        print("here after sending message")
+
+        if attachment_ids:
+
+            for attachment_id in attachment_ids:
+
+                attachment = (
+                    self.attachment_repository
+                    .get_by_id(attachment_id)
+                )
+
+                if not attachment:
+                    raise ValueError(
+                        f"Attachment not found: {attachment_id}"
+                    )
+                
+
+                attachment.message_id = result["message_id"]
+                attachment.lead_id = lead_id
+
+                self.attachment_repository.save(
+                    attachment
+                )
+
+        return result
 
     async def get_all_channels(
             self,

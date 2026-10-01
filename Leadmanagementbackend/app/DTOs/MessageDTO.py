@@ -27,6 +27,8 @@ class MessageDetailsDTO(BaseModel):
 
     provider_created_at: datetime | None = None
 
+    attachment_urls: list[str] | None = None
+
 
 class LeadMessagesResponseDTO(BaseModel):
 
@@ -39,6 +41,8 @@ class LeadMessagesResponseDTO(BaseModel):
     lead_phone: str | None = None
 
     messages: list[MessageDetailsDTO]
+
+
 
 
 

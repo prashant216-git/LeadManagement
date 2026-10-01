@@ -36,6 +36,8 @@ async def create_meeting(
             description=request.description,
             start_time=request.start_time,
             end_time=request.end_time,
+            to_cc=request.to_cc,
+            attendee_mail=request.attendee_email
         )
 
         return meeting

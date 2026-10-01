@@ -1,6 +1,10 @@
 import json
 import re
 import secrets
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from email.mime.text import MIMEText
@@ -814,6 +818,7 @@ class GmailProvider(BaseChannelProvider):
             lead,
             content: str,
             reply_to_message_id: int | None = None,
+            attachment_ids: list[UUID] | None = None,
     ):
         if not lead.email:
             raise ValueError(
@@ -833,11 +838,54 @@ class GmailProvider(BaseChannelProvider):
 
         rfc_message_id = make_msgid()
 
-        email_message = MIMEText(
-            content,
-            "plain",
-            "utf-8",
+
+
+        email_message = MIMEMultipart("mixed")
+
+        email_message["To"] = lead.email
+        email_message["Message-ID"] = rfc_message_id
+
+        # Email body
+        email_message.attach(
+            MIMEText(
+                content,
+                "plain",
+                "utf-8",
+            )
         )
+
+        # Attachments
+        if attachment_ids:
+
+            attachments = await self.channel_resolver.get_attachments(
+                attachment_ids
+            )
+
+            for attachment, file_bytes in attachments:
+                mime_type = (
+                        attachment.file_type
+                        or "application/octet-stream"
+                )
+
+                maintype, subtype = mime_type.split("/", 1)
+
+                part = MIMEBase(
+                    maintype,
+                    subtype,
+                )
+
+                part.set_payload(file_bytes)
+
+                encoders.encode_base64(part)
+
+                part.add_header(
+                    "Content-Disposition",
+                    "attachment",
+                    filename=attachment.file_name,
+                )
+
+                email_message.attach(part)
+
 
         email_message["To"] = lead.email
 
@@ -908,7 +956,7 @@ class GmailProvider(BaseChannelProvider):
         # Save outbound message
         # ==========================================
 
-        await self.message_service.create_message(
+        created_message,created =await self.message_service.create_message(
             lead_id=lead.id,
 
             channel_connection_id=connection.id,
@@ -946,7 +994,10 @@ class GmailProvider(BaseChannelProvider):
             provider_created_at=datetime.now(timezone.utc),
         )
 
-        return sent_response
+        return {
+            "sent_response": sent_response,
+            "message_id": created_message.id,
+        }
 
 
     async def _get_new_messages(
@@ -1477,11 +1528,19 @@ class GmailProvider(BaseChannelProvider):
             start_time: datetime,
             end_time: datetime,
             attendee_email: str,
+            to_cc: list[str] | None = None,
     ) -> dict:
 
         access_token = await self.channel_resolver.resolve_access_token(
             connection_id=connection_id,
         )
+        attendees = [{"email": attendee_email, }]
+
+        if to_cc:
+            for email in to_cc:
+                if email != attendee_email:
+                    attendees.append({"email": email, })
+
 
         event = {
             "summary": title,
@@ -1494,11 +1553,7 @@ class GmailProvider(BaseChannelProvider):
                 "dateTime": end_time.isoformat(),
                 "timeZone": "Asia/Kolkata",
             },
-            "attendees": [
-                {
-                    "email": attendee_email,
-                }
-            ],
+            "attendees": attendees,
             "conferenceData": {
                 "createRequest": {
                     "requestId": f"lead-meeting-{uuid4()}",
@@ -1548,10 +1603,9 @@ class GmailProvider(BaseChannelProvider):
             "html_link": created_event.get("htmlLink"),
         }
 
-    from datetime import datetime
-    from uuid import UUID
 
-    import httpx
+
+
 
     async def update_meeting(
             self,

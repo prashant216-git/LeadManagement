@@ -252,7 +252,7 @@ async def send_message(
             .send_message(
                 lead_id=body.lead_id,
 
-                channel_id=body.channel_id,
+
 
                 connection_id=body.connection_id,
 
@@ -261,6 +261,7 @@ async def send_message(
                 reply_to_message_id=(
                     body.reply_to_message_id
                 ),
+                attachment_ids=body.attachment_ids,
             )
         )
 

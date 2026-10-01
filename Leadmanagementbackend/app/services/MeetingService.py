@@ -9,6 +9,7 @@ from app.repositories.LeadMeetingRepository import (
 )
 
 
+
 class MeetingService:
 
     def __init__(
@@ -39,6 +40,8 @@ class MeetingService:
             description: str | None,
             start_time: datetime,
             end_time: datetime,
+            attendee_mail: str | None = None,
+            to_cc: list[str] | None = None,
     ) -> LeadMeeting:
 
         existing_meeting = self.meeting_repository.get_by_time(lead_id=lead_id,start_time=start_time,end_time=end_time)
@@ -85,13 +88,20 @@ class MeetingService:
             channel_code=channel.code,
         )
 
+
+        if attendee_mail:
+            email= attendee_mail
+        else:
+            email=lead.email
+
         result =await provider.create_meeting(
             title=title,
             connection_id=channel_connection_id,
             description=description,
             start_time=start_time,
             end_time=end_time,
-            attendee_email=lead.email,
+            attendee_email=email,
+            to_cc=to_cc
         )
 
         meeting = LeadMeeting(

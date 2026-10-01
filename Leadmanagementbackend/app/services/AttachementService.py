@@ -74,9 +74,14 @@ class AttachmentService:
 
         elif message_id and not lead_id:
             object_path = f"attachments/{user_id}/{message_id}/{file_name}"
+
+        elif not message_id and not lead_id:
+            object_path = f"attachments/extras/{user_id}/{file_name}"
+
+
         else:
             raise ValueError(
-                "Either lead_id or message_id is required"
+                "something went wrong"
             )
 
         blob = self.bucket.blob(object_path)
@@ -115,3 +120,7 @@ class AttachmentService:
             expiration=timedelta(minutes=expiration_minutes),
             method="GET",
         )
+
+    def download_bytes(self, path: str) -> bytes:
+        blob = self.bucket.blob(path)
+        return blob.download_as_bytes()

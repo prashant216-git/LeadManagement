@@ -18,7 +18,7 @@ from app.schedulers.temporal.startup_scheduler import register_static_schedulers
 from app.schedulers.temporal.worker import create_temporal_worker
 from app.api.Schedules import router as schedules_router
 from app.api.Lead_Status_Controller import router as lead_status_controller
-
+from app.api.attachement_controller import router as attachement_controller
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -74,6 +74,7 @@ app.include_router(channel_router)
 app.include_router(ai_controller)
 app.include_router(lead_status_controller)
 app.include_router(schedules_router)
+app.include_router(attachement_controller)
 
 app.include_router(quick_message_controller)
 

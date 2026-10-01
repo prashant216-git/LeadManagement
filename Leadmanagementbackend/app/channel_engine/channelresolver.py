@@ -7,6 +7,7 @@ from app.enums.channel import ConnectionStatus
 from datetime import datetime, timezone, timedelta
 from app.models.messages import Message
 from app.core.lock import lead_lock_manager
+from app.models.Attachements import Attachment
 
 
 class ChannelResolver:
@@ -18,7 +19,9 @@ class ChannelResolver:
         channel_watch_repository,
         channel_master_repository,
         credential_encryption_service,
-        message_repository
+        message_repository,
+            attachement_repository,
+            attachement_service
     ):
         self.connection_repository = connection_repository
         self.credential_repository = credential_repository
@@ -29,6 +32,8 @@ class ChannelResolver:
         )
         self.client = httpx.AsyncClient()
         self.message_repository=message_repository
+        self.attachement_repository=attachement_repository
+        self.attachement_service=attachement_service
 
 
     def resolve_connection_id(
@@ -326,3 +331,28 @@ class ChannelResolver:
 
 
         return result
+
+    async def get_attachments(
+            self,
+            attachment_ids: list[UUID],
+    ) -> list[tuple[Attachment, bytes]]:
+
+        attachments = self.attachement_repository.get_attachments_by_ids(
+            attachment_ids
+        )
+
+        valid_attachments = []
+
+        for attachment in attachments:
+            file_bytes = self.attachement_service.download_bytes(
+                attachment.file_path
+            )
+
+            valid_attachments.append(
+                (attachment, file_bytes)
+            )
+
+        return valid_attachments
+
+
+

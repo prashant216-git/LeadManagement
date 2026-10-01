@@ -44,6 +44,7 @@ from app.repositories.AttachementRepository import AttachmentRepository
 from app.repositories.QuickMessageRepository import QuickMessageRepository
 from app.services.AttachementService import AttachmentService
 from app.services.QuickMessageService import QuickMessageAttachmentService
+from app.services.attachement_upload_service import AttachmentUploadService
 
 
 def get_credential_encryption_service(
@@ -57,11 +58,16 @@ def get_message_service(
     lead_repository: LeadRepository = Depends(
         get_lead_repository
     ),
+        db=Depends(get_db),
+attachement_repository=Depends(get_attachment_repository)
+
 ) -> MessageService:
 
     return MessageService(
         message_repository=message_repository,
         lead_repository=lead_repository,
+        attachment_repository=attachement_repository,
+        db=db
     )
 
 def get_lead_service(
@@ -130,6 +136,10 @@ def get_channel_resolver(
     message_repository: MessageRepository = Depends(
         get_message_repository
     ),
+attachment_repository: AttachmentRepository = Depends(
+        get_attachment_repository
+    ),
+
 ) -> ChannelResolver:
 
     return ChannelResolver(
@@ -139,6 +149,8 @@ def get_channel_resolver(
         channel_master_repository=channel_master_repository,
         credential_encryption_service=credential_service,
         message_repository=message_repository,
+        attachement_repository=attachment_repository,
+        attachement_service=AttachmentService()
     )
 
 def get_ai_service(
@@ -217,11 +229,25 @@ def get_quick_message_service(
     attachment_repository: AttachmentRepository = Depends(
         get_attachment_repository
     ),
+
 ) -> QuickMessageAttachmentService:
 
     return QuickMessageAttachmentService(
         db=db,
         repository=quick_message_repository,
+        attachment_repository=attachment_repository,
+        attachment_service=AttachmentService(),
+    )
+
+def get_attachment_upload_service(
+    db: AsyncSession = Depends(get_db),
+    attachment_repository: AttachmentRepository = Depends(
+        get_attachment_repository
+    ),
+) -> AttachmentUploadService:
+
+    return AttachmentUploadService(
+        db=db,
         attachment_repository=attachment_repository,
         attachment_service=AttachmentService(),
     )
