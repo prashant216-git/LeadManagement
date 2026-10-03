@@ -1,16 +1,16 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from starlette import status
 
+from app.DTOs.LeadStatusHistoryResponse import LeadStatusHistoryResponse
 from app.DTOs.LeadStatusDTO import (
     LeadStatusCreateDTO,
     LeadStatusResponseDTO,
     LeadStatusUpdateDTO, ChangeLeadStatusDTO,
 )
 from app.services.LeadStatusService import LeadStatusService
-from app.dependencies.services import get_lead_status_service
-
-
+from app.dependencies.services import get_lead_status_service, get_lead_service
 
 router = APIRouter(
     prefix="/lead-status",
@@ -154,6 +154,7 @@ async def change_status(
             user_id=user_id,
             lead_id=request.lead_id,
             status_id=request.status_id,
+            comment=request.comment,
         )
 
         return lead_status
@@ -161,5 +162,25 @@ async def change_status(
     except ValueError as e:
         raise HTTPException(
             status_code=400,
+            detail=str(e),
+        )
+
+@router.get(
+    "/{lead_id}/history",
+    response_model=list[LeadStatusHistoryResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def get_lead_history(
+    lead_id: UUID,
+    lead_status_service=Depends(get_lead_status_service),
+):
+    try:
+        return await lead_status_service.get_status_history(
+            lead_id=lead_id
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )

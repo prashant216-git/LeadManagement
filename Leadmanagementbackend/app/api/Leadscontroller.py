@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
+from app.DTOs.Leadlist import Leadetails
 from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO
 from app.DTOs.Chats import ChatSidebarDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
@@ -142,33 +143,25 @@ async def get_lead_messages(
         )
 @router.post(
     "/create_manual_lead",
+    response_model=Leadetails,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_lead_manual(
-    lead_details: CreateManualLeadDTO = Body(
-        ...,
-
-    ),
-    lead_service=Depends(
-        get_lead_service,
-    ),
+    lead_details: CreateManualLeadDTO = Body(...),
+    lead_service=Depends(get_lead_service),
 ):
-
     try:
 
-        user_id = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
-
-        created_lead = (
-            await lead_service.create_manual_lead(
-                user_id=user_id,
-                lead_data=lead_details,
-            )
+        user_id = UUID(
+            "09a81c46-92c4-42ae-9ffe-4275d62f1d9f"
         )
 
-        return created_lead
+        return await lead_service.create_manual_lead(
+            user_id=user_id,
+            lead_data=lead_details,
+        )
 
     except ValueError as e:
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),

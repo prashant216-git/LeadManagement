@@ -36,3 +36,4 @@ class LeadStatusResponseDTO(BaseModel):
 class ChangeLeadStatusDTO(BaseModel):
     lead_id: UUID | None = None
     status_id: UUID | None = None
+    comment : str | None = None

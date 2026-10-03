@@ -21,7 +21,8 @@ class LeadService:
         lead_repository,
         channel_connection_repository,
             lead_status_repository,
-            lead_status_master_repository
+            lead_status_master_repository,
+            status_history_repository
     ):
         self.lead_repository = lead_repository
         self.channel_connection_repository = (
@@ -29,6 +30,7 @@ class LeadService:
         )
         self.lead_status_repository : LeadStatusRepository =lead_status_repository
         self.lead_status_master_repository=lead_status_master_repository
+        self.status_history_repository = status_history_repository
 
     async def create_or_update_lead(
             self,
@@ -129,6 +131,12 @@ class LeadService:
                     )
 
                     self.lead_status_repository.save(lead_status)
+                    self.status_history_repository.create(
+                        lead_id=result.id,
+                        status_id=default_status.id,
+                        comment="NEW",
+                        changed_by=None,
+                    )
 
             except Exception as exc:
                 print(
@@ -257,7 +265,7 @@ class LeadService:
             self,
             user_id: UUID,
             lead_data: CreateManualLeadDTO,
-    ) -> Lead:
+    ) -> Leadetails:
 
         lead = None
 
@@ -266,7 +274,7 @@ class LeadService:
 
 
                     email=lead_data.email,
-                    phone_number=lead_data.email,)
+                    phone_number=lead_data.phone_number,)
 
         # --------------------------------------------------
         # Existing lead
@@ -301,6 +309,7 @@ class LeadService:
         result = self.lead_repository.save(
             lead
         )
+
         try:
             default_status = (
                 self.lead_status_master_repository
@@ -318,13 +327,29 @@ class LeadService:
                 print("creating lead status")
 
                 self.lead_status_repository.save(lead_status)
+                print("creating history")
+                self.status_history_repository.create(
+                    lead_id=lead.id,
+                    status_id=default_status.id,
+                    comment="NEW",
+                    changed_by=user_id,
+                )
+
 
         except Exception as exc:
             print(
                 f"Failed to assign status to lead "
                 f"{lead.id}: {exc}"
             )
-        return lead
+        return Leadetails(
+            connection_id=None,
+            source_identifier=None,
+            id=lead.id,
+            name=lead.name,
+            email=lead.email,
+            phone_number=lead.phone_number,
+            created_at=lead.created_at,
+        )
 
     async def get_manual_leads(
             self,

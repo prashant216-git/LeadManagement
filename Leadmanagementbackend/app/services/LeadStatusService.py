@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from app.DTOs.LeadStatusHistoryResponse import LeadStatusHistoryResponse
 from app.DTOs.LeadStatusDTO import LeadStatusResponseDTO
 from app.models.lead_status import LeadStatus
 from app.models.lead_status_master import LeadStatusMaster
@@ -8,6 +9,7 @@ from app.repositories.LeadStatusRepository import LeadStatusRepository
 from app.repositories.LeadStatusMasterRepository import (
     LeadStatusMasterRepository,
 )
+from app.repositories.LeadStatusHistoryRepository import LeadStatusHistoryRepository
 
 
 class LeadStatusService:
@@ -25,6 +27,7 @@ class LeadStatusService:
             lead_status_master_repository
         )
         self.db = db
+        self.status_history_repository=LeadStatusHistoryRepository(self.db)
 
     # --------------------------------------------------
     # GET ALL STATUS
@@ -274,6 +277,7 @@ class LeadStatusService:
         user_id: UUID,
         lead_id: UUID,
         status_id: UUID,
+            comment:str | None,
     ) -> LeadStatus:
 
 
@@ -337,9 +341,18 @@ class LeadStatusService:
         if current_status:
 
             current_status.status_id = status_id
-
             self.db.commit()
+
+            self.status_history_repository.create(
+                lead_id=lead_id,
+                status_id=status_id,
+                comment=comment,
+                changed_by=user_id,
+            )
             self.db.refresh(current_status)
+
+
+
 
             return current_status
 
@@ -356,7 +369,36 @@ class LeadStatusService:
             lead_status
         )
 
-        self.db.commit()
+        self.status_history_repository.create(
+            lead_id=lead_id,
+            status_id=status_id,
+            comment=comment,
+            changed_by=user_id,
+        )
+
+
         self.db.refresh(lead_status)
 
         return lead_status
+
+    async def get_status_history(
+            self,
+            lead_id: int,
+    ) -> list[LeadStatusHistoryResponse]:
+
+        history = self.status_history_repository.get_history_by_lead_id(
+            lead_id=lead_id
+        )
+
+        return [
+            LeadStatusHistoryResponse(
+                id=row.id,
+                lead_id=row.lead_id,
+                status_id=row.status_id,
+                status_name=master.status_name,
+                comment=row.comment,
+                changed_by=row.changed_by,
+                created_at=row.created_at,
+            )
+            for row,master in history
+        ]

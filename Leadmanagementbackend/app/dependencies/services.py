@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.ai.ai_service import AIService
 from app.channel_engine.channelresolver import ChannelResolver
@@ -45,6 +45,7 @@ from app.repositories.QuickMessageRepository import QuickMessageRepository
 from app.services.AttachementService import AttachmentService
 from app.services.QuickMessageService import QuickMessageAttachmentService
 from app.services.attachement_upload_service import AttachmentUploadService
+from app.repositories.LeadStatusHistoryRepository import LeadStatusHistoryRepository
 
 
 def get_credential_encryption_service(
@@ -78,7 +79,8 @@ def get_lead_service(
         get_channel_connection_repository
     ),
     lead_status_repository: LeadStatusRepository = Depends(get_lead_status_repository),
-        lead_status_master_repository: LeadStatusMasterRepository = Depends(get_lead_status_master_repository)
+        lead_status_master_repository: LeadStatusMasterRepository = Depends(get_lead_status_master_repository),
+        db : AsyncSession = Depends(get_db),
 ) -> LeadService:
 
     return LeadService(
@@ -87,7 +89,8 @@ def get_lead_service(
             channel_connection_repository
         ),
         lead_status_repository=lead_status_repository,
-        lead_status_master_repository=lead_status_master_repository
+        lead_status_master_repository=lead_status_master_repository,
+        status_history_repository=LeadStatusHistoryRepository(db)
     )
 
 def get_chat_service(
