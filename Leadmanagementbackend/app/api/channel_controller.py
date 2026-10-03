@@ -5,6 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Request
 from starlette.responses import RedirectResponse
 
+from app.Security.dependencies import get_current_user
+from app.Security.rbac import rbac_service
+from app.Security.schema import CurrentUser
 from app.DTOs.channelreponseDTO import ChannelResponseDTO
 from app.DTOs.connection.connection_response import ConnectResponse
 from app.DTOs.send_message import SendMessageDTO
@@ -14,27 +17,7 @@ from app.channel_engine.channelservice import ChannelService
 from app.core.config import settings
 from app.dependencies.channelservice import get_channel_service
 
-from app.repositories.ChannelConnectionRepository import (
-    ChannelConnectionRepository,
-)
 
-from app.repositories.ChannelMasterRepositories import (
-    ChannelMasterRepository,
-)
-
-from app.repositories.ChannelCredentialRepository import (
-    ChannelCredentialRepository,
-)
-from app.repositories.ChannelWatchRepository import ChannelWatchRepository
-from app.repositories.LeadRepository import LeadRepository
-from app.repositories.MessageRepository import MessageRepository
-
-from app.services.CredentialEncryptionService import (
-    CredentialEncryptionService,
-)
-
-from app.db.session import get_db
-from app.services.messageservice import MessageService
 
 router = APIRouter(
     prefix="/channels",
@@ -189,7 +172,17 @@ channel_service: ChannelService = Depends(
 )
 async def get_all_channels(
     service: ChannelService = Depends(get_channel_service),
+current_user: CurrentUser = Depends(
+        get_current_user
+    ),
 ):
+    print(current_user.user_id)
+    rbac_service.require_privilege(
+        permissions=current_user.permissions,
+        permission="LEAD",
+        privilege="CREATE")
+
+
     try:
         user_id = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
         return await service.get_all_channels(user_id=user_id)

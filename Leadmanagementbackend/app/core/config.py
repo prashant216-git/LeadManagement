@@ -12,6 +12,7 @@ print("ENV EXISTS:", (BASE_DIR / ".env").exists())
 
 
 class Settings(BaseSettings):
+    RBAC_SERVICE_URL:Optional[str] = None
 
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
