@@ -3,6 +3,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 
+from app.Security.dependencies import get_current_user
+from app.Security.rbac import rbac_service
 from app.DTOs.MessageDTO import ScheduledMessageResponse, ScheduledMessageCreate, CancelledScheduledMessageResponse
 from app.dependencies.services import (
     get_scheduled_message_service,
@@ -25,8 +27,14 @@ async def schedule_message(
     service: ScheduledMessageService = Depends(
         get_scheduled_message_service
     ),
+current_user=Depends(get_current_user),
 ):
-    user_id=UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
+    rbac_service.require_privilege(
+        permissions=current_user.permissions,
+        permission="SCHEDULE_MESSAGE",
+        privilege="CREATE",
+    )
+    user_id=current_user.user_id
     scheduled_message = await service.schedule_message(
         user_id=user_id,
         lead_id=request.lead_id,
@@ -48,7 +56,13 @@ async def schedule_message(
     service: ScheduledMessageService = Depends(
         get_scheduled_message_service
     ),
+current_user=Depends(get_current_user),
 ):
+    rbac_service.require_privilege(
+        permissions=current_user.permissions,
+        permission="SCHEDULE_MESSAGE",
+        privilege="VIEW",
+    )
     result= await service.get_by_lead_id(lead_id=lead_id)
     return result
 
@@ -64,8 +78,14 @@ scheduled_message_id: UUID,
     service: ScheduledMessageService = Depends(
         get_scheduled_message_service
     ),
+current_user=Depends(get_current_user),
 ):
-    user_id=UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
+    rbac_service.require_privilege(
+        permissions=current_user.permissions,
+        permission="SCHEDULE_MESSAGE",
+        privilege="DELETE",
+    )
+    user_id=current_user.user_id
     cancelled_message = await service.cancel_message(scheduled_message_id=scheduled_message_id,user_id=user_id)
 
 

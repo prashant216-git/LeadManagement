@@ -176,11 +176,7 @@ current_user: CurrentUser = Depends(
         get_current_user
     ),
 ):
-    print(current_user.user_id)
-    rbac_service.require_privilege(
-        permissions=current_user.permissions,
-        permission="LEAD",
-        privilege="CREATE")
+
 
 
     try:
