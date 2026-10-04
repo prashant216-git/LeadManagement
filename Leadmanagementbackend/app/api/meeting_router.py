@@ -30,13 +30,13 @@ async def create_meeting(
     meeting_service: MeetingService = Depends(
         get_meeting_service
     ),
-current_user=Depends(get_current_user),
+# current_user=Depends(get_current_user),
 ):
-    rbac_service.require_privilege(
-        permissions=current_user.permissions,
-        permission="MEETING",
-        privilege="CREATE",
-    )
+    # rbac_service.require_privilege(
+    #     permissions=current_user.permissions,
+    #     permission="MEETING",
+    #     privilege="CREATE",
+    # )
     try:
         meeting = await meeting_service.create_meeting(
             lead_id=request.lead_id,
@@ -69,13 +69,13 @@ end_time: datetime,
     meeting_service: MeetingService = Depends(
         get_meeting_service
     ),
-current_user=Depends(get_current_user),
+# current_user=Depends(get_current_user),
 ):
-    rbac_service.require_privilege(
-        permissions=current_user.permissions,
-        permission="MEETING",
-        privilege="VIEW",
-    )
+    # rbac_service.require_privilege(
+    #     permissions=current_user.permissions,
+    #     permission="MEETING",
+    #     privilege="VIEW",
+    # )
     user_id=UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
     available = await meeting_service.check_meeting_availability(
         user_id=user_id,
@@ -95,15 +95,15 @@ async def get_meetings_by_lead(
     meeting_service: MeetingService = Depends(
         get_meeting_service
     ),
-current_user=Depends(get_current_user),
+# current_user=Depends(get_current_user),
 
 
 ):
-    rbac_service.require_privilege(
-        permissions=current_user.permissions,
-        permission="MEETING",
-        privilege="VIEW",
-    )
+    # rbac_service.require_privilege(
+    #     permissions=current_user.permissions,
+    #     permission="MEETING",
+    #     privilege="VIEW",
+    # )
     try:
         return await meeting_service.get_meetings_by_lead_id(
             lead_id=lead_id
@@ -127,13 +127,13 @@ async def update_meeting(
     meeting_service: MeetingService = Depends(
         get_meeting_service
     ),
-current_user=Depends(get_current_user),
+# current_user=Depends(get_current_user),
 ):
-    rbac_service.require_privilege(
-        permissions=current_user.permissions,
-        permission="MEETING",
-        privilege="UPDATE",
-    )
+    # rbac_service.require_privilege(
+    #     permissions=current_user.permissions,
+    #     permission="MEETING",
+    #     privilege="UPDATE",
+    # )
     try:
 
         return await meeting_service.update_meeting(
