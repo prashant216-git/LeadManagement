@@ -19,6 +19,7 @@ from app.socketmanager.websocketmanager import websocketmanager
 from app.repositories.AttachementRepository import AttachmentRepository
 from app.services.AttachementService import AttachmentService
 from app.repositories.LeadStatusHistoryRepository import LeadStatusHistoryRepository
+from app.repositories.LeadTransferHistoryRepository import LeadTransferHistoryRepository
 
 
 def build_channel_service(db: AsyncSession) -> ChannelService:
@@ -61,7 +62,8 @@ def build_channel_service(db: AsyncSession) -> ChannelService:
         # ...
         lead_status_master_repository=lead_status_master_repository,
         lead_status_repository=lead_status_repository,
-    status_history_repository=LeadStatusHistoryRepository(db)
+    status_history_repository=LeadStatusHistoryRepository(db),
+    lead_transfer_history_repository=LeadTransferHistoryRepository(db)
     )
 
     channel_engine = ChannelEngine(

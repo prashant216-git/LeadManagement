@@ -64,11 +64,7 @@ class User(BaseModel):
         back_populates="user",  # ✅ Match singular name on ChannelConnection
         foreign_keys="ChannelConnection.user_id",  # ✅ Disambiguates user_id from created_by
     )
-    leads: Mapped[list["Lead"]] = relationship(
-        "Lead",
-        back_populates="user",  # ✅ Match singular name on Lead
-        cascade="all, delete-orphan",
-    )
+
     ai_drafts: Mapped[list["AIDraft"]] = relationship(
         "AIDraft",
         back_populates="user",
@@ -92,5 +88,16 @@ class User(BaseModel):
         "LeadStatus",
         foreign_keys="LeadStatus.update_by",
         back_populates="updated_by_user",
+    )
+    leads = relationship(
+        "Lead",
+        foreign_keys="Lead.user_id",
+        back_populates="user",
+    )
+
+    assigned_leads = relationship(
+        "Lead",
+        foreign_keys="Lead.assigned_user_id",
+        back_populates="assigned_user",
     )
 

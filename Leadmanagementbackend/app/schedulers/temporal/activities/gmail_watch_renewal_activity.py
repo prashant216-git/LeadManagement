@@ -10,31 +10,11 @@ from app.dependencies.services import get_websocket_manager
 from app.repositories.ChannelWatchRepository import (
     ChannelWatchRepository,
 )
-from app.repositories.ChannelConnectionRepository import (
-    ChannelConnectionRepository,
-)
-from app.repositories.ChannelCredentialRepository import (
-    ChannelCredentialRepository,
-)
-from app.repositories.ChannelMasterRepositories import (
-    ChannelMasterRepository,
-)
-from app.repositories.LeadRepository import LeadRepository
-from app.repositories.LeadStatusMasterRepository import LeadStatusMasterRepository
-from app.repositories.LeadStatusRepository import LeadStatusRepository
-from app.repositories.MessageRepository import MessageRepository
-from app.services.Leadmanagementservice import LeadService
 
-from app.services.messageservice import MessageService
-from app.channel_engine.channelresolver import ChannelResolver
 
-from app.services.CredentialEncryptionService import (
-    CredentialEncryptionService,
-)
 
-from app.channel_engine.engine import ChannelEngine
-from app.socketmanager.websocketmanager import websocketmanager
-from dependencies.ObjectConstructor import build_channel_service
+
+from app.dependencies.ObjectConstructor import build_channel_service
 
 
 @activity.defn

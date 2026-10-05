@@ -46,6 +46,7 @@ from app.services.AttachementService import AttachmentService
 from app.services.QuickMessageService import QuickMessageAttachmentService
 from app.services.attachement_upload_service import AttachmentUploadService
 from app.repositories.LeadStatusHistoryRepository import LeadStatusHistoryRepository
+from app.repositories.LeadTransferHistoryRepository import LeadTransferHistoryRepository
 
 
 def get_credential_encryption_service(
@@ -90,7 +91,8 @@ def get_lead_service(
         ),
         lead_status_repository=lead_status_repository,
         lead_status_master_repository=lead_status_master_repository,
-        status_history_repository=LeadStatusHistoryRepository(db)
+        status_history_repository=LeadStatusHistoryRepository(db),
+        lead_transfer_history_repository=LeadTransferHistoryRepository(db)
     )
 
 def get_chat_service(

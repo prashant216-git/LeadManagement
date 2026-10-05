@@ -72,11 +72,24 @@ class Lead(BaseModel):
         index=True,
     )
 
+    assigned_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
     # ======================================================
     # Relationships
     # ======================================================
 
-    user: Mapped["User"] = relationship("User", back_populates="leads")
+    user: Mapped["User"] = relationship(
+        "User",
+        foreign_keys=[user_id],
+        back_populates="leads",
+    )
 
     messages: Mapped[list["Message"]] = relationship(
         "Message",
@@ -105,4 +118,8 @@ class Lead(BaseModel):
         "LeadStatus",
         back_populates="lead",
         cascade="all, delete-orphan",
+    )
+    assigned_user: Mapped["User"] = relationship(
+        "User",
+        foreign_keys=[assigned_user_id],
     )

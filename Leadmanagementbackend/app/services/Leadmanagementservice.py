@@ -12,6 +12,8 @@ from app.core.lock import (
 )
 from app.models.lead_status import LeadStatus
 from app.repositories.LeadStatusRepository import LeadStatusRepository
+from app.enums.LeadTransfer import LeadTransferStatus, LeadTransferType
+from app.models.LeadTransferHistory import LeadTransferHistory
 
 
 class LeadService:
@@ -22,7 +24,8 @@ class LeadService:
         channel_connection_repository,
             lead_status_repository,
             lead_status_master_repository,
-            status_history_repository
+            status_history_repository,
+            lead_transfer_history_repository
     ):
         self.lead_repository = lead_repository
         self.channel_connection_repository = (
@@ -31,6 +34,7 @@ class LeadService:
         self.lead_status_repository : LeadStatusRepository =lead_status_repository
         self.lead_status_master_repository=lead_status_master_repository
         self.status_history_repository = status_history_repository
+        self.lead_transfer_history_repository=lead_transfer_history_repository
 
     async def create_or_update_lead(
             self,
@@ -501,6 +505,61 @@ class LeadService:
                 for connection in identifiers
             ],
         )
+
+    async def transfer_lead(
+            self,
+            lead_id: UUID,
+            transfer_to: UUID,
+            transfer_type: LeadTransferType,
+
+            current_user_id: UUID,
+    ):
+        # 1. Get lead
+        lead = self.lead_repository.get_by_id(lead_id)
+
+        print("reached srrvice")
+
+        if lead is None:
+            raise ValueError("Lead not found.")
+
+        # 2. Current assignee must be the user
+        if lead.assigned_user_id != current_user_id:
+            raise ValueError(
+                "You are not the current assignee of this lead."
+            )
+
+        # 3. Cannot transfer to yourself
+        if transfer_to == current_user_id:
+            raise ValueError(
+                "Lead cannot be transferred to yourself."
+            )
+
+        # 4. Update current assignee
+        lead.assigned_user_id = transfer_to
+
+
+
+        # 5. Create transfer history
+        transfer_history = LeadTransferHistory(
+            lead_id=lead.id,
+            transfer_from=current_user_id,
+            transfer_to=transfer_to,
+            transfer_type=transfer_type,
+            transfer_status=LeadTransferStatus.COMPLETED,
+
+            created_by=current_user_id,
+            updated_by=current_user_id,
+        )
+
+        self.lead_transfer_history_repository.create(
+            transfer_history
+        )
+        self.lead_repository.save(lead)
+
+
+
+
+        return lead
 
 
 

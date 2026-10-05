@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
+from app.DTOs.TransferLeadDTO import TransferLeadRequest
 from app.DTOs.Leadlist import Leadetails
 from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO
 from app.DTOs.Chats import ChatSidebarDTO
@@ -19,6 +20,7 @@ from app.repositories.MessageRepository import MessageRepository
 from app.services.Chatservice import ChatService
 from app.services.Leadmanagementservice import LeadService
 from app.services.messageservice import MessageService
+from app.enums.LeadTransfer import LeadTransferType, LeadTransferStatus
 
 router = APIRouter(
     prefix="/leads",
@@ -220,4 +222,67 @@ async def get_chat_sidebar(
     return await chat_service.get_chat_sidebar(
         channel_id=channel_id,user_id=user_id
     )
+
+@router.get(
+    "/transfer/types"
+)
+async def get_transfer_enums():
+
+    return {
+        "transfer_types": [
+            {
+                "key": transfer_type.name,
+                "value": transfer_type.value,
+            }
+            for transfer_type in LeadTransferType
+        ],
+
+    }
+
+@router.post(
+    "/transfer",
+    status_code=status.HTTP_200_OK,
+)
+async def transfer_lead(
+    request: TransferLeadRequest,
+    lead_service: LeadService = Depends(
+        get_lead_service
+    ),
+):
+    try:
+
+        # Replace this with current_user.user_id
+        # once your JWT dependency is connected.
+        current_user_id = UUID(
+            "09a81c46-92c4-42ae-9ffe-4275d62f1d9f"
+        )
+
+        lead = await lead_service.transfer_lead(
+            lead_id=request.lead_id,
+            transfer_to=request.transfer_to,
+            transfer_type=request.transfer_type,
+
+            current_user_id=current_user_id,
+        )
+
+        return {
+            "message": "Lead transferred successfully.",
+            "lead_id": lead.id,
+            "assigned_user_id": lead.assigned_user_id,
+        }
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to transfer lead.",
+        )
+
 
