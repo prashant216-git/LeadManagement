@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     VERIFY_TOKEN: Optional[str] = None
     WHATSAPP_TOKEN: Optional[str] = None
     PHONE_NUMBER_ID: Optional[str] = None
+    META_GRAPH_API_VERSION : Optional[str] = None
 
     MICROSOFT_CLIENT_ID: Optional[str] = None
     MICROSOFT_CLIENT_SECRET: Optional[str] = None

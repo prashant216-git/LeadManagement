@@ -22,6 +22,8 @@ class ChannelProviderRegistry:
 
     @classmethod
     def get(cls, channel_code: str):
+        print("REQUESTED PROVIDER:", repr(channel_code))
+        print("AVAILABLE PROVIDERS:", cls._providers.keys())
 
         provider = cls._providers.get(channel_code)
 

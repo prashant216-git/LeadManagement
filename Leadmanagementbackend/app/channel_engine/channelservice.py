@@ -1,4 +1,4 @@
-import ast
+
 import secrets
 from datetime import datetime, timezone
 from uuid import UUID
@@ -6,20 +6,18 @@ from uuid import UUID
 from fastapi import HTTPException
 
 
-from app.DTOs import channelreponseDTO
+
 from app.DTOs.connection.callbackerror import CallbackException
 from app.DTOs.connection.connection_response import ConnectResponse
 from app.channel_engine.engine import ChannelEngine
 from datetime import datetime, timezone
 
-from app.db.session import get_db
+
 from app.enums.channel import (
     ConnectionStatus,
     WatchStatus,
 )
-from app.DTOs.messages_and_attachment.send_message_request import (
-    SendMessageRequest,
-)
+
 from app.channel_engine.channelresolver import ChannelResolver
 from app.DTOs.channelreponseDTO import ConnectedAccountDTO
 from app.models import Users
@@ -857,3 +855,49 @@ class ChannelService:
         return (self.credential_encryption_service.decrypt(
             credential.encrypted_payload
         ))["access_token"]
+
+    async def verify_webhook(
+            self,
+            channel_code: str,
+            query_params: dict,
+    ):
+        # ==================================================
+        # 1. Resolve channel
+        # ==================================================
+
+        print(
+            f"Verifying webhook for {channel_code}")
+
+        channel = (
+            self.channel_master_repository
+            .get_by_code(
+                channel_code=channel_code
+            )
+        )
+
+        if channel is None:
+            raise ValueError(
+                f"Unsupported channel: {channel_code}"
+            )
+
+        # ==================================================
+        # 2. Create provider
+        # ==================================================
+
+        provider = self.channel_engine.create_provider(
+            channel_code=channel.code,
+            connection=None,
+        )
+
+        if provider is None:
+            raise ValueError(
+                f"Provider not found for {channel.code}"
+            )
+
+        # ==================================================
+        # 3. Let provider verify webhook
+        # ==================================================
+
+        return await provider.verify_webhook(
+            query_params=query_params,
+        )

@@ -28,36 +28,16 @@ async def channel_webhook(
         # ==================================================
         # GET → WEBHOOK VERIFICATION
         # ==================================================
+        print("slivng webhook")
 
         if request.method == "GET":
-
             query_params = dict(
                 request.query_params
             )
 
-            hub_mode = query_params.get(
-                "hub.mode"
-            )
-
-            hub_verify_token = query_params.get(
-                "hub.verify_token"
-            )
-
-            hub_challenge = query_params.get(
-                "hub.challenge"
-            )
-
-            if (
-                hub_mode == "subscribe"
-                and hub_verify_token == settings.VERIFY_TOKEN
-            ):
-                return PlainTextResponse(
-                    content=hub_challenge
-                )
-
-            return PlainTextResponse(
-                content="Verification Failed",
-                status_code=403,
+            return await channel_service.verify_webhook(
+                channel_code=channel_code,
+                query_params=query_params,
             )
 
         # ==================================================
@@ -81,13 +61,13 @@ async def channel_webhook(
             payload=payload,
         )
 
+
     except Exception as e:
 
         print(
-            f"Webhook failed [{channel_code}]: {e}"
+
+            f"Webhook failed [{channel_code}]: {repr(e)}"
+
         )
 
-        raise HTTPException(
-            status_code=500,
-            detail="Webhook processing failed.",
-        )
+        raise
