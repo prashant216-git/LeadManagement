@@ -34,6 +34,7 @@ from app.services.CredentialEncryptionService import (
 
 from app.channel_engine.engine import ChannelEngine
 from app.socketmanager.websocketmanager import websocketmanager
+from dependencies.ObjectConstructor import build_channel_service
 
 
 @activity.defn
@@ -59,74 +60,7 @@ async def renew_expiring_channel_watches() -> dict:
 
         channel_watch_repository = ChannelWatchRepository(db)
 
-        channel_connection_repository = (
-            ChannelConnectionRepository(db)
-        )
-
-        channel_credential_repository = (
-            ChannelCredentialRepository(db)
-        )
-
-        channel_master_repository = ChannelMasterRepository(db)
-
-        lead_repository = LeadRepository(db)
-
-        message_repository = MessageRepository(db)
-
-        # --------------------------------------------------
-        # Create services
-        # --------------------------------------------------
-
-        credential_service = CredentialEncryptionService()
-
-        message_service = MessageService(
-            message_repository=message_repository,
-            lead_repository=lead_repository,
-        )
-        lead_status_repository=LeadStatusRepository(db)
-        lead_status_master_repository=LeadStatusMasterRepository(db)
-
-
-        websocket_manager = websocketmanager()
-
-        # -------------------------------------------------
-        # Create ChannelResolver
-        # -------------------------------------------------
-
-        channel_resolver = ChannelResolver(
-            connection_repository=channel_connection_repository,
-            credential_repository=channel_credential_repository,
-            channel_watch_repository=channel_watch_repository,
-            channel_master_repository=channel_master_repository,
-            credential_encryption_service=credential_service,
-            message_repository=message_repository,
-        )
-        lead_service=LeadService(
-            lead_repository=lead_repository,
-            channel_connection_repository=(
-                channel_connection_repository
-            ),
-            lead_status_repository=lead_status_repository,
-            lead_status_master_repository=lead_status_master_repository
-        )
-
-        # -------------------------------------------------
-        # Create ChannelEngine
-        # -------------------------------------------------
-
-        channel_engine = ChannelEngine(
-            connection_repository=channel_connection_repository,
-            credential_repository=channel_credential_repository,
-            credential_service=credential_service,
-            channel_watch_repository=channel_watch_repository,
-            channel_master_repository=channel_master_repository,
-            lead_repository=lead_repository,
-            channel_resolver=channel_resolver,
-            message_service=message_service,
-            db=db,
-            webmanager=websocket_manager,
-            lead_service=lead_service
-        )
+        channel_service = build_channel_service(db)
 
         # --------------------------------------------------
         # Get expiring watches
@@ -137,7 +71,7 @@ async def renew_expiring_channel_watches() -> dict:
             .get_watches_expiring_before(expiry_limit)
         )
 
-        gmail_provider = channel_engine.create_provider("gmail")
+
 
         # --------------------------------------------------
         # Renew each watch
@@ -162,7 +96,10 @@ async def renew_expiring_channel_watches() -> dict:
                         "channel_id": channel_id,
                     },
                 )
-                await gmail_provider.setup_watch(identifier=provider_identifier, channel_id=channel_id)
+
+                return await channel_service.setup_watch(identifier=provider_identifier,
+                                                          channel_code="gmail"
+                                                         )
 
                 # --------------------------------------------------
                 # Gmail provider

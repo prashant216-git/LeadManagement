@@ -173,9 +173,12 @@ channel_service: ChannelService = Depends(
 async def get_all_channels(
     service: ChannelService = Depends(get_channel_service),
 # current_user: CurrentUser = Depends(
-        # #         get_current_user
-        # #     ),
+#         get_current_user
+#     ),
 ):
+
+
+
     try:
         user_id = UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
         return await service.get_all_channels(user_id=user_id)

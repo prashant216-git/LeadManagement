@@ -429,8 +429,9 @@ class ChannelService:
     async def setup_watch(
             self,
             identifier:str,
-            user_id: UUID,
-            channel_code:str
+
+            channel_code:str,
+            user_id: UUID | None = None,
 
     ):
         sourcename = self.channel_master_repository.get_by_code(
