@@ -125,7 +125,7 @@ class LeadRepository:
             
             .where(
                 Lead.source_channel_id == channel_id,
-                Lead.user_id == user_id,
+                Lead.assigned_user_id == user_id,
             )
         )
 
