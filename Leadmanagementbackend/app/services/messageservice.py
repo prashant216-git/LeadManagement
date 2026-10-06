@@ -125,11 +125,11 @@ class MessageService:
                 message.id
             )
 
-            attachment_url = []
+            attachment_urls = []
 
             for attachment in attachments:
                 if attachment and attachment.temporary_url:
-                    attachment_url.append(attachment.temporary_url)
+                    attachment_urls.append(attachment.temporary_url)
 
                 elif attachment:
                     attachment_url = (
@@ -137,7 +137,7 @@ class MessageService:
                             attachment.file_path
                         )
                     )
-                    attachment_url.append(attachment.temporary_url)
+                    attachment_urls.append(attachment.temporary_url)
                     self.db.commit()
 
             message_details.append(
@@ -158,7 +158,7 @@ class MessageService:
 
                     message_type=message.message_type,
 
-                    attachment_urls=attachment_url,
+                    attachment_urls=attachment_urls,
 
                     repliedmessageid=(
                         message.reply_to_message_id
