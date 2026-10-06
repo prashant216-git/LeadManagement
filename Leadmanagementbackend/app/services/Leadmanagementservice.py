@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
 from math import ceil
+from typing import List
 from uuid import UUID
 
+from app.DTOs.TransferLeadDTO import TransferLeadResponseDTO
 from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO, ChannelIdentifierDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.Leadlist import LeadlistDTO, Leadetails
@@ -511,6 +513,7 @@ class LeadService:
             lead_id: UUID,
             transfer_to: UUID,
             transfer_type: LeadTransferType,
+            comment: str,
 
             current_user_id: UUID,
     ):
@@ -546,7 +549,7 @@ class LeadService:
             transfer_to=transfer_to,
             transfer_type=transfer_type,
             transfer_status=LeadTransferStatus.COMPLETED,
-
+            comment=comment,
             created_by=current_user_id,
             updated_by=current_user_id,
         )
@@ -555,11 +558,60 @@ class LeadService:
             transfer_history
         )
         self.lead_repository.save(lead)
-
-
-
-
         return lead
+
+    async def get_transfer_history(
+            self,
+            user_id: UUID,
+            transfer_type: str,
+
+            page: int = 1,
+            page_size: int = 20,
+            sort_by: str = "created_at",
+            sort_order: str = "desc",
+            channel_id: UUID | None = None,
+    ) -> tuple[List[TransferLeadResponseDTO], int]:
+
+        transfers, total = (
+            self.lead_transfer_history_repository
+            .get_transferred_leads(
+                user_id=user_id,
+                transfer_type=transfer_type,
+                channel_id=channel_id,
+                page=page,
+                page_size=page_size,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+        )
+
+        response = []
+
+        for transfer, lead in transfers:
+            response.append(
+                TransferLeadResponseDTO(
+                    id=lead.id,
+
+                    assigned_user_id=lead.assigned_user_id,
+                    name=lead.name,
+                    email=lead.email,
+                    phone_number=lead.phone_number,
+                    source_channel_id=lead.source_channel_id,
+                    comment=transfer.comment,
+                    created_at=lead.created_at,
+                    updated_at=lead.updated_at,
+
+                    transfer_id=transfer.id,
+                    transfer_from=transfer.transfer_from,
+                    transfer_to=transfer.transfer_to,
+                    transfer_type=transfer.transfer_type,
+                    transfer_status=transfer.transfer_status,
+                    transfer_created_at=transfer.created_at,
+                    transfer_updated_at=transfer.updated_at,
+                )
+            )
+
+        return response, total
 
 
 

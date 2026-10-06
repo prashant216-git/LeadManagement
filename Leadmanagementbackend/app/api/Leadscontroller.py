@@ -10,13 +10,9 @@ from app.DTOs.ChannelLeadidentifier import LeadChannelIdentifiersDTO
 from app.DTOs.Chats import ChatSidebarDTO
 from app.DTOs.CreateManualLeadDTO import CreateManualLeadDTO
 from app.DTOs.MessageDTO import LeadMessagesResponseDTO
-from app.db.session import get_db
+
 from app.dependencies.services import get_lead_service, get_message_service, get_chat_service
-from app.repositories.ChannelConnectionRepository import (
-    ChannelConnectionRepository,
-)
-from app.repositories.LeadRepository import LeadRepository
-from app.repositories.MessageRepository import MessageRepository
+
 from app.services.Chatservice import ChatService
 from app.services.Leadmanagementservice import LeadService
 from app.services.messageservice import MessageService
@@ -36,6 +32,11 @@ router = APIRouter(
 async def get_leads(
     channel_id: UUID | None = Query(
         default=None,
+    ),
+
+    transfer_type: str | None = Query(
+        default=None,
+        pattern="^(TRANSFER_IN|TRANSFER_OUT)$",
     ),
 
     page: int = Query(
@@ -64,6 +65,29 @@ async def get_leads(
 ):
 
     try:
+        user_id = UUID(
+            "09a81c46-92c4-42ae-9ffe-4275d62f1d9f"
+        )
+
+        # ---------------------------------------------
+        # TRANSFER IN / OUT
+        # ---------------------------------------------
+
+        if transfer_type is not None:
+
+            return await lead_service.get_transfer_history(
+                channel_id=channel_id,
+                transfer_type=transfer_type,
+                page=page,
+                page_size=page_size,
+                sort_by=sort_by,
+                sort_order=sort_order,
+                user_id=user_id
+            )
+
+        # ---------------------------------------------
+        # NORMAL LEADS
+        # ---------------------------------------------
 
         if channel_id is None:
 
@@ -105,7 +129,6 @@ async def get_leads(
             status_code=500,
             detail="Unable to retrieve leads.",
         )
-
 
 @router.get(
     "/{lead_id}/messages/{channel_id}",
@@ -261,6 +284,7 @@ async def transfer_lead(
             lead_id=request.lead_id,
             transfer_to=request.transfer_to,
             transfer_type=request.transfer_type,
+            comment=request.comment,
 
             current_user_id=current_user_id,
         )

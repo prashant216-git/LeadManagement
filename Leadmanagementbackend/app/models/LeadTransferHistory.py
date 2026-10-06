@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Text, Column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
@@ -73,6 +73,8 @@ class LeadTransferHistory(BaseModel):
         nullable=False,
         default=LeadTransferStatus.COMPLETED,
     )
+
+    comment = Column(Text, nullable=True)
 
     # ==================================================
     # Source Channel

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from app.models.LeadTransferHistory import LeadTransferHistory
 from app.enums.LeadTransfer import (
     LeadTransferStatus,
 )
+from app.models.Leads import Lead
 
 
 class LeadTransferHistoryRepository:
@@ -198,3 +199,121 @@ class LeadTransferHistoryRepository:
         transfer = result.scalar_one_or_none()
 
         return transfer
+
+    def get_transferred_leads(
+            self,
+            user_id: UUID,
+            transfer_type: str,
+            channel_id: UUID | None = None,
+            page: int = 1,
+            page_size: int = 20,
+            sort_by: str = "created_at",
+            sort_order: str = "desc",
+    ) -> tuple[list[tuple[LeadTransferHistory, Lead]], int]:
+
+        # --------------------------------------------------
+        # Base Query
+        # --------------------------------------------------
+
+        statement = (
+            select(LeadTransferHistory,Lead)
+            .join(
+                Lead,
+                Lead.id == LeadTransferHistory.lead_id,
+            )
+        )
+
+        # --------------------------------------------------
+        # TRANSFER IN / OUT
+        # --------------------------------------------------
+
+        if transfer_type == "TRANSFER_IN":
+
+            statement = statement.where(
+                LeadTransferHistory.transfer_to == user_id
+            )
+
+        elif transfer_type == "TRANSFER_OUT":
+
+            statement = statement.where(
+                LeadTransferHistory.transfer_from == user_id
+            )
+
+        else:
+
+            raise ValueError(
+                "Invalid transfer type."
+            )
+
+        # --------------------------------------------------
+        # CHANNEL FILTER
+        # --------------------------------------------------
+
+        if channel_id is not None:
+            statement = statement.where(
+                Lead.channel_connection_id == channel_id
+            )
+
+        # --------------------------------------------------
+        # COUNT
+        # --------------------------------------------------
+
+        count_statement = (
+            select(func.count())
+            .select_from(
+                statement.subquery()
+            )
+        )
+
+        total = self.db.execute(
+            count_statement
+        ).scalar_one()
+
+        # --------------------------------------------------
+        # SORT
+        # --------------------------------------------------
+
+        allowed_sort_columns = {
+            "created_at": LeadTransferHistory.created_at,
+            "updated_at": LeadTransferHistory.updated_at,
+        }
+
+        sort_column = allowed_sort_columns.get(
+            sort_by,
+            LeadTransferHistory.created_at,
+        )
+
+        if sort_order == "asc":
+            statement = statement.order_by(
+                sort_column.asc()
+            )
+        else:
+            statement = statement.order_by(
+                sort_column.desc()
+            )
+
+        # --------------------------------------------------
+        # PAGINATION
+        # --------------------------------------------------
+
+        offset = (page - 1) * page_size
+
+        statement = statement.offset(
+            offset
+        ).limit(
+            page_size
+        )
+
+        # --------------------------------------------------
+        # EXECUTE
+        # --------------------------------------------------
+
+        result = self.db.execute(
+            statement
+        )
+
+        transfers = list(
+            result.all()
+        )
+
+        return transfers, total
