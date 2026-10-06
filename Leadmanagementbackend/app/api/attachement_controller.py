@@ -9,8 +9,8 @@ from app.services import attachement_upload_service
 from app.services.attachement_upload_service import AttachmentUploadService
 
 router = APIRouter(
-    prefix="/attahcement",
-    tags=["attahcement"],
+    prefix="/attachment",
+    tags=["attachment"],
 
 )
 
