@@ -140,7 +140,7 @@ class MessageService:
                         )
                     )
                     attachment_urls.append(attachment_url)
-                    attachement.temporary_url=attachment_url
+                    attachment.temporary_url=attachment_url
                     self.db.commit()
 
             message_details.append(
