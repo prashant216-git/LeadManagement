@@ -124,6 +124,8 @@ class MessageService:
             attachments = self.attachment_repository.get_by_message(
                 message.id
             )
+            attachment_url=None
+            
 
             attachment_urls = []
 
@@ -137,7 +139,8 @@ class MessageService:
                             attachment.file_path
                         )
                     )
-                    attachment_urls.append(attachment.temporary_url)
+                    attachment_urls.append(attachment_url)
+                    attachement.temporary_url=attachment_url
                     self.db.commit()
 
             message_details.append(
