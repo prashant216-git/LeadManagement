@@ -1,6 +1,8 @@
 from datetime import datetime
+from typing import List
 from uuid import UUID
 
+from fastapi import UploadFile, File
 from pydantic import BaseModel
 
 from app.enums.message import (
@@ -54,6 +56,7 @@ class ScheduledMessageCreate(BaseModel):
     channel_connection_id: UUID
     content: str
     scheduled_at: datetime
+    attachment_ids: list[UUID] | None = None
 
 
 class ScheduledMessageResponse(BaseModel):

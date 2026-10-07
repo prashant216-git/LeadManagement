@@ -211,11 +211,13 @@ def get_scheduled_message_service(
     temporal_scheduler: TemporalScheduler = Depends(
         get_temporal_scheduler
     ),
+        db: AsyncSession = Depends(get_db),
 ) -> ScheduledMessageService:
 
     return ScheduledMessageService(
         scheduled_message_repository=scheduled_message_repository,
         temporal_dyanmic_registrar=temporal_scheduler,
+        db=db
     )
 
 

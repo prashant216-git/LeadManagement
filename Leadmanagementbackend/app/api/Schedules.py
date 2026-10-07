@@ -41,6 +41,7 @@ async def schedule_message(
         channel_connection_id=request.channel_connection_id,
         content=request.content,
         scheduled_at=request.scheduled_at,
+        attachment_ids=request.attachment_ids
     )
 
     return scheduled_message

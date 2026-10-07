@@ -91,3 +91,28 @@ def build_channel_service(db: AsyncSession) -> ChannelService:
         channel_resolver=channel_resolver,
         lead_repository=lead_repository,
     )
+
+def build_channel_resolver(
+    db: AsyncSession,
+) -> ChannelResolver:
+
+    connection_repository = ChannelConnectionRepository(db)
+    credential_repository = ChannelCredentialRepository(db)
+    channel_master_repository = ChannelMasterRepository(db)
+    channel_watch_repository = ChannelWatchRepository(db)
+    message_repository = MessageRepository(db)
+    attachement_repository = AttachmentRepository(db)
+
+    credential_service = CredentialEncryptionService()
+    attachement_service = AttachmentService()
+
+    return ChannelResolver(
+        connection_repository=connection_repository,
+        credential_repository=credential_repository,
+        channel_watch_repository=channel_watch_repository,
+        channel_master_repository=channel_master_repository,
+        credential_encryption_service=credential_service,
+        message_repository=message_repository,
+        attachement_repository=attachement_repository,
+        attachement_service=attachement_service,
+    )

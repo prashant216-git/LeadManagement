@@ -1,5 +1,8 @@
 from datetime import datetime
+from typing import List
 from uuid import UUID
+
+from fastapi import UploadFile
 
 from app.DTOs.MessageDTO import ScheduledMessageResponse
 
@@ -8,6 +11,10 @@ from app.models.scheduled_message import (
     ScheduledMessageStatus,
 )
 from app.schedulers.temporal.workflows.SchedulerMessageWorkflow import ScheduledMessageWorkflow
+from app.models.Attachements import Attachment
+from app.repositories.AttachementRepository import AttachmentRepository
+
+from app.services.AttachementService import AttachmentService
 
 
 class ScheduledMessageService:
@@ -16,19 +23,26 @@ class ScheduledMessageService:
         self,
         scheduled_message_repository,
             temporal_dyanmic_registrar,
+        db
     ):
         self.scheduled_message_repository = (
             scheduled_message_repository
         )
         self.temporal_dyanmic_registrar=temporal_dyanmic_registrar
+        self.db=db
+        self.attachment_repository = AttachmentRepository(db)
+        self.attachment_service=AttachmentService()
+
+
 
     async def schedule_message(
-        self,
-        user_id: UUID,
-        lead_id: UUID,
-        channel_connection_id: UUID,
-        content: str,
-        scheduled_at: datetime,
+            self,
+            user_id: UUID,
+            lead_id: UUID,
+            channel_connection_id: UUID,
+            content: str,
+            scheduled_at: datetime,
+            attachment_ids : list[UUID] | None = None,
     ) -> ScheduledMessage:
 
         scheduled_message = ScheduledMessage(
@@ -39,10 +53,27 @@ class ScheduledMessageService:
             scheduled_at=scheduled_at,
             status=ScheduledMessageStatus.SCHEDULED,
         )
-        scheduled_message=self.scheduled_message_repository.create(
+
+        scheduled_message = self.scheduled_message_repository.create(
             scheduled_message
         )
-        print("creating worfkloew")
+        message_id=scheduled_message.id
+
+        if attachment_ids:
+            for attachement_id in attachment_ids:
+                print(attachement_id)
+                attachment=self.attachment_repository.get_by_id(attachement_id)
+                attachment.message_id=message_id
+                self.db.commit()
+
+
+
+
+
+
+
+        print("creating workflow")
+
         await self.temporal_dyanmic_registrar.register(
             schedule_id=f"scheduled-message-{scheduled_message.id}",
             workflow=ScheduledMessageWorkflow.run,
@@ -53,6 +84,8 @@ class ScheduledMessageService:
         )
 
         return scheduled_message
+
+
 
     async def get_by_lead_id(self, lead_id: UUID) -> list[ScheduledMessageResponse] | None:
 
