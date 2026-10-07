@@ -9,7 +9,7 @@ from app.enums.LeadTransfer import (
     LeadTransferStatus,
 )
 from app.models.Leads import Lead
-from models.LeadStatusHistory import LeadStatusHistory
+from app.models.LeadStatusHistory import LeadStatusHistory
 
 
 class LeadTransferHistoryRepository:
