@@ -16,6 +16,7 @@ from app.models.lead_status import LeadStatus
 from app.repositories.LeadStatusRepository import LeadStatusRepository
 from app.enums.LeadTransfer import LeadTransferStatus, LeadTransferType
 from app.models.LeadTransferHistory import LeadTransferHistory
+from models.lead_status import LeadStatus
 
 
 class LeadService:
@@ -587,20 +588,19 @@ class LeadService:
 
         response = []
 
-        for transfer, lead in transfers:
+        for transfer, lead, leadstatus in transfers:
             response.append(
                 TransferLeadResponseDTO(
                     id=lead.id,
-
                     assigned_user_id=lead.assigned_user_id,
                     name=lead.name,
                     email=lead.email,
                     phone_number=lead.phone_number,
                     source_channel_id=lead.source_channel_id,
-                    comment=transfer.comment,
+                    lead_status= leadstatus.status_id,
+                    transfer_comment=transfer.comment,
                     created_at=lead.created_at,
                     updated_at=lead.updated_at,
-
                     transfer_id=transfer.id,
                     transfer_from=transfer.transfer_from,
                     transfer_to=transfer.transfer_to,

@@ -30,6 +30,8 @@ class TransferLeadResponseDTO(BaseModel):
     phone_number: str | None = None
 
     source_channel_id: UUID | None = None
+    transfer_comment : str | None = None
+    lead_status: UUID | None = None
 
 
 

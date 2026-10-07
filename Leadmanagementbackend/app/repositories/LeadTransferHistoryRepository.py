@@ -9,6 +9,7 @@ from app.enums.LeadTransfer import (
     LeadTransferStatus,
 )
 from app.models.Leads import Lead
+from models.LeadStatusHistory import LeadStatusHistory
 
 
 class LeadTransferHistoryRepository:
@@ -209,17 +210,20 @@ class LeadTransferHistoryRepository:
             page_size: int = 20,
             sort_by: str = "created_at",
             sort_order: str = "desc",
-    ) -> tuple[list[tuple[LeadTransferHistory, Lead]], int]:
+    ) -> tuple[list[tuple[LeadTransferHistory, Lead , LeadStatusHistory]], int]:
 
         # --------------------------------------------------
         # Base Query
         # --------------------------------------------------
 
         statement = (
-            select(LeadTransferHistory,Lead)
+            select(LeadTransferHistory,Lead,LeadStatusHistory)
             .join(
                 Lead,
                 Lead.id == LeadTransferHistory.lead_id,
+            )
+            .join(
+                LeadStatusHistory.lead_id==LeadTransferHistory.lead_id
             )
         )
 
