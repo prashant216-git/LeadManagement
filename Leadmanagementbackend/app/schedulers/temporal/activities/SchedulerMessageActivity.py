@@ -25,7 +25,7 @@ async def send_scheduled_message(
             connection=channel_connection_repo.get_by_id(scheduled_message.channel_connection_id)
 
 
-            result=await channel_service.send_message(lead_id=scheduled_message.lead_id,connection_id=scheduled_message.channel_connection_id,content=scheduled_message.content,reply_to_message_id=None)
+            result=await channel_service.send_message(lead_id=scheduled_message.lead_id,connection_id=scheduled_message.channel_connection_id,content=scheduled_message.content,reply_to_message_id=None,attachment_ids=attachment_ids)
             if result:
                 scheduled_message.status=ScheduledMessageStatus.SENT
                 db.add(scheduled_message)

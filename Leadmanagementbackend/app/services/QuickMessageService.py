@@ -124,7 +124,8 @@ class QuickMessageAttachmentService:
             attachment_url = None
 
             if  attachment :
-                attachment_url=self.attachment_service.generate_signed_url(attachment[0])
+                attachmentnew=self.attachment_service.generate_signed_url(attachment[0])
+                attachment_url=attachmentnew.temporary_url
                 self.db.commit()
 
 

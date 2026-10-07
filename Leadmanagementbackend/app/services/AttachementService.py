@@ -8,7 +8,7 @@ from google.cloud import storage
 from functools import partial
 
 from app.core.config import settings
-from models.Attachements import Attachment
+from app.models.Attachements import Attachment
 
 
 class AttachmentService:

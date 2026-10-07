@@ -130,17 +130,11 @@ class MessageService:
             attachment_urls = []
 
             for attachment in attachments:
-                if attachment and attachment.temporary_url:
-                    attachment_urls.append(attachment.temporary_url)
-
-                elif attachment:
-                    attachment_url = (
-                        self.attachment_service.generate_signed_url(
-                            attachment.file_path
-                        )
-                    )
+                if attachment:
+                    attachmentnew = self.attachment_service.generate_signed_url(attachment)
+                    attachment_url = attachmentnew.temporary_url
                     attachment_urls.append(attachment_url)
-                    attachment.temporary_url=attachment_url
+
                     self.db.commit()
 
             message_details.append(
