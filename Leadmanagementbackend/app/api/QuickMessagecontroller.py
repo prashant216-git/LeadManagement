@@ -3,7 +3,7 @@ from uuid import UUID
 
 from starlette import status
 
-from app.DTOs.QuickMessageDTO import ListResponse
+from app.DTOs.QuickMessageDTO import ListResponse, QuickMessageCreate
 from app.dependencies.services import get_quick_message_service
 from app.enums.message import QuickMessageType
 from app.services.QuickMessageService import QuickMessageAttachmentService
@@ -22,10 +22,7 @@ async def get_quick_message_types():
 
 @router.post("/create",status_code=status.HTTP_201_CREATED)
 async def create_quick_message(
-    message_text: str | None = Form(None),
-    title: str | None = Form(None),
-    attachment_type: QuickMessageType = Form(QuickMessageType.TEXT),
-    attachment: UploadFile | None = File(None),
+    request:QuickMessageCreate,
 
 
 
@@ -38,10 +35,10 @@ async def create_quick_message(
         user_id=UUID("09a81c46-92c4-42ae-9ffe-4275d62f1d9f")
         quick_message = await service.create(
             user_id=user_id,
-            message_text=message_text,
-            title=title,
-            attachment_type=attachment_type,
-            attachment=attachment,
+            message_text=request.message_text,
+            title=request.title,
+            attachment_type=request.attachment_type,
+            attachment_ids=request.attachment_ids,
         )
         print(quick_message)
 

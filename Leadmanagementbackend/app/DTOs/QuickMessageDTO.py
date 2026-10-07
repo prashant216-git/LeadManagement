@@ -13,7 +13,14 @@ class QuickMessageResponse(BaseModel):
     attachment_type: QuickMessageType
     is_active: bool
 
-    attachment_url: str | None = None
+    attachment_urls: list[str] | None = None
 
 class ListResponse(BaseModel):
     items: list[QuickMessageResponse]
+
+
+class QuickMessageCreate(BaseModel):
+    message_text: str
+    title: str
+    attachment_type: QuickMessageType = QuickMessageType.TEXT,
+    attachment_ids: list[UUID] | None = None,

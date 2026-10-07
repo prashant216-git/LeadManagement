@@ -35,10 +35,10 @@ class QuickMessageAttachmentService:
         message_text: str | None,
         title: str | None,
         attachment_type: QuickMessageType,
-        attachment: UploadFile | None,
+        attachment_ids: list[UUID] | None=None,
     ):
 
-        uploaded_file = None
+
 
         try:
 
@@ -58,28 +58,20 @@ class QuickMessageAttachmentService:
             )
 
             # If attachment exists
-            if attachment:
-
-                uploaded_file = (
-                    await self.attachment_service.upload(
-                        file=attachment,
-                        user_id=user_id,
-                        message_id=quick_message.id,
+            if attachment_ids:
+                for attachment_id in attachment_ids:
+                    attachment=self.attachment_repository.get_by_id(attachment_id)
+                    attachment.message_id=quick_message.id
+                    self.attachment_repository.save(
+                        attachment
                     )
-                )
 
-                attachment_model = Attachment(
-                    user_id=user_id,
-                    message_id=quick_message.id,
-                    file_name=uploaded_file["file_name"],
-                    file_path=uploaded_file["file_path"],
-                    file_type=uploaded_file["file_type"],
-                    file_size=uploaded_file["file_size"],
-                )
 
-                self.attachment_repository.save(
-                    attachment_model
-                )
+
+
+
+
+
 
             # Everything succeeded
             self.db.commit()
@@ -96,12 +88,7 @@ class QuickMessageAttachmentService:
 
             # DB rollback cannot remove GCP object,
             # so remove it manually
-            if uploaded_file:
-                try:
-                   print("rollbacked")
-                except Exception:
-                    # Log this properly in production
-                    pass
+
 
             raise
 
@@ -117,16 +104,22 @@ class QuickMessageAttachmentService:
 
         for message in quick_messages:
 
-            attachment = self.attachment_repository.get_by_message(
+            attachments = self.attachment_repository.get_by_message(
                 message.id
             )
 
             attachment_url = None
+            attachment_urls = []
 
-            if  attachment :
-                attachmentnew=self.attachment_service.generate_signed_url(attachment[0])
-                attachment_url=attachmentnew.temporary_url
-                self.db.commit()
+            for attachment in attachments:
+                if attachment:
+                    attachmentnew = self.attachment_service.generate_signed_url(attachment)
+                    attachment_url = attachmentnew.temporary_url
+                    attachment_urls.append(str(attachment.file_name)+"+"+attachment_url)
+
+                    self.db.commit()
+
+
 
 
             items.append(
@@ -136,7 +129,7 @@ class QuickMessageAttachmentService:
                     title=message.Title,
                     attachment_type=message.attachment_type,
                     is_active=message.is_active,
-                    attachment_url=attachment_url,
+                    attachment_urls=attachment_urls,
                 )
             )
 
