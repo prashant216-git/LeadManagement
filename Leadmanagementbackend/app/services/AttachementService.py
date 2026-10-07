@@ -108,7 +108,7 @@ class AttachmentService:
     def generate_signed_url(
         self,
         file_path: str,
-        expiration_minutes: int = 15000,
+        expiration_minutes: int = 1500,
     ) -> str:
 
         print("generating signed url")
