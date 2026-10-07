@@ -16,7 +16,7 @@ from app.models.lead_status import LeadStatus
 from app.repositories.LeadStatusRepository import LeadStatusRepository
 from app.enums.LeadTransfer import LeadTransferStatus, LeadTransferType
 from app.models.LeadTransferHistory import LeadTransferHistory
-from models.lead_status import LeadStatus
+from app.models.lead_status import LeadStatus
 
 
 class LeadService:
