@@ -1,5 +1,5 @@
 import asyncio
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
 from google.oauth2 import service_account
@@ -8,6 +8,7 @@ from google.cloud import storage
 from functools import partial
 
 from app.core.config import settings
+from models.Attachements import Attachment
 
 
 class AttachmentService:
@@ -20,7 +21,7 @@ class AttachmentService:
         "image/png",
     }
 
-    def __init__(self):
+    def __init__(self,):
         private_key = settings.GCP_PRIVATE_KEY.replace("\\n", "\n")
 
         print(repr(private_key[:80]))
@@ -44,6 +45,7 @@ class AttachmentService:
         self.bucket = self.client.bucket(
             settings.GCP_BUCKET_NAME
         )
+
 
     async def upload(
         self,
@@ -106,20 +108,37 @@ class AttachmentService:
         }
 
     def generate_signed_url(
-        self,
-        file_path: str,
-        expiration_minutes: int = 1500,
-    ) -> str:
+            self,
+            attachment: Attachment,
+            expiration_minutes: int = 10080,  # 7 days
+    ) -> Attachment:
+
+        now = datetime.now(timezone.utc)
+
+        # Reuse existing URL if it is still valid
+        if (
+                attachment.temporary_url
+                and attachment.temporary_url_expires_at
+                and attachment.temporary_url_expires_at
+                > now + timedelta(minutes=30)
+        ):
+            return attachment
 
         print("generating signed url")
 
-        blob = self.bucket.blob(file_path)
+        blob = self.bucket.blob(attachment.file_path)
 
-        return blob.generate_signed_url(
+        attachment.temporary_url = blob.generate_signed_url(
             version="v4",
             expiration=timedelta(minutes=expiration_minutes),
             method="GET",
         )
+
+        attachment.temporary_url_expires_at = (
+                now + timedelta(minutes=expiration_minutes)
+        )
+
+        return attachment
 
     def download_bytes(self, path: str) -> bytes:
         blob = self.bucket.blob(path)

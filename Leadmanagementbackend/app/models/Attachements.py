@@ -1,6 +1,7 @@
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Text
+from sqlalchemy import Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base_model import BaseModel
@@ -42,6 +43,11 @@ class Attachment(BaseModel):
     )
     temporary_url: Mapped[str |None] = mapped_column(
         Text,
+        nullable=True,
+    )
+    temporary_url_expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+
         nullable=True,
     )
 
