@@ -166,6 +166,7 @@ class MessageService:
                     provider_created_at=(
                         message.provider_created_at
                     ),
+                    subject=message.subject,
 
                 )
             )

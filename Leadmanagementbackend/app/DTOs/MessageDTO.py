@@ -31,6 +31,8 @@ class MessageDetailsDTO(BaseModel):
 
     attachment_urls: list[str] | None = None
 
+    subject: str | None = None
+
 
 class LeadMessagesResponseDTO(BaseModel):
 
