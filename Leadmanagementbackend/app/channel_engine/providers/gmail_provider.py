@@ -712,7 +712,9 @@ class GmailProvider(BaseChannelProvider):
 
                 createdmessage,is_new =await self.message_service.create_message(
                     lead_id=createdlead.id,
-
+                    subject=message_details[
+                            "subject"
+                        ],
                     channel_connection_id=connectionid,
 
                     conversation_id=(
@@ -819,6 +821,7 @@ class GmailProvider(BaseChannelProvider):
             content: str,
             reply_to_message_id: int | None = None,
             attachment_ids: list[UUID] | None = None,
+            subject: str | None = None,
     ):
         if not lead.email:
             raise ValueError(
@@ -844,6 +847,7 @@ class GmailProvider(BaseChannelProvider):
 
         email_message["To"] = lead.email
         email_message["Message-ID"] = rfc_message_id
+        email_message["Subject"] = subject or ""
 
         # Email body
         email_message.attach(
@@ -960,6 +964,7 @@ class GmailProvider(BaseChannelProvider):
             lead_id=lead.id,
 
             channel_connection_id=connection.id,
+            subject=subject,
 
             conversation_id=(
                 sent_response.get("threadId")
@@ -1389,6 +1394,7 @@ class GmailProvider(BaseChannelProvider):
             "conversation_id": message.get(
                 "threadId"
             ),
+            "subject": header_map.get("subject"),
 
             # Gmail message ID
             "provider_message_id": message.get(

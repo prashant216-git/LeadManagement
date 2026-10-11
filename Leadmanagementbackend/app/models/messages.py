@@ -142,6 +142,10 @@ class Message(BaseModel):
         Text,
         nullable=True,
     )
+    subject: Mapped[str | None] = mapped_column(
+        String(998),
+        nullable=True,
+    )
 
     message_type: Mapped[MessageType | None] = mapped_column(
         Enum(MessageType),

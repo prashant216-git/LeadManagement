@@ -8,8 +8,8 @@ class SendMessageDTO(BaseModel):
 
     lead_id: UUID
 
-
-
+    subject: str | None = None
+    
     connection_id: UUID
 
     content: str

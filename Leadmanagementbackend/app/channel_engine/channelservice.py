@@ -601,6 +601,7 @@ class ChannelService:
             content: str,
             reply_to_message_id:UUID,
             attachment_ids: list[UUID] | None = None,
+            subject: str | None = None,
     ):
 
         lead = (
@@ -648,6 +649,7 @@ class ChannelService:
             lead=lead,
             content=content,
             attachment_ids=attachment_ids,
+            subject=subject
         )
         print("here after sending message")
 

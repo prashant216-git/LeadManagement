@@ -48,6 +48,7 @@ class MessageService:
             message_type: MessageType | None = None,
             provider_created_at: datetime | None = None,
             provider_metadata: dict | None = None,
+            subject:str | None = None,
     ) -> tuple[Message, bool]:
 
         lock_key = (
@@ -87,6 +88,7 @@ class MessageService:
                 content=content,
                 message_type=message_type,
                 provider_created_at=provider_created_at,
+                subject=subject
 
             )
             created_message=self.message_repository.create(message)

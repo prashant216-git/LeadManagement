@@ -240,9 +240,7 @@ async def send_message(
             channel_service
             .send_message(
                 lead_id=body.lead_id,
-
-
-
+                subject=body.subject,
                 connection_id=body.connection_id,
 
                 content=body.content,
