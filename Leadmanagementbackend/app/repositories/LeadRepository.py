@@ -244,3 +244,8 @@ class LeadRepository:
             lead: Lead,
     ):
         self.db.flush()
+
+    def save_without_commit(self, lead: Lead) -> Lead:
+        self.db.add(lead)
+        self.db.flush()
+        return lead

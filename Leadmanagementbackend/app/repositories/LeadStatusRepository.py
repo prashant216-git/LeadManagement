@@ -42,3 +42,17 @@ class LeadStatusRepository:
 
 
         return lead_status
+
+
+    def save_without_commit(
+        self,
+        lead_status: LeadStatus,
+    ) -> LeadStatus:
+
+        self.db.add(lead_status)
+        self.db.flush()
+
+
+
+
+        return lead_status

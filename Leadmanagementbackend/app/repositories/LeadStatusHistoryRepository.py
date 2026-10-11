@@ -73,3 +73,27 @@ class LeadStatusHistoryRepository:
         )
 
         return list(result.scalars().all())
+
+
+    def create_without_commit(
+        self,
+        lead_id: UUID,
+        status_id: UUID,
+        comment: str | None,
+        changed_by: UUID | None,
+    ) -> LeadStatusHistory:
+
+        history = LeadStatusHistory(
+            lead_id=lead_id,
+            status_id=status_id,
+            comment=comment,
+            changed_by=changed_by,
+        )
+
+        self.db.add(history)
+
+        self.db.flush()
+
+
+
+        return history

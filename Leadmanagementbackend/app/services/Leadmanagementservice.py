@@ -616,6 +616,99 @@ class LeadService:
 
 
 
+    async def create_manual_lead_without_commit(
+            self,
+            user_id: UUID,
+            lead_data: CreateManualLeadDTO,
+    ) -> Leadetails:
+
+        lead = None
+
+        # Find existing lead by email
+        lead =self.lead_repository.get_by_identifier(user_id=user_id,
+
+
+                    email=lead_data.email,
+                    phone_number=lead_data.phone_number,)
+
+        # --------------------------------------------------
+        # Existing lead
+        # --------------------------------------------------
+
+        if lead is not None:
+
+            if lead_data.name:
+                lead.name = lead_data.name
+
+            if lead_data.email:
+                lead.email = lead_data.email
+
+            if lead_data.phone_number:
+                lead.phone_number = lead_data.phone_number
+
+            lead.updated_at = datetime.now(timezone.utc)
+
+            self.lead_repository.save_without_commit(lead)
+
+            return lead
+
+
+        lead = Lead(
+            user_id=user_id,
+            source_channel_id=None,
+            name=lead_data.name,
+            email=lead_data.email,
+            phone_number=lead_data.phone_number,
+        )
+
+        result = self.lead_repository.save_without_commit(
+            lead
+        )
+
+        try:
+            default_status = (
+                self.lead_status_master_repository
+                .get_by_user_id_default(
+                    user_id=user_id
+                )
+            )
+
+            if default_status:
+                lead_status = LeadStatus(
+                    lead_id=result.id,
+                    status_id=default_status.id,
+                    update_by=user_id,
+                )
+                print("creating lead status")
+
+                self.lead_status_repository.save_without_commit(lead_status)
+                print("creating history")
+                self.status_history_repository.create_without_commit(
+                    lead_id=lead.id,
+                    status_id=default_status.id,
+                    comment="NEW",
+                    changed_by=user_id,
+                )
+
+
+        except Exception as exc:
+            print(
+                f"Failed to assign status to lead "
+                f"{lead.id}: {exc}"
+            )
+        return Leadetails(
+            connection_id=None,
+            source_identifier=None,
+            id=lead.id,
+            name=lead.name,
+            email=lead.email,
+            phone_number=lead.phone_number,
+            created_at=lead.created_at,
+        )
+
+
+
+
 
 
 

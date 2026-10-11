@@ -22,3 +22,6 @@ SQLAlchemy
 psycopg[binary]
 greenlet
 asyncpg
+pandas
+openpyxl
+python-multipart
