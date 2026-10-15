@@ -25,3 +25,4 @@ asyncpg
 pandas
 openpyxl
 python-multipart
+pgvector

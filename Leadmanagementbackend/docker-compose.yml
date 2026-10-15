@@ -1,4 +1,15 @@
 services:
+  alembic-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: silexa-app:latest
+    container_name: silexa-migrate
+    env_file:
+      - .env
+    command: [ "alembic", "upgrade", "heads" ]
+    restart: "no"
+
   silexa-comp:
     build:
       context: .

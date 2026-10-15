@@ -116,6 +116,8 @@ class LeadService:
                 name=name,
                 email=email,
                 phone_number=phone_number,
+                assigned_user_id=connection.user_id
+
             )
 
 
@@ -311,6 +313,7 @@ class LeadService:
             name=lead_data.name,
             email=lead_data.email,
             phone_number=lead_data.phone_number,
+            assigned_user_id=user_id
         )
 
         result = self.lead_repository.save(
@@ -659,6 +662,7 @@ class LeadService:
             name=lead_data.name,
             email=lead_data.email,
             phone_number=lead_data.phone_number,
+            assigned_user_id=user_id
         )
 
         result = self.lead_repository.save_without_commit(
