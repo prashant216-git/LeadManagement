@@ -14,6 +14,7 @@ class QuickMessageResponse(BaseModel):
     is_active: bool
 
     attachment_urls: list[str] | None = None
+    attachment_ids: list[UUID] | None = None
 
 class ListResponse(BaseModel):
     items: list[QuickMessageResponse]

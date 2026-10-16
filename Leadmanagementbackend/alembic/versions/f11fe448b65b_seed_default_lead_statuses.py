@@ -1,99 +1,103 @@
-"""seed default lead statuses for all users
 
-Revision ID: xxxxx
-Revises: previous_revision_id
-"""
+"""Create lead status master table."""
 
-from uuid import uuid4
+from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 
-revision = "f11fe448b65b"
-down_revision = "cf8351dba755"
-branch_labels = None
-depends_on = None
+# Revision identifiers
+revision: str = "d7a91c2e4f60"
+down_revision: Union[str, Sequence[str], None] = "abc123"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    connection = op.get_bind()
-
-    users = connection.execute(
-        sa.text(
-            """
-            SELECT id
-            FROM users
-            """
-        )
-    ).fetchall()
-
-    lead_status_master = sa.table(
+    # Create lead_status_master table.
+    op.create_table(
         "lead_status_master",
-        sa.column("id", postgresql.UUID(as_uuid=True)),
-        sa.column("user_id", postgresql.UUID(as_uuid=True)),
-        sa.column("status_name", sa.String()),
-        sa.column("is_active", sa.Boolean()),
-        sa.column("is_default", sa.Boolean()),
-        sa.column("created_by", postgresql.UUID(as_uuid=True)),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "status_name",
+            sa.String(length=100),
+            nullable=False,
+        ),
+        sa.Column(
+            "is_default",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.false(),
+        ),
+        sa.Column(
+            "is_active",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.true(),
+        ),
+        sa.Column(
+            "created_by",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="RESTRICT"),
+            nullable=False,
+        ),
+        sa.Column(
+            "colour",
+            sa.String(length=100),
+            nullable=True,
+        ),
     )
 
-    for user in users:
-        user_id = user[0]
+    # Indexes matching the model.
+    op.create_index(
+        "ix_lead_status_master_user_id",
+        "lead_status_master",
+        ["user_id"],
+        unique=False,
+    )
 
-        op.bulk_insert(
-            lead_status_master,
-            [
-                {
-                    "id": uuid4(),
-                    "user_id": user_id,
-                    "status_name": "New",
-                    "is_active": True,
-                    "is_default": True,
-                    "created_by": user_id,
-                },
-                {
-                    "id": uuid4(),
-                    "user_id": user_id,
-                    "status_name": "Contacted",
-                    "is_active": True,
-                    "is_default": False,
-                    "created_by": user_id,
-                },
-                {
-                    "id": uuid4(),
-                    "user_id": user_id,
-                    "status_name": "Converted",
-                    "is_active": True,
-                    "is_default": False,
-                    "created_by": user_id,
-                },
-                {
-                    "id": uuid4(),
-                    "user_id": user_id,
-                    "status_name": "Not Interested",
-                    "is_active": True,
-                    "is_default": False,
-                    "created_by": user_id,
-                },
-            ],
-        )
+    op.create_index(
+        "ix_lead_status_master_created_by",
+        "lead_status_master",
+        ["created_by"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    connection = op.get_bind()
-
-    connection.execute(
-        sa.text(
-            """
-            DELETE FROM lead_status_master
-            WHERE status_name IN (
-                'New',
-                'Contacted',
-                'Converted',
-                'Not Interested'
-            )
-            """
-        )
+    op.drop_index(
+        "ix_lead_status_master_created_by",
+        table_name="lead_status_master",
     )
+
+    op.drop_index(
+        "ix_lead_status_master_user_id",
+        table_name="lead_status_master",
+    )
+
+    op.drop_table("lead_status_master")

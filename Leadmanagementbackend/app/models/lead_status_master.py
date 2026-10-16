@@ -24,8 +24,9 @@ class LeadStatusMaster(BaseModel):
 
     is_default: Mapped[str] = mapped_column(
         Boolean,
-        default=False
-        ,
+        default=False,
+        nullable=False,
+
 
 
     )

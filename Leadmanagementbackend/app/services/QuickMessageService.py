@@ -110,11 +110,13 @@ class QuickMessageAttachmentService:
 
             attachment_url = None
             attachment_urls = []
+            attachement_ids=[]
 
             for attachment in attachments:
                 if attachment:
                     attachmentnew = self.attachment_service.generate_signed_url(attachment)
                     attachment_url = attachmentnew.temporary_url
+                    attachement_ids.append(attachment.id)
                     attachment_urls.append(str(attachment.file_name)+"+"+attachment_url)
 
                     self.db.commit()
