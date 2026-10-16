@@ -132,6 +132,7 @@ class QuickMessageAttachmentService:
                     attachment_type=message.attachment_type,
                     is_active=message.is_active,
                     attachment_urls=attachment_urls,
+                    attachement_ids=attachement_ids
                 )
             )
 
